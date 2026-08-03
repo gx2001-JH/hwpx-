@@ -1,10 +1,22 @@
 import io
+import json
+import os
+import urllib.error
+import urllib.request
 
 from flask import Flask, render_template, request, send_file, jsonify
 
 from hwpx_builder_web import build_hwpx_bytes
 
 app = Flask(__name__)
+
+OCR_PROMPT = """다음 이미지에 있는 수학 문제 텍스트를 그대로 옮겨 적어줘.
+
+규칙:
+- 수식 부분은 LaTeX 문법으로 작성하고 반드시 $...$ 로 감싸줘. 여러 줄에 걸치거나 별도 줄로 강조해야 하는 블록 수식은 $$...$$ 로 감싸줘.
+- 수식이 아닌 일반 텍스트(문제 번호, 설명, 보기 등)는 이미지에 있는 그대로 옮기고, 문단/줄바꿈 구조도 최대한 유지해줘.
+- 이미지에 없는 내용을 추가하거나 문제를 풀지 마. 오직 옮겨 적기만 해.
+- 설명이나 코드블록 없이, 옮겨 적은 텍스트만 출력해줘."""
 
 
 @app.route("/")
@@ -32,6 +44,60 @@ def convert():
         download_name=f"{filename}.hwpx",
         mimetype="application/haansofthwpx",
     )
+
+
+@app.route("/ocr", methods=["POST"])
+def ocr():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "서버에 GEMINI_API_KEY가 설정되어 있지 않습니다."}), 500
+
+    body = request.get_json(silent=True) or {}
+    image_base64 = body.get("imageBase64")
+    mime_type = body.get("mimeType")
+    if not image_base64 or not mime_type:
+        return jsonify({"error": "이미지 데이터가 없습니다."}), 400
+
+    payload = json.dumps(
+        {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": OCR_PROMPT},
+                        {"inline_data": {"mime_type": mime_type, "data": image_base64}},
+                    ]
+                }
+            ]
+        }
+    ).encode("utf-8")
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-2.5-flash:generateContent?key={api_key}"
+    )
+    req = urllib.request.Request(
+        url, data=payload, headers={"Content-Type": "application/json"}, method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = json.loads(e.read().decode("utf-8"))
+            msg = err_body.get("error", {}).get("message", f"Gemini API 오류 ({e.code})")
+        except Exception:
+            msg = f"Gemini API 오류 ({e.code})"
+        return jsonify({"error": msg}), 502
+    except Exception as e:
+        return jsonify({"error": f"OCR 처리 중 오류: {e}"}), 500
+
+    try:
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        return jsonify({"error": "이미지에서 텍스트를 추출하지 못했습니다."}), 502
+
+    return jsonify({"text": text.strip()})
 
 
 if __name__ == "__main__":
