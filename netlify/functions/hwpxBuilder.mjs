@@ -181,14 +181,41 @@ function szMeasure(tokens) {
       i = newI;
       let newW, newH;
       if (baseTag === "bigop") {
-        newH = baseH + Math.max(750, ch + 500);
-        newW = baseW + Math.max(cw, 500);
+        // 큰연산자(sum/int/lim 등)의 위·아래첨자는 실제로는 작은 글꼴로 압축되어
+        // 렌더링된다. "sum^{n}" 단독과 "sum_{i=1}^{n}" 전체를 실측해 역산해보면
+        // 위첨자가 아래첨자보다 조금 더 크게 잡히는데, 이전처럼 두 항목 모두 거의
+        // 동일한 큰 고정폭(ch+500)을 매번 더하면 3~4배까지 부풀려졌다(위/아래
+        // 첨자가 옆이 아니라 위아래로 쌓이는데 옆으로 이어붙이듯 계산했기 때문).
+        if (tok === "^") {
+          newH = baseH + Math.max(700, ch * 1.05);
+          newW = baseW + Math.max(400, cw * 0.9);
+        } else {
+          newH = baseH + Math.max(500, ch * 0.65);
+          newW = baseW + Math.max(150, cw * 0.10);
+        }
       } else {
         // 실측 4건("x^2..", "x^{10}", "log_{2} x", "angle..^{circ}")이 전부
         // baseH+195(=BASE_H*0.20) 근처로 일관되게 나와, 첨자가 붙을 때 실제로
         // 늘어나는 높이는 ch에 크게 비례하지 않는다(계수 0.55는 실측보다 훨씬 컸다).
-        newH = baseH + Math.max(150, ch * 0.20);
-        newW = baseW + cw * 0.55 + 100;
+        const addH1 = Math.max(150, ch * 0.20);
+        const addW1 = cw * 0.55 + 100;
+        const other = tok === "^" ? "_" : "^";
+        if (i < n && tokens[i] === other) {
+          // "x^{2}_{i}"처럼 위·아래첨자가 같은 밑에 동시에 붙으면 옆으로
+          // 이어붙는 게 아니라 같은 세로줄에 위아래로 쌓인다. 실측(975)이 거의
+          // 밑 하나("x"=600)에 첨자 한 칸만 더한 수준이라, 폭은 둘 중 더 넓은
+          // 쪽만 차지하고(둘을 더하면 크게 부풀려진다) 높이만 위아래로 쌓이므로
+          // 그대로 더한다.
+          const [cw2, ch2, , newI2] = nextArg(i + 1);
+          i = newI2;
+          const addH2 = Math.max(150, ch2 * 0.20);
+          const addW2 = cw2 * 0.55 + 100;
+          newW = baseW + Math.max(addW1, addW2);
+          newH = baseH + addH1 + addH2;
+        } else {
+          newW = baseW + addW1;
+          newH = baseH + addH1;
+        }
       }
       out.push([newW, newH, baseTag]);
       continue;
@@ -232,10 +259,17 @@ function szMeasure(tokens) {
         let rowW = 0;
         let rowH = BASE_H;
         for (const cell of cells) {
-          const [cw, ch] = szMeasure(cell);
-          rowW += cw + 200;
+          // 변환기는 항상 "a & b"처럼 구분자 앞뒤에 공백을 넣는데, 셀 앞뒤의 공백
+          // 토큰을 벗겨내지 않으면 내용 폭에 공백까지 중복 합산된다.
+          let trimmed = cell.slice();
+          while (trimmed.length && trimmed[0].trim() === "") trimmed = trimmed.slice(1);
+          while (trimmed.length && trimmed[trimmed.length - 1].trim() === "") trimmed = trimmed.slice(0, -1);
+          const [cw, ch] = szMeasure(trimmed);
+          rowW += cw;
           rowH = Math.max(rowH, ch);
         }
+        // 셀 "개수"가 아니라 셀 "사이 간격" 개수(n-1)만큼만 간격을 더한다.
+        rowW += 200 * Math.max(0, cells.length - 1);
         rowSizes.push([rowW, rowH]);
       }
       const mw = rowSizes.length ? Math.max(...rowSizes.map(([w]) => w)) : ATOM_W;

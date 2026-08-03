@@ -190,15 +190,40 @@ def _sz_measure(tokens):
             base_w, base_h, base_tag = take_base()
             cw, ch, _, i = next_arg(i + 1)
             if base_tag == "bigop":
-                new_h = base_h + max(750, ch + 500)
-                new_w = base_w + max(cw, 500)
+                # 큰연산자(sum/int/lim 등)의 위·아래첨자는 실제로는 작은 글꼴로
+                # 압축되어 렌더링된다. "sum^{n}" 단독과 "sum_{i=1}^{n}" 전체를 실측해
+                # 역산해보면 위첨자가 아래첨자보다 조금 더 크게 잡히는데, 이전처럼 두
+                # 항목 모두 거의 동일한 큰 고정폭(ch+500)을 매번 더하면 3~4배까지
+                # 부풀려졌다(위/아래 첨자가 옆이 아니라 위아래로 쌓이는데 옆으로
+                # 이어붙이듯 계산했기 때문).
+                if tok == "^":
+                    new_h = base_h + max(700, ch * 1.05)
+                    new_w = base_w + max(400, cw * 0.9)
+                else:
+                    new_h = base_h + max(500, ch * 0.65)
+                    new_w = base_w + max(150, cw * 0.10)
             else:
                 # 실측 4건("x^2..", "x^{10}", "log_{2} x", "angle..^{circ}")이
                 # 전부 base_h+195(=BASE_H*0.20) 근처로 일관되게 나와, 첨자가 붙을 때
                 # 실제로 늘어나는 높이는 ch에 크게 비례하지 않는다(계수 0.55는 실측보다
                 # 훨씬 컸다).
-                new_h = base_h + max(150, ch * 0.20)
-                new_w = base_w + cw * 0.55 + 100
+                add_h1 = max(150, ch * 0.20)
+                add_w1 = cw * 0.55 + 100
+                other = "_" if tok == "^" else "^"
+                if i < n and tokens[i] == other:
+                    # "x^{2}_{i}"처럼 위·아래첨자가 같은 밑에 동시에 붙으면 옆으로
+                    # 이어붙는 게 아니라 같은 세로줄에 위아래로 쌓인다. 실측(975)이
+                    # 거의 밑 하나("x"=600)에 첨자 한 칸만 더한 수준이라, 폭은 둘 중
+                    # 더 넓은 쪽만 차지하고(둘을 더하면 크게 부풀려진다) 높이만
+                    # 위아래로 쌓이므로 그대로 더한다.
+                    cw2, ch2, _, i = next_arg(i + 1)
+                    add_h2 = max(150, ch2 * 0.20)
+                    add_w2 = cw2 * 0.55 + 100
+                    new_w = base_w + max(add_w1, add_w2)
+                    new_h = base_h + add_h1 + add_h2
+                else:
+                    new_w = base_w + add_w1
+                    new_h = base_h + add_h1
             out.append([new_w, new_h, base_tag])
             continue
 
@@ -233,9 +258,18 @@ def _sz_measure(tokens):
                 cells = _sz_split(row, "&")
                 row_w, row_h = 0, BASE_H
                 for cell in cells:
-                    cw, ch = _sz_measure(cell)
-                    row_w += cw + 200
+                    # 변환기는 항상 "a & b"처럼 구분자 앞뒤에 공백을 넣는데, 셀 앞뒤의
+                    # 공백 토큰을 벗겨내지 않으면 내용 폭에 공백까지 중복 합산된다.
+                    trimmed = cell[:]
+                    while trimmed and trimmed[0].strip() == "":
+                        trimmed = trimmed[1:]
+                    while trimmed and trimmed[-1].strip() == "":
+                        trimmed = trimmed[:-1]
+                    cw, ch = _sz_measure(trimmed)
+                    row_w += cw
                     row_h = max(row_h, ch)
+                # 셀 "개수"가 아니라 셀 "사이 간격" 개수(n-1)만큼만 간격을 더한다.
+                row_w += 200 * max(0, len(cells) - 1)
                 row_sizes.append((row_w, row_h))
             mw = max((w for w, h in row_sizes), default=ATOM_W)
             mh = sum(h for w, h in row_sizes) + 250 * max(0, len(row_sizes) - 1)
