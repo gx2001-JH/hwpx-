@@ -26,7 +26,7 @@
   body {
     font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
     margin: 0;
-    padding: 20px 24px;
+    padding: clamp(10px, 2.5vw, 20px) clamp(10px, 3vw, 24px);
     color: var(--text);
     background: var(--bg);
     line-height: 1.4;
@@ -35,7 +35,7 @@
     overflow: hidden;
   }
   .page {
-    max-width: 760px;
+    max-width: min(94vw, 820px);
     width: 100%;
     margin: 0 auto;
     height: 100%;
@@ -43,7 +43,7 @@
     flex-direction: column;
     min-height: 0;
   }
-  header { flex: none; margin-bottom: 12px; }
+  header { flex: none; margin-bottom: 10px; }
   .titlebar { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .eyebrow {
     display: inline-flex;
@@ -56,74 +56,65 @@
     padding: 3px 9px;
     border-radius: 100px;
   }
-  .eyebrow .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   h1 {
     font-family: "Georgia", "Noto Serif KR", serif;
-    font-size: 22px;
+    font-size: clamp(19px, 3vw, 22px);
     font-weight: 500;
     letter-spacing: -0.01em;
     margin: 0;
     color: var(--text);
   }
-  p.desc {
-    color: var(--text-muted);
-    font-size: 13.5px;
-    margin: 6px 0 0;
-    line-height: 1.5;
-  }
+  p.desc { color: var(--text-muted); font-size: 13px; margin: 5px 0 0; line-height: 1.5; }
+
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 18px;
-    padding: 18px;
+    padding: clamp(10px, 2vw, 16px);
     box-shadow: var(--shadow);
     flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
-  form {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+
+  /* 이미지 드롭존 */
+  .dropzone {
+    flex: none;
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 10px;
+    transition: border-color .15s ease, background .15s ease;
   }
-  textarea {
-    width: 100%;
-    flex: 1;
-    min-height: 0;
-    font-family: "SFMono-Regular", "D2Coding", Consolas, monospace;
-    font-size: 13.5px;
-    line-height: 1.6;
-    padding: 14px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface-2);
-    color: var(--text);
-    resize: none;
+  .dropzone:hover, .dropzone:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
+  .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone b { color: var(--text); font-weight: 600; }
+  .dropzone kbd {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-family: inherit;
   }
-  textarea:focus, input[type=text]:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
+
   .toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 8px;
     flex: none;
+    flex-wrap: wrap;
   }
-  .toolbar .label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
+  .select-all { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
+  .box-count { font-size: 12px; color: var(--text-muted); }
+  .toolbar-actions { display: flex; gap: 2px; flex-wrap: wrap; margin-left: auto; }
   .link-btn {
     background: none;
     border: none;
@@ -133,88 +124,23 @@
     cursor: pointer;
     padding: 3px 7px;
     border-radius: 6px;
+    white-space: nowrap;
   }
   .link-btn:hover { background: var(--accent-soft); }
   .link-btn.active { background: var(--accent-soft); }
-  .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; flex-wrap: wrap; flex: none; }
-  label[for=filename] { font-size: 13px; color: var(--text-muted); }
-  input[type=text] {
-    padding: 8px 11px;
+
+  .ai-panel { display: none; gap: 6px; margin-bottom: 8px; flex: none; flex-wrap: wrap; }
+  .ai-panel.show { display: flex; }
+  .ai-panel select {
     border: 1px solid var(--border);
     border-radius: 9px;
-    font-size: 13.5px;
     background: var(--surface-2);
     color: var(--text);
-  }
-  #filename { width: 180px; }
-  button[type=submit] {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 9px 20px;
-    border-radius: 9px;
-    font-size: 13.5px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-left: auto;
-    transition: background 0.15s ease;
-  }
-  button[type=submit]:disabled { background: #D9B7A9; cursor: default; }
-  button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); }
-  .hint {
-    font-size: 11.5px;
-    color: var(--text-muted);
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-    line-height: 1.6;
+    font-size: 12.5px;
+    padding: 0 6px;
     flex: none;
   }
-  .hint code {
-    background: var(--code-bg);
-    color: var(--text);
-    padding: 1px 5px;
-    border-radius: 5px;
-    font-size: 11px;
-  }
-  #status {
-    margin-top: 8px;
-    font-size: 13px;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    flex: none;
-  }
-  #status.show { display: flex; }
-  #status.error { color: var(--error); }
-  #status.ok { color: var(--ok); }
-  #status.pending { color: var(--text-muted); }
-  .spinner {
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--accent-soft);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex: none;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  footer {
-    flex: none;
-    margin-top: 10px;
-    text-align: center;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .ai-panel {
-    display: none;
-    gap: 8px;
-    margin-bottom: 8px;
-    flex: none;
-  }
-  .ai-panel.show { display: flex; }
-  .ai-panel input[type=text] { flex: 1; }
+  .ai-panel input[type=text] { flex: 1; min-width: 160px; }
   .ai-panel button {
     background: var(--accent);
     color: #fff;
@@ -228,44 +154,124 @@
   .ai-panel button:disabled { background: #D9B7A9; cursor: default; }
   .ai-panel button:hover:not(:disabled) { background: var(--accent-hover); }
 
-  .image-queue {
-    display: none;
-    gap: 8px;
-    margin-bottom: 8px;
-    flex: none;
-    flex-wrap: wrap;
-  }
+  .image-queue { display: none; gap: 8px; margin-bottom: 8px; flex: none; flex-wrap: wrap; }
   .image-queue.show { display: flex; }
-  .queue-item {
-    position: relative;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    flex: none;
-  }
+  .queue-item { position: relative; width: 36px; height: 36px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex: none; }
   .queue-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .queue-item .badge {
-    position: absolute;
-    right: -3px;
-    bottom: -3px;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: #fff;
+    position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff;
     border: 2px solid var(--surface);
   }
   .queue-item.pending .badge, .queue-item.processing .badge { background: var(--accent); }
   .queue-item.done .badge { background: var(--ok); }
   .queue-item.error .badge { background: var(--error); }
-  .queue-item.processing .badge {
-    animation: spin 0.9s linear infinite;
-    border-top-color: transparent;
+  .queue-item.processing .badge { animation: spin 0.9s linear infinite; border-top-color: transparent; }
+
+  /* 문제 박스 목록 */
+  .box-list {
+    flex: 1;
+    min-height: 60px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 2px 2px 2px 0;
+  }
+  .empty-state {
+    flex: none;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    padding: 24px 12px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+  }
+  .box {
+    flex: none;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 10px;
+    background: var(--surface-2);
+    transition: opacity .15s ease;
+  }
+  .box.unchecked { opacity: 0.45; }
+  .box-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .box-source {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 1px 8px;
+  }
+  .box-controls { display: flex; gap: 3px; margin-left: auto; }
+  .box-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    line-height: 1;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+  }
+  .box-btn:disabled { opacity: 0.3; cursor: default; }
+  .box-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .box-btn.danger:hover:not(:disabled) { border-color: var(--error); color: var(--error); }
+  .box-text {
+    width: 100%;
+    min-height: 64px;
+    font-family: "SFMono-Regular", "D2Coding", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    resize: vertical;
+  }
+
+  textarea:focus, input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .row { display: flex; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap; flex: none; }
+  label[for=filename] { font-size: 13px; color: var(--text-muted); }
+  input[type=text] { padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; font-size: 13.5px; background: var(--surface-2); color: var(--text); }
+  #filename { width: 160px; }
+  button[type=submit] {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: auto;
+    transition: background 0.15s ease;
+  }
+  button[type=submit]:disabled { background: #D9B7A9; cursor: default; }
+  button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .hint { font-size: 11px; color: var(--text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.6; flex: none; }
+  .hint code { background: var(--code-bg); color: var(--text); padding: 1px 5px; border-radius: 5px; font-size: 10.5px; }
+
+  #status { margin-top: 8px; font-size: 12.5px; display: none; align-items: center; gap: 8px; flex: none; }
+  #status.show { display: flex; }
+  #status.error { color: var(--error); }
+  #status.ok { color: var(--ok); }
+  #status.pending { color: var(--text-muted); }
+  .spinner { width: 12px; height: 12px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer { flex: none; margin-top: 8px; text-align: center; font-size: 11px; color: var(--text-muted); }
+
+  @media (max-width: 480px) {
+    #filename { width: 120px; }
+    .box-controls { margin-left: 0; }
   }
 </style>
 </head>
@@ -276,43 +282,52 @@
         <h1>한글 수식 변환기</h1>
         <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
       </div>
-      <p class="desc">
-        LaTeX 수식이 섞인 텍스트를 입력하면, 한글(HWP) 수식편집기로 편집 가능한 네이티브 수식이 삽입된 hwpx 파일을 만들어 다운로드합니다.
-      </p>
+      <p class="desc">이미지·AI·직접입력으로 문제 박스를 모으고, 원하는 것만 골라 hwpx 하나로 변환합니다.</p>
     </header>
 
     <div class="card">
+      <div class="dropzone" id="dropzone" tabindex="0">
+        <b>클릭</b>해서 이미지 선택 · <b>드래그</b>해서 놓기 · 여기 클릭 후 <kbd>Ctrl+V</kbd>로 붙여넣기
+      </div>
+      <input type="file" id="ocrFile" accept="image/*" multiple style="display:none">
+
+      <div class="toolbar">
+        <label class="select-all"><input type="checkbox" id="selectAllChk">전체 선택</label>
+        <span class="box-count" id="boxCount"></span>
+        <span class="toolbar-actions">
+          <button type="button" class="link-btn" id="addBoxBtn">+ 박스 추가</button>
+          <button type="button" class="link-btn" id="aiToggleBtn">AI로 생성·변형</button>
+          <button type="button" class="link-btn" id="exampleBtn">예시 불러오기</button>
+        </span>
+      </div>
+
+      <div class="ai-panel" id="aiPanel">
+        <select id="aiType">
+          <option value="">유형: 자동</option>
+          <option value="객관식">객관식</option>
+          <option value="단답형">단답형</option>
+          <option value="서술형">서술형</option>
+        </select>
+        <input type="text" id="aiInstruction" placeholder="예: 이차함수 최댓값 문제 2개 만들어줘 / 선택한 문제를 서술형으로 바꿔줘">
+        <button type="button" id="aiSubmitBtn">생성</button>
+      </div>
+
+      <div class="image-queue" id="imageQueue"></div>
+
+      <div class="box-list" id="boxList">
+        <div class="empty-state" id="emptyState">아직 추가된 문제가 없습니다. 위에서 이미지를 넣거나, AI로 생성하거나, "박스 추가"로 직접 입력해보세요.</div>
+      </div>
+
       <form id="convertForm">
-        <div class="toolbar">
-          <span class="label">문제 텍스트</span>
-          <span>
-            <button type="button" class="link-btn" id="ocrBtn">이미지에서 가져오기</button>
-            <button type="button" class="link-btn" id="aiToggleBtn">AI로 생성·변형</button>
-            <button type="button" class="link-btn" id="exampleBtn">예시 불러오기</button>
-          </span>
-          <input type="file" id="ocrFile" accept="image/*" multiple style="display:none">
-        </div>
-
-        <div class="ai-panel" id="aiPanel">
-          <input type="text" id="aiInstruction" placeholder="예: 이차함수 최댓값 문제 2개, 해설 포함으로 만들어줘 / 위 문제를 서술형으로 바꿔줘">
-          <button type="button" id="aiSubmitBtn">생성</button>
-        </div>
-
-        <div class="image-queue" id="imageQueue"></div>
-
-        <textarea id="text" name="text" placeholder="예시: 1. 다음 이차방정식의 해를 구하시오. $x^2 - 3x + 2 = 0$ 풀이: 근의 공식에 의해 $x = \frac{3 \pm \sqrt{9-8}}{2}$ 이므로 $x=1$ 또는 $x=2$ 이다.
-
-이미지를 이 칸에 Ctrl+V로 바로 붙여넣을 수도 있습니다. 여러 장을 순서대로 붙여넣으면 한 번에 모두 인식됩니다."></textarea>
-
         <div class="row">
           <label for="filename">파일 이름</label>
           <input type="text" id="filename" name="filename" value="output" placeholder="output">
-          <button type="submit" id="submitBtn">hwpx로 변환 &amp; 다운로드</button>
+          <button type="submit" id="submitBtn">선택한 문제 hwpx로 변환</button>
         </div>
       </form>
       <div id="status"><span class="spinner" style="display:none"></span><span class="msg"></span></div>
       <div class="hint">
-        수식은 <code>$...$</code>(인라인) 또는 <code>$$...$$</code>, <code>\[...\]</code>, <code>\(...\)</code> 로 감싸서 입력하세요. 그 외 텍스트는 일반 문단으로 삽입됩니다. 분수(<code>\frac</code>), 근호(<code>\sqrt</code>), 위/아래첨자, 그리스문자, 적분/급수/극한, 행렬/케이스, <code>\text{}</code> 등을 지원합니다.
+        수식은 <code>$...$</code>(인라인) 또는 <code>$$...$$</code>, <code>\[...\]</code>, <code>\(...\)</code> 로 감싸서 입력하세요. 분수(<code>\frac</code>), 근호(<code>\sqrt</code>), 위/아래첨자, 그리스문자, 적분/급수/극한, 행렬/케이스, <code>\text{}</code> 등을 지원합니다.
       </div>
     </div>
 
@@ -320,12 +335,9 @@
   </div>
 
   <script>
-    const form = document.getElementById('convertForm');
     const statusEl = document.getElementById('status');
     const statusMsg = statusEl.querySelector('.msg');
     const spinner = statusEl.querySelector('.spinner');
-    const btn = document.getElementById('submitBtn');
-    const textEl = document.getElementById('text');
 
     function setStatus(mode, text) {
       statusEl.className = 'show ' + mode;
@@ -333,42 +345,142 @@
       statusMsg.textContent = text;
     }
 
-    function appendText(extra) {
-      const cur = textEl.value.trim();
-      textEl.value = cur ? cur + '\n\n' + extra.trim() : extra.trim();
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // ---- 예시 불러오기 ----
-    const EXAMPLE = `1. 다음 이차방정식의 해를 구하시오.
+    // ---- 문제 박스 상태 ----
+    let boxes = []; // { id, text, checked, source: 'ocr'|'ai'|'manual' }
+    let idCounter = 0;
+    function genId() { return 'b' + (++idCounter); }
 
-$x^2 - 3x + 2 = 0$
+    const boxListEl = document.getElementById('boxList');
+    const emptyStateEl = document.getElementById('emptyState');
+    const selectAllChk = document.getElementById('selectAllChk');
+    const boxCountEl = document.getElementById('boxCount');
 
-풀이: 근의 공식에 의해 $x = \\frac{3 \\pm \\sqrt{9-8}}{2}$ 이므로 $x=1$ 또는 $x=2$ 이다.
+    const SOURCE_LABEL = { ocr: '이미지', ai: 'AI', manual: '직접입력' };
 
-2. $0 < \\theta < \\frac{\\pi}{2}$ 이고 $\\sin\\theta \\ge \\frac{1}{2}$ 일 때, 다음을 구하시오.
+    function renderBoxList() {
+      emptyStateEl.style.display = boxes.length ? 'none' : '';
+      const cards = boxes.map((box, i) => `
+        <div class="box${box.checked ? '' : ' unchecked'}" data-id="${box.id}">
+          <div class="box-head">
+            <input type="checkbox" class="box-chk" ${box.checked ? 'checked' : ''}>
+            <span class="box-source">${SOURCE_LABEL[box.source] || '문제'}</span>
+            <span class="box-controls">
+              <button type="button" class="box-btn" data-action="up" ${i === 0 ? 'disabled' : ''} title="위로">&uarr;</button>
+              <button type="button" class="box-btn" data-action="down" ${i === boxes.length - 1 ? 'disabled' : ''} title="아래로">&darr;</button>
+              <button type="button" class="box-btn danger" data-action="delete" title="삭제">&times;</button>
+            </span>
+          </div>
+          <textarea class="box-text" rows="4">${escapeHtml(box.text)}</textarea>
+        </div>
+      `).join('');
+      boxListEl.querySelectorAll('.box').forEach((el) => el.remove());
+      boxListEl.insertAdjacentHTML('beforeend', cards);
+      updateSelectAllState();
+      updateBoxCount();
+    }
 
-$$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
+    function updateSelectAllState() {
+      if (!boxes.length) {
+        selectAllChk.checked = false;
+        selectAllChk.indeterminate = false;
+        return;
+      }
+      const checkedCount = boxes.filter((b) => b.checked).length;
+      selectAllChk.checked = checkedCount === boxes.length;
+      selectAllChk.indeterminate = checkedCount > 0 && checkedCount < boxes.length;
+    }
 
-    document.getElementById('exampleBtn').addEventListener('click', () => {
-      textEl.value = EXAMPLE;
-      textEl.focus();
+    function updateBoxCount() {
+      boxCountEl.textContent = boxes.length ? `${boxes.filter((b) => b.checked).length}/${boxes.length}개 선택됨` : '';
+    }
+
+    function addBoxes(texts, source) {
+      texts.filter((t) => t && t.trim()).forEach((t) => {
+        boxes.push({ id: genId(), text: t.trim(), checked: true, source });
+      });
+      renderBoxList();
+    }
+
+    selectAllChk.addEventListener('change', () => {
+      boxes.forEach((b) => (b.checked = selectAllChk.checked));
+      renderBoxList();
     });
 
-    // ---- 이미지 큐 (파일 업로드 + 클립보드 붙여넣기 공용) ----
-    const ocrBtn = document.getElementById('ocrBtn');
+    document.getElementById('addBoxBtn').addEventListener('click', () => {
+      boxes.push({ id: genId(), text: '', checked: true, source: 'manual' });
+      renderBoxList();
+      const last = boxListEl.querySelector('.box:last-child .box-text');
+      if (last) last.focus();
+    });
+
+    // 텍스트 편집/체크박스/이동/삭제 (이벤트 위임 — 매 입력마다 전체 리렌더하면 커서 위치가 날아가므로,
+    // 텍스트 입력과 체크는 상태만 갱신하고 DOM은 건드리지 않는다. 순서변경/삭제만 다시 그린다)
+    boxListEl.addEventListener('input', (e) => {
+      if (!e.target.classList.contains('box-text')) return;
+      const id = e.target.closest('.box').dataset.id;
+      const box = boxes.find((b) => b.id === id);
+      if (box) box.text = e.target.value;
+    });
+
+    boxListEl.addEventListener('change', (e) => {
+      if (!e.target.classList.contains('box-chk')) return;
+      const boxEl = e.target.closest('.box');
+      const id = boxEl.dataset.id;
+      const box = boxes.find((b) => b.id === id);
+      if (box) box.checked = e.target.checked;
+      boxEl.classList.toggle('unchecked', !e.target.checked);
+      updateSelectAllState();
+      updateBoxCount();
+    });
+
+    boxListEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.box-btn');
+      if (!btn) return;
+      const id = btn.closest('.box').dataset.id;
+      const idx = boxes.findIndex((b) => b.id === id);
+      if (idx === -1) return;
+      const action = btn.dataset.action;
+      if (action === 'up' && idx > 0) {
+        [boxes[idx - 1], boxes[idx]] = [boxes[idx], boxes[idx - 1]];
+        renderBoxList();
+      } else if (action === 'down' && idx < boxes.length - 1) {
+        [boxes[idx + 1], boxes[idx]] = [boxes[idx], boxes[idx + 1]];
+        renderBoxList();
+      } else if (action === 'delete') {
+        boxes.splice(idx, 1);
+        renderBoxList();
+      }
+    });
+
+    // ---- 예시 불러오기 ----
+    const EXAMPLES = [
+      `1. 다음 이차방정식의 해를 구하시오.\n\n$x^2 - 3x + 2 = 0$\n\n풀이: 근의 공식에 의해 $x = \\frac{3 \\pm \\sqrt{9-8}}{2}$ 이므로 $x=1$ 또는 $x=2$ 이다.`,
+      `2. $0 < \\theta < \\frac{\\pi}{2}$ 이고 $\\sin\\theta \\ge \\frac{1}{2}$ 일 때, 다음을 구하시오.\n\n$$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`,
+    ];
+    document.getElementById('exampleBtn').addEventListener('click', () => addBoxes(EXAMPLES, 'manual'));
+
+    // ---- 이미지 입력: 드롭존(클릭/드래그/붙여넣기) + 파일선택 공용 큐 ----
+    const dropzone = document.getElementById('dropzone');
     const ocrFile = document.getElementById('ocrFile');
     const queueEl = document.getElementById('imageQueue');
     let queue = [];
     let queueProcessing = false;
 
-    ocrBtn.addEventListener('click', () => ocrFile.click());
-
-    ocrFile.addEventListener('change', () => {
-      Array.from(ocrFile.files).forEach(enqueueImage);
-      ocrFile.value = '';
+    dropzone.addEventListener('click', () => ocrFile.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []).filter((f) => f.type.startsWith('image/'));
+      files.forEach(enqueueImage);
     });
 
-    textEl.addEventListener('paste', (e) => {
+    function handlePasteEvent(e) {
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
       const imageFiles = [];
@@ -382,6 +494,13 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
         e.preventDefault();
         imageFiles.forEach(enqueueImage);
       }
+    }
+    dropzone.addEventListener('paste', handlePasteEvent);
+    document.addEventListener('paste', handlePasteEvent);
+
+    ocrFile.addEventListener('change', () => {
+      Array.from(ocrFile.files).forEach(enqueueImage);
+      ocrFile.value = '';
     });
 
     function renderQueue() {
@@ -425,7 +544,6 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
     async function processQueue() {
       if (queueProcessing) return;
       queueProcessing = true;
-      ocrBtn.disabled = true;
 
       let item;
       while ((item = queue.find((q) => q.status === 'pending'))) {
@@ -435,7 +553,7 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
         setStatus('pending', `이미지 ${idx}/${queue.length} 처리 중...`);
         try {
           const text = await ocrImage(item.file);
-          appendText(text);
+          if (text) addBoxes([text], 'ocr');
           item.status = 'done';
         } catch (err) {
           item.status = 'error';
@@ -445,14 +563,13 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
       }
 
       queueProcessing = false;
-      ocrBtn.disabled = false;
 
       const done = queue.filter((q) => q.status === 'done').length;
       const failed = queue.filter((q) => q.status === 'error');
       if (failed.length) {
-        setStatus('error', `이미지 ${done}장 완료, ${failed.length}장 인식 실패(${failed[0].errorMsg}). 변환 전에 내용을 확인해주세요.`);
+        setStatus('error', `이미지 ${done}장을 박스로 추가, ${failed.length}장 인식 실패(${failed[0].errorMsg}).`);
       } else if (done) {
-        setStatus('ok', `이미지 ${done}장에서 텍스트를 가져왔습니다. 변환 전에 내용을 확인해주세요.`);
+        setStatus('ok', `이미지 ${done}장에서 텍스트를 가져와 박스로 추가했습니다. 내용을 확인해주세요.`);
       }
 
       setTimeout(() => {
@@ -466,6 +583,7 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
     // ---- AI 문항 생성/변형 ----
     const aiToggleBtn = document.getElementById('aiToggleBtn');
     const aiPanel = document.getElementById('aiPanel');
+    const aiType = document.getElementById('aiType');
     const aiInstruction = document.getElementById('aiInstruction');
     const aiSubmitBtn = document.getElementById('aiSubmitBtn');
 
@@ -483,17 +601,19 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
       setStatus('pending', 'AI가 문제를 만드는 중입니다...');
 
       try {
+        const context = boxes.filter((b) => b.checked).map((b) => b.text.trim()).filter(Boolean).join('\n\n');
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instruction, context: textEl.value }),
+          body: JSON.stringify({ instruction, context, type: aiType.value }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
 
-        appendText(data.text || '');
+        const problems = data.problems || [];
+        addBoxes(problems, 'ai');
         aiInstruction.value = '';
-        setStatus('ok', 'AI가 생성한 내용입니다. 정답·해설을 확인한 뒤 변환해주세요.');
+        setStatus('ok', `AI가 문제 ${problems.length}개를 생성해 박스로 추가했습니다. 정답·해설을 확인한 뒤 변환해주세요.`);
       } catch (err) {
         setStatus('error', err.message);
       } finally {
@@ -509,18 +629,22 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
       }
     });
 
-    // ---- hwpx 변환 ----
+    // ---- hwpx 변환 (선택된 박스만) ----
+    const form = document.getElementById('convertForm');
+    const submitBtn = document.getElementById('submitBtn');
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const text = textEl.value;
+      const selected = boxes.filter((b) => b.checked);
+      const text = selected.map((b) => b.text.trim()).filter(Boolean).join('\n\n');
       const filename = document.getElementById('filename').value || 'output';
 
-      if (!text.trim()) {
-        setStatus('error', '변환할 텍스트를 입력해주세요.');
+      if (!text) {
+        setStatus('error', '변환할 문제를 1개 이상 선택해주세요.');
         return;
       }
 
-      btn.disabled = true;
+      submitBtn.disabled = true;
       setStatus('pending', '수식을 변환하는 중입니다...');
 
       try {
@@ -544,13 +668,15 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
         a.remove();
         URL.revokeObjectURL(url);
 
-        setStatus('ok', '변환이 완료되어 다운로드했습니다.');
+        setStatus('ok', `문제 ${selected.length}개를 변환해 다운로드했습니다.`);
       } catch (err) {
         setStatus('error', err.message);
       } finally {
-        btn.disabled = false;
+        submitBtn.disabled = false;
       }
     });
+
+    renderBoxList();
   </script>
 </body>
 </html>

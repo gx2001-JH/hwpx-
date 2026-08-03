@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 
@@ -19,26 +20,58 @@ OCR_PROMPT = """다음 이미지에 있는 수학 문제 텍스트를 그대로 
 - 설명이나 코드블록 없이, 옮겨 적은 텍스트만 출력해줘."""
 
 
-def _build_generate_prompt(instruction: str, context: str) -> str:
+TYPE_INSTRUCTIONS = {
+    "객관식": "문제 유형은 객관식으로 작성해줘. 보기는 ①, ②, ③, ④, ⑤ 기호를 사용하고, [해설] 마지막에 정답 번호를 명시해줘.",
+    "단답형": "문제 유형은 단답형으로 작성해줘. 정수이거나 간단한 형태의 값이 답으로 나오도록 하고, 문제 끝을 '...값을 구하시오.' 형식으로 마무리해줘.",
+    "서술형": "문제 유형은 서술형으로 작성해줘. 최종 답만이 아니라 풀이 과정을 요구하는 형식으로 작성하고, [해설]에 전체 풀이 과정을 단계별로 자세히 서술해줘.",
+}
+
+
+def _build_generate_prompt(instruction: str, context: str, problem_type: str) -> str:
     context_block = ""
     if context and context.strip():
         context_block = (
             "\n다음은 참고할 기존 문제(스타일 참고용이거나 변형 대상)야:\n"
             f'"""\n{context.strip()}\n"""\n'
         )
+    type_block = f"\n{TYPE_INSTRUCTIONS[problem_type]}\n" if problem_type in TYPE_INSTRUCTIONS else ""
     return (
-        "너는 한국 수학 문제 출제 전문가야. 아래 사용자 요청에 따라 수학 문제와 해설을 작성해줘.\n\n"
-        "규칙:\n"
+        "너는 대한민국 수능(대학수학능력시험)/모의고사 스타일 수학 문제를 출제하는 전문가야.\n"
+        "아래 사용자 요청에 따라 수학 문제와 해설을 작성해줘.\n\n"
+        "형식 규칙:\n"
         "- 수식은 반드시 LaTeX 문법으로 작성하고 $...$ 로 감싸줘 (여러 줄/블록 수식은 $$...$$).\n"
-        "- 문제 번호, 문제 본문, [해설] 형식을 갖춰서 작성해줘.\n"
         "- 마크다운 문법(**굵게**, - 목록, # 제목 등)을 쓰지 말고 일반 텍스트로만 작성해줘.\n"
-        "- 설명이나 코드블록 없이, 문제와 해설 텍스트만 출력해줘.\n"
-        f"{context_block}\n사용자 요청: {instruction}"
+        "- 각 문제는 문제 본문 다음 줄에 \"[해설]\"로 시작하는 해설을 붙여줘.\n"
+        "- 대한민국 수능/모의고사에서 실제로 쓰이는 어휘와 문장 형식을 따라줘 "
+        "(예: \"다음 중 옳은 것은?\", \"...의 값을 구하시오.\", \"...을 만족시키는 모든 ...의 값의 합은?\" 등).\n"
+        "- 여러 문제를 요청받으면 하나로 합치지 말고 problems 배열의 개별 원소로 나눠서 작성해줘.\n"
+        f"{type_block}{context_block}\n사용자 요청: {instruction}\n\n"
+        '반드시 다음 JSON 형식으로만 응답해: {"problems": ["문제1 전체 텍스트(문제+[해설])", "문제2 전체 텍스트", ...]}'
     )
 
 
-def _call_gemini(api_key: str, parts: list):
-    payload = json.dumps({"contents": [{"parts": parts}]}).encode("utf-8")
+def _strip_code_fence(text: str) -> str:
+    stripped = text.strip()
+    m = re.match(r"^```(?:json)?\s*([\s\S]*?)\s*```$", stripped)
+    return m.group(1) if m else text
+
+
+def _parse_problems(text: str):
+    try:
+        parsed = json.loads(_strip_code_fence(text))
+        problems = parsed.get("problems")
+        if isinstance(problems, list) and problems:
+            return [str(p).strip() for p in problems if str(p).strip()]
+    except Exception:
+        pass
+    return [text.strip()] if text.strip() else []
+
+
+def _call_gemini(api_key: str, parts: list, json_mode: bool = False):
+    body = {"contents": [{"parts": parts}]}
+    if json_mode:
+        body["generationConfig"] = {"responseMimeType": "application/json"}
+    payload = json.dumps(body).encode("utf-8")
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
         f"gemini-2.5-flash:generateContent?key={api_key}"
@@ -123,13 +156,14 @@ def generate():
     body = request.get_json(silent=True) or {}
     instruction = (body.get("instruction") or "").strip()
     context = body.get("context") or ""
+    problem_type = body.get("type") or ""
     if not instruction:
         return jsonify({"error": "생성/변형 요청 내용을 입력해주세요."}), 400
 
-    parts = [{"text": _build_generate_prompt(instruction, context)}]
+    parts = [{"text": _build_generate_prompt(instruction, context, problem_type)}]
 
     try:
-        data = _call_gemini(api_key, parts)
+        data = _call_gemini(api_key, parts, json_mode=True)
     except urllib.error.HTTPError as e:
         try:
             err_body = json.loads(e.read().decode("utf-8"))
@@ -143,9 +177,13 @@ def generate():
     try:
         text = data["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError):
+        text = None
+
+    problems = _parse_problems(text) if text else []
+    if not problems:
         return jsonify({"error": "문제를 생성하지 못했습니다."}), 502
 
-    return jsonify({"text": text.strip()})
+    return jsonify({"problems": problems})
 
 
 if __name__ == "__main__":
