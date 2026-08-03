@@ -79,6 +79,11 @@ _KEYWORD_GLYPHS = {
     "prime", "neq", "Rightarrow", "Leftarrow", "phi", "theta", "pi", "alpha", "beta",
     "gamma", "delta", "epsilon", "zeta", "eta", "iota", "kappa", "lambda", "mu", "nu",
     "xi", "rho", "sigma", "tau", "upsilon", "chi", "psi", "omega",
+    # 함수 이름도 글자 수만큼 넓어지지 않고 압축된 기호처럼 렌더링된다
+    # (실측: "sin theta"=1875, "cos x + sin y"=5080 — 문자수 폭 공식보다 훨씬 좁음).
+    "sin", "cos", "tan", "csc", "sec", "cot", "sinh", "cosh", "tanh",
+    "arcsin", "arccos", "arctan", "log", "ln", "lg", "exp", "max", "min",
+    "sup", "inf", "gcd", "det", "deg", "mod",
 }
 # 뒤따르는 그룹/토큰에 강세표시를 얹는 접두 키워드 (그 자체는 폭을 거의 차지하지 않음)
 _ACCENTS = {
@@ -126,7 +131,7 @@ def _sz_split(tokens, sep):
 
 def _sz_classify_plain(tok):
     if tok.strip() == "":
-        return len(tok) * SPACE_W, BASE_H, None
+        return len(tok) * SPACE_W, BASE_H, "ws"
     if tok.startswith('"') and tok.endswith('"'):
         text = tok[1:-1]
         return max(MIN_ATOM_W, len(text) * CHAR_W), BASE_H, None
@@ -145,12 +150,23 @@ def _sz_measure(tokens):
     n = len(tokens)
 
     def take_base():
+        # "num} over {den"처럼 연산자 앞에 남는 의미 없는 공백 항목은 버리고 진짜
+        # 직전 항목(분자 등)을 가져온다 (그렇지 않으면 공백을 분자로 오인하고,
+        # 진짜 분자는 그대로 out에 남아 폭에 중복 합산된다).
+        while out and out[-1][2] == "ws":
+            out.pop()
         if out:
             return tuple(out.pop())
         return (0, BASE_H, None)
 
     def next_arg(i):
-        """i번째 토큰부터 {그룹} 또는 단일 토큰 하나를 읽어 (w,h,tag,new_i) 반환."""
+        """i번째 토큰부터 {그룹} 또는 단일 토큰 하나를 읽어 (w,h,tag,new_i) 반환.
+        변환기가 만드는 스크립트는 항상 "over {denom}"처럼 키워드와 여는 중괄호
+        사이에 공백이 하나 있다. 그 공백 토큰을 건너뛰지 않으면 공백 자체를
+        인자로 오인하고, 진짜 {내용}은 뒤에 남아 별도 항목으로 중복 합산되어
+        폭이 크게 부풀려진다."""
+        while i < n and tokens[i].strip() == "":
+            i += 1
         if i < n and tokens[i] == "{":
             j = _sz_find_close(tokens, i)
             w, h = _sz_measure(tokens[i + 1:j])
@@ -239,11 +255,14 @@ def _sz_measure(tokens):
 def estimate_equation_size(script: str):
     """실제 한글로 다양한 수식을 렌더링해 얻은 (width, height) 표본에 근사하도록
     구성한 추정기. 한/글이 없는 환경에서는 정확한 레이아웃 값을 알 수 없으므로,
-    과소평가로 인한 텍스트 겹침을 피하기 위해 여유 배율을 적용한다."""
+    과소평가로 인한 텍스트 겹침을 피하기 위해 약간의 여유 배율을 적용한다.
+    (배율을 1.22/1.12로 크게 잡았을 때 36개 실측 샘플 평균이 실제보다 약 11%
+    더 크게 나와, 특히 분수/비교연산 수식에서 우측에 뚜렷한 여백이 생기는 것을
+    확인했다. 1.10/1.03으로 낮추면 그 평균이 실제값에 훨씬 가까워진다.)"""
     tokens = _sz_tokenize(script)
     w, h = _sz_measure(tokens)
-    width = max(600, int(w * 1.22))
-    height = max(975, int(h * 1.12))
+    width = max(600, int(w * 1.10))
+    height = max(975, int(h * 1.03))
     return width, height
 
 

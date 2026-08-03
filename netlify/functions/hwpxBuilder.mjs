@@ -66,6 +66,11 @@ const KEYWORD_GLYPHS = new Set([
   "prime", "neq", "Rightarrow", "Leftarrow", "phi", "theta", "pi", "alpha", "beta",
   "gamma", "delta", "epsilon", "zeta", "eta", "iota", "kappa", "lambda", "mu", "nu",
   "xi", "rho", "sigma", "tau", "upsilon", "chi", "psi", "omega",
+  // 함수 이름도 글자 수만큼 넓어지지 않고 압축된 기호처럼 렌더링된다
+  // (실측: "sin theta"=1875, "cos x + sin y"=5080 — 문자수 폭 공식보다 훨씬 좁음).
+  "sin", "cos", "tan", "csc", "sec", "cot", "sinh", "cosh", "tanh",
+  "arcsin", "arccos", "arctan", "log", "ln", "lg", "exp", "max", "min",
+  "sup", "inf", "gcd", "det", "deg", "mod",
 ]);
 // 뒤따르는 그룹/토큰에 강세표시를 얹는 접두 키워드 (그 자체는 폭을 거의 차지하지 않음)
 const ACCENTS = new Set([
@@ -116,7 +121,7 @@ function isAlnum(ch) {
 }
 
 function szClassifyPlain(tok) {
-  if (tok.trim() === "") return [tok.length * SPACE_W, BASE_H, null];
+  if (tok.trim() === "") return [tok.length * SPACE_W, BASE_H, "ws"];
   if (tok.startsWith('"') && tok.endsWith('"')) {
     const text = tok.slice(1, -1);
     return [Math.max(MIN_ATOM_W, text.length * CHAR_W), BASE_H, null];
@@ -133,11 +138,20 @@ function szMeasure(tokens) {
   const n = tokens.length;
 
   const takeBase = () => {
+    // "num} over {den"처럼 연산자 앞에 남는 의미 없는 공백 항목은 버리고 진짜
+    // 직전 항목(분자 등)을 가져온다 (그렇지 않으면 공백을 분자로 오인하고,
+    // 진짜 분자는 그대로 out에 남아 폭에 중복 합산된다).
+    while (out.length && out[out.length - 1][2] === "ws") out.pop();
     if (out.length) return out.pop();
     return [0, BASE_H, null];
   };
 
-  const nextArg = (idx) => {
+  const nextArg = (rawIdx) => {
+    let idx = rawIdx;
+    // 변환기가 만드는 스크립트는 항상 "over {denom}"처럼 키워드와 여는 중괄호 사이에
+    // 공백이 하나 있다. 그 공백 토큰을 건너뛰지 않으면 공백 자체를 인자로 오인하고,
+    // 진짜 {내용}은 뒤에 남아 별도 항목으로 중복 합산되어 폭이 크게 부풀려진다.
+    while (idx < n && /^\s+$/.test(tokens[idx])) idx += 1;
     if (idx < n && tokens[idx] === "{") {
       const j = szFindClose(tokens, idx);
       const [w, h] = szMeasure(tokens.slice(idx + 1, j));
@@ -245,10 +259,15 @@ function szMeasure(tokens) {
 }
 
 export function estimateEquationSize(script) {
+  // 실제 한글로 다양한 수식을 렌더링해 얻은 (width, height) 표본에 근사하도록
+  // 구성한 추정기. 약간의 여유 배율을 적용하되(과소평가로 인한 텍스트 겹침 방지),
+  // 배율을 1.22/1.12로 크게 잡았을 때 36개 실측 샘플 평균이 실제보다 약 11%
+  // 더 크게 나와 분수/비교연산 수식에서 우측에 뚜렷한 여백이 생기는 것을
+  // 확인했다. 1.10/1.03으로 낮추면 그 평균이 실제값에 훨씬 가까워진다.
   const tokens = szTokenize(script);
   const [w, h] = szMeasure(tokens);
-  const width = Math.max(600, Math.trunc(w * 1.22));
-  const height = Math.max(975, Math.trunc(h * 1.12));
+  const width = Math.max(600, Math.trunc(w * 1.10));
+  const height = Math.max(975, Math.trunc(h * 1.03));
   return [width, height];
 }
 
