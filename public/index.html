@@ -73,7 +73,17 @@
     border-radius: 100px;
   }
   .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-  header .desc { font-size: 13px; color: var(--text-muted); margin-left: auto; max-width: 380px; text-align: right; line-height: 1.5; }
+  .flow { display: flex; align-items: center; gap: 5px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+  .flow-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 100px; padding: 4px 11px 4px 8px;
+  }
+  .flow-chip .icon { width: 12px; height: 12px; }
+  .flow-chip.ai { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+  .flow-chip.result { background: var(--accent-soft); color: var(--accent-hover); border-color: var(--accent-soft); font-weight: 700; }
+  .flow-arrow { color: #C9C6B8; font-size: 13px; }
 
   /* ---------- 전체 레이아웃: 사이드바 + 리사이저 + 메인 ---------- */
   .shell { flex: 1; display: flex; min-height: 0; }
@@ -119,9 +129,18 @@
     font-size: 12px;
     transition: border-color .15s ease, background .15s ease;
   }
-  .dropzone .dz-icon { display: flex; justify-content: center; margin-bottom: 8px; color: var(--text-muted); }
+  .dropzone .dz-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; margin: 0 auto 10px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
   .dropzone:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
   .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .dz-title { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .dz-desc { font-size: 11px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+  .dz-hint { font-size: 11px; color: var(--text-muted); }
   .dropzone b { color: var(--text); font-weight: 600; }
   .dropzone kbd { background: var(--code-bg); border-radius: 4px; padding: 0 5px; font-size: 11px; font-family: inherit; }
   .dz-browse {
@@ -162,7 +181,7 @@
   }
   @keyframes ai-gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
   .ai-card-inner { background: var(--surface); border-radius: 14px; padding: 12px; }
-  .ai-card-title { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; margin-bottom: 8px; color: var(--accent-2); }
+  .ai-card-title { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; margin-bottom: 8px; color: var(--accent); }
   .ai-card select {
     width: 100%;
     border: 1px solid var(--border);
@@ -312,7 +331,19 @@
   .box-btn:disabled { opacity: 0.3; cursor: default; }
   .box-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
   .box-btn.danger:hover:not(:disabled) { border-color: var(--error); color: var(--error); }
-  .box-btn.ai-btn:hover:not(:disabled) { border-color: var(--accent-2); color: var(--accent-2); }
+  .box-btn.ai-btn {
+    width: auto;
+    padding: 0 8px 0 7px;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    background: var(--accent-soft);
+    border-color: var(--accent-soft);
+    color: var(--accent-hover);
+  }
+  .box-btn.ai-btn:hover:not(:disabled) { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+  .box-ai-caption { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--accent-2); font-weight: 600; }
 
   .box-view-toggle { display: flex; gap: 4px; }
   .view-btn {
@@ -378,7 +409,7 @@
   .box.ai-processing { animation: ai-pulse 1.5s ease-in-out infinite; border-color: transparent; }
 
   @media (max-width: 860px) {
-    header .desc { display: none; }
+    .flow { display: none; }
     .shell { flex-direction: column; }
     .resizer { display: none; }
     .sidebar { width: 100% !important; max-width: none; border-right: none; border-bottom: 1px solid var(--border); max-height: 46vh; }
@@ -392,15 +423,24 @@
       <h1>한글 수식 변환기</h1>
       <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
     </div>
-    <span class="desc">이미지·AI·직접입력으로 문제 박스를 모으고, 원하는 것만 골라 hwpx로 변환하세요.</span>
+    <div class="flow">
+      <span class="flow-chip"><svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>이미지</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-chip ai"><svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>AI</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-chip"><svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>직접입력</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-chip result">hwpx 변환</span>
+    </div>
   </header>
 
   <div class="shell">
     <aside class="sidebar" id="sidebar">
       <div class="dropzone" id="dropzone" tabindex="0">
         <div class="dz-icon" id="iconImage"></div>
-        <b>드래그</b>해서 이미지 놓기<br>
-        이 영역 클릭 후 <kbd>Ctrl+V</kbd> 붙여넣기
+        <div class="dz-title">이미지로 문제 가져오기</div>
+        <div class="dz-desc">사진 속 문제와 수식을 자동으로 인식해<br>편집 가능한 텍스트로 바꿔줍니다</div>
+        <div class="dz-hint"><b>드래그</b>해서 놓기 · 이 영역 클릭 후 <kbd>Ctrl+V</kbd></div>
         <div>
           <button type="button" class="dz-browse" id="browseBtn"><span id="iconPlusSmall"></span>파일 선택</button>
         </div>
@@ -524,7 +564,7 @@
             <input type="checkbox" class="box-chk" ${box.checked ? 'checked' : ''}>
             <span class="box-source src-${box.source}">${sourceIcon}${SOURCE_LABEL[box.source] || '문제'}</span>
             <span class="box-controls">
-              <button type="button" class="box-btn ai-btn" data-action="ai" title="AI로 변형" ${processing ? 'disabled' : ''}>${ICONS.spark}</button>
+              <button type="button" class="box-btn ai-btn" data-action="ai" title="AI로 이 문제 다시 쓰기" ${processing ? 'disabled' : ''}>${ICONS.spark}AI</button>
               <button type="button" class="box-btn" data-action="up" ${i === 0 ? 'disabled' : ''} title="위로">${ICONS.up}</button>
               <button type="button" class="box-btn" data-action="down" ${i === boxes.length - 1 ? 'disabled' : ''} title="아래로">${ICONS.down}</button>
               <button type="button" class="box-btn danger" data-action="delete" title="삭제">${ICONS.trash}</button>
@@ -537,6 +577,7 @@
           ${preview
             ? `<div class="box-preview" data-preview>${escapeHtml(box.text)}</div>`
             : `<textarea class="box-text" rows="5">${escapeHtml(box.text)}</textarea>`}
+          ${aiOpen ? `<div class="box-ai-caption">${ICONS.spark} AI에게 이 문제만 다시 써달라고 요청하세요</div>` : ''}
           <div class="box-ai-panel${aiOpen ? ' show' : ''}">
             <input type="text" class="box-ai-input" placeholder="예: 더 어렵게 바꿔줘 / 객관식으로 바꿔줘" ${processing ? 'disabled' : ''}>
             <button type="button" class="box-ai-submit" ${processing ? 'disabled' : ''}>${processing ? '...' : ICONS.spark + '변형'}</button>
