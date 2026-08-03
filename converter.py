@@ -138,7 +138,11 @@ class Parser:
             if tok in ("^", "_"):
                 base = take_base()
                 content, from_braces = self.parse_supsub_arg()
-                brace = content if (not from_braces and is_single_atom(content)) else "{" + content + "}"
+                # 위/아래첨자 뒤에 공백 없이 다른 문자가 바로 이어지면("a_n+b_n") 한글
+                # 자체 수식 파서가 첨자 뒤 경계를 잘못 인식해 뒤 내용까지 첨자에
+                # 삼켜버리는 문제가 실측으로 확인됐다({} 없이 단일문자를 쓸 때만
+                # 발생). 항상 중괄호로 감싸면 이 모호함이 사라진다.
+                brace = "{" + content + "}"
                 marker = "^" if tok == "^" else "_"
                 emit_atom(base + marker + brace)
                 continue
@@ -218,6 +222,14 @@ class Parser:
             return self.render_command(tok[1:]), False
         if tok.startswith("\\") and len(tok) == 2:
             return tok[1], False
+        if len(tok) > 1:
+            # 토크나이저는 "n+b"처럼 특수문자가 아닌 문자들을 한 토큰으로 묶어서
+            # 반환하는데, 중괄호 없는 위/아래첨자는 LaTeX 규칙상 문자 1개만 가져가야
+            # 한다("a_n+b_n"의 첨자는 "n"뿐, "n+b"가 아님). 나머지는 토큰 스트림에
+            # 되돌려 넣어야 그 다음 "+b_n"이 정상적으로 이어서 파싱된다.
+            self.tokens.insert(self.i, tok[1:])
+            self.n += 1
+            return tok[0], False
         return tok, False
 
     def render_command(self, name):

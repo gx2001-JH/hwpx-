@@ -146,8 +146,12 @@ class Parser {
 
       if (tok === "^" || tok === "_") {
         const base = takeBase();
-        const [content, fromBraces] = this.parseSupsubArg();
-        const brace = !fromBraces && isSingleAtom(content) ? content : "{" + content + "}";
+        const [content] = this.parseSupsubArg();
+        // 위/아래첨자 뒤에 공백 없이 다른 문자가 바로 이어지면("a_n+b_n") 한글 자체
+        // 수식 파서가 첨자 뒤 경계를 잘못 인식해 뒤 내용까지 첨자에 삼켜버리는
+        // 문제가 실측으로 확인됐다({} 없이 단일문자를 쓸 때만 발생). 항상 중괄호로
+        // 감싸면 이 모호함이 사라진다.
+        const brace = "{" + content + "}";
         const marker = tok === "^" ? "^" : "_";
         emitAtom(base + marker + brace);
         continue;
@@ -240,6 +244,15 @@ class Parser {
     }
     if (tok.startsWith("\\") && tok.length === 2) {
       return [tok[1], false];
+    }
+    if (tok.length > 1) {
+      // 토크나이저는 "n+b"처럼 특수문자가 아닌 문자들을 한 토큰으로 묶어서
+      // 반환하는데, 중괄호 없는 위/아래첨자는 LaTeX 규칙상 문자 1개만 가져가야
+      // 한다("a_n+b_n"의 첨자는 "n"뿐, "n+b"가 아님). 나머지는 토큰 스트림에
+      // 되돌려 넣어야 그 다음 "+b_n"이 정상적으로 이어서 파싱된다.
+      this.tokens.splice(this.i, 0, tok.slice(1));
+      this.n += 1;
+      return [tok[0], false];
     }
     return [tok, false];
   }
