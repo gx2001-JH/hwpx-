@@ -252,6 +252,25 @@ export function estimateEquationSize(script) {
   return [width, height];
 }
 
+// hp:equation의 baseLine(글상자 내 텍스트 기준선 위치, %). 분수/행렬처럼
+// 상하로 내용이 쌓이는 수식은 실제 한글에서 66~68 정도로 훨씬 낮게 저장되는데,
+// 고정값을 쓰면 그런 수식만 기준선보다 위로 붕 떠 보인다(실제 버그로 확인됨).
+// over/atop/matrix가 있으면 낮게, 위아래첨자가 붙는 큰 연산자(int, sum 등)도
+// 상하로 내용이 쌓이므로 함께 낮게 잡고, 그 외 단순 한 줄 수식은 높게 둔다.
+export function estimateBaseline(script) {
+  const tokens = szTokenize(script);
+  const tokenSet = new Set(tokens);
+  if (tokenSet.has("over") || tokenSet.has("atop") || tokenSet.has("matrix")) {
+    return 67;
+  }
+  for (let i = 0; i < tokens.length; i++) {
+    if (BIG_OPS.has(tokens[i]) && (tokens[i + 1] === "^" || tokens[i + 1] === "_" || tokens[i + 2] === "^" || tokens[i + 2] === "_")) {
+      return 60;
+    }
+  }
+  return 88;
+}
+
 class Counters {
   constructor() {
     this.eqId = 2000000001;
@@ -272,12 +291,13 @@ function equationXml(latex, counters) {
   const script = latexToHwp(latex);
   if (!script) return "";
   const [width, height] = estimateEquationSize(script);
+  const baseline = estimateBaseline(script);
   const eqId = counters.nextEqId();
   const zOrder = counters.nextZOrder();
   return (
     `<hp:equation id="${eqId}" zOrder="${zOrder}" numberingType="EQUATION" ` +
     'textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" ' +
-    'version="Equation Version 60" baseLine="85" textColor="#000000" baseUnit="1000" ' +
+    `version="Equation Version 60" baseLine="${baseline}" textColor="#000000" baseUnit="1000" ` +
     'lineMode="CHAR" font="HancomEQN">' +
     `<hp:sz width="${width}" widthRelTo="ABSOLUTE" height="${height}" ` +
     'heightRelTo="ABSOLUTE" protect="0"/>' +

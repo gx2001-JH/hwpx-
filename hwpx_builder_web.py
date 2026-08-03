@@ -247,6 +247,22 @@ def estimate_equation_size(script: str):
     return width, height
 
 
+def estimate_baseline(script: str) -> int:
+    """hp:equation의 baseLine(글상자 내 텍스트 기준선 위치, %). 분수/행렬처럼
+    상하로 내용이 쌓이는 수식은 실제 한글에서 66~68 정도로 훨씬 낮게 저장되는데,
+    고정값을 쓰면 그런 수식만 기준선보다 위로 붕 떠 보인다(실제 버그로 확인됨).
+    over/atop/matrix가 있으면 낮게, 위아래첨자가 붙는 큰 연산자(int, sum 등)도
+    상하로 내용이 쌓이므로 함께 낮게 잡고, 그 외 단순 한 줄 수식은 높게 둔다."""
+    tokens = _sz_tokenize(script)
+    token_set = set(tokens)
+    if "over" in token_set or "atop" in token_set or "matrix" in token_set:
+        return 67
+    for i, tok in enumerate(tokens):
+        if tok in _BIG_OPS and any(t in ("^", "_") for t in tokens[i + 1:i + 3]):
+            return 60
+    return 88
+
+
 class _Counters:
     def __init__(self):
         self.eq_id = 2000000001
@@ -267,12 +283,13 @@ def _equation_xml(latex: str, counters: "_Counters") -> str:
     if not script:
         return ""
     width, height = estimate_equation_size(script)
+    baseline = estimate_baseline(script)
     eq_id = counters.next_eq_id()
     z_order = counters.next_z_order()
     return (
         f'<hp:equation id="{eq_id}" zOrder="{z_order}" numberingType="EQUATION" '
         'textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" '
-        'version="Equation Version 60" baseLine="85" textColor="#000000" baseUnit="1000" '
+        f'version="Equation Version 60" baseLine="{baseline}" textColor="#000000" baseUnit="1000" '
         'lineMode="CHAR" font="HancomEQN">'
         f'<hp:sz width="{width}" widthRelTo="ABSOLUTE" height="{height}" '
         'heightRelTo="ABSOLUTE" protect="0"/>'
