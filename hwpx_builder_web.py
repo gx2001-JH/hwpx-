@@ -193,8 +193,12 @@ def _sz_measure(tokens):
                 new_h = base_h + max(750, ch + 500)
                 new_w = base_w + max(cw, 500)
             else:
-                new_h = base_h + max(180, ch * 0.55)
-                new_w = base_w + cw * 0.75 + 120
+                # 실측 4건("x^2..", "x^{10}", "log_{2} x", "angle..^{circ}")이
+                # 전부 base_h+195(=BASE_H*0.20) 근처로 일관되게 나와, 첨자가 붙을 때
+                # 실제로 늘어나는 높이는 ch에 크게 비례하지 않는다(계수 0.55는 실측보다
+                # 훨씬 컸다).
+                new_h = base_h + max(150, ch * 0.20)
+                new_w = base_w + cw * 0.55 + 100
             out.append([new_w, new_h, base_tag])
             continue
 

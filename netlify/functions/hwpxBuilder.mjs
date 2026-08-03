@@ -184,8 +184,11 @@ function szMeasure(tokens) {
         newH = baseH + Math.max(750, ch + 500);
         newW = baseW + Math.max(cw, 500);
       } else {
-        newH = baseH + Math.max(180, ch * 0.55);
-        newW = baseW + cw * 0.75 + 120;
+        // 실측 4건("x^2..", "x^{10}", "log_{2} x", "angle..^{circ}")이 전부
+        // baseH+195(=BASE_H*0.20) 근처로 일관되게 나와, 첨자가 붙을 때 실제로
+        // 늘어나는 높이는 ch에 크게 비례하지 않는다(계수 0.55는 실측보다 훨씬 컸다).
+        newH = baseH + Math.max(150, ch * 0.20);
+        newW = baseW + cw * 0.55 + 100;
       }
       out.push([newW, newH, baseTag]);
       continue;
