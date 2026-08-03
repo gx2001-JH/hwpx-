@@ -135,6 +135,7 @@
     border-radius: 6px;
   }
   .link-btn:hover { background: var(--accent-soft); }
+  .link-btn.active { background: var(--accent-soft); }
   .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; flex-wrap: wrap; flex: none; }
   label[for=filename] { font-size: 13px; color: var(--text-muted); }
   input[type=text] {
@@ -142,10 +143,10 @@
     border: 1px solid var(--border);
     border-radius: 9px;
     font-size: 13.5px;
-    width: 180px;
     background: var(--surface-2);
     color: var(--text);
   }
+  #filename { width: 180px; }
   button[type=submit] {
     background: var(--accent);
     color: #fff;
@@ -205,6 +206,67 @@
     font-size: 11px;
     color: var(--text-muted);
   }
+
+  .ai-panel {
+    display: none;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex: none;
+  }
+  .ai-panel.show { display: flex; }
+  .ai-panel input[type=text] { flex: 1; }
+  .ai-panel button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0 16px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .ai-panel button:disabled { background: #D9B7A9; cursor: default; }
+  .ai-panel button:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .image-queue {
+    display: none;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex: none;
+    flex-wrap: wrap;
+  }
+  .image-queue.show { display: flex; }
+  .queue-item {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    flex: none;
+  }
+  .queue-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .queue-item .badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    border: 2px solid var(--surface);
+  }
+  .queue-item.pending .badge, .queue-item.processing .badge { background: var(--accent); }
+  .queue-item.done .badge { background: var(--ok); }
+  .queue-item.error .badge { background: var(--error); }
+  .queue-item.processing .badge {
+    animation: spin 0.9s linear infinite;
+    border-top-color: transparent;
+  }
 </style>
 </head>
 <body>
@@ -225,11 +287,22 @@
           <span class="label">문제 텍스트</span>
           <span>
             <button type="button" class="link-btn" id="ocrBtn">이미지에서 가져오기</button>
+            <button type="button" class="link-btn" id="aiToggleBtn">AI로 생성·변형</button>
             <button type="button" class="link-btn" id="exampleBtn">예시 불러오기</button>
           </span>
-          <input type="file" id="ocrFile" accept="image/*" style="display:none">
+          <input type="file" id="ocrFile" accept="image/*" multiple style="display:none">
         </div>
-        <textarea id="text" name="text" placeholder="예시: 1. 다음 이차방정식의 해를 구하시오. $x^2 - 3x + 2 = 0$ 풀이: 근의 공식에 의해 $x = \frac{3 \pm \sqrt{9-8}}{2}$ 이므로 $x=1$ 또는 $x=2$ 이다."></textarea>
+
+        <div class="ai-panel" id="aiPanel">
+          <input type="text" id="aiInstruction" placeholder="예: 이차함수 최댓값 문제 2개, 해설 포함으로 만들어줘 / 위 문제를 서술형으로 바꿔줘">
+          <button type="button" id="aiSubmitBtn">생성</button>
+        </div>
+
+        <div class="image-queue" id="imageQueue"></div>
+
+        <textarea id="text" name="text" placeholder="예시: 1. 다음 이차방정식의 해를 구하시오. $x^2 - 3x + 2 = 0$ 풀이: 근의 공식에 의해 $x = \frac{3 \pm \sqrt{9-8}}{2}$ 이므로 $x=1$ 또는 $x=2$ 이다.
+
+이미지를 이 칸에 Ctrl+V로 바로 붙여넣을 수도 있습니다. 여러 장을 순서대로 붙여넣으면 한 번에 모두 인식됩니다."></textarea>
 
         <div class="row">
           <label for="filename">파일 이름</label>
@@ -254,6 +327,18 @@
     const btn = document.getElementById('submitBtn');
     const textEl = document.getElementById('text');
 
+    function setStatus(mode, text) {
+      statusEl.className = 'show ' + mode;
+      spinner.style.display = mode === 'pending' ? 'inline-block' : 'none';
+      statusMsg.textContent = text;
+    }
+
+    function appendText(extra) {
+      const cur = textEl.value.trim();
+      textEl.value = cur ? cur + '\n\n' + extra.trim() : extra.trim();
+    }
+
+    // ---- 예시 불러오기 ----
     const EXAMPLE = `1. 다음 이차방정식의 해를 구하시오.
 
 $x^2 - 3x + 2 = 0$
@@ -269,16 +354,57 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
       textEl.focus();
     });
 
+    // ---- 이미지 큐 (파일 업로드 + 클립보드 붙여넣기 공용) ----
     const ocrBtn = document.getElementById('ocrBtn');
     const ocrFile = document.getElementById('ocrFile');
+    const queueEl = document.getElementById('imageQueue');
+    let queue = [];
+    let queueProcessing = false;
 
     ocrBtn.addEventListener('click', () => ocrFile.click());
 
-    ocrFile.addEventListener('change', async () => {
-      const file = ocrFile.files[0];
+    ocrFile.addEventListener('change', () => {
+      Array.from(ocrFile.files).forEach(enqueueImage);
       ocrFile.value = '';
-      if (!file) return;
+    });
 
+    textEl.addEventListener('paste', (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      const imageFiles = [];
+      for (const item of items) {
+        if (item.type && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+      if (imageFiles.length) {
+        e.preventDefault();
+        imageFiles.forEach(enqueueImage);
+      }
+    });
+
+    function renderQueue() {
+      if (!queue.length) {
+        queueEl.className = 'image-queue';
+        queueEl.innerHTML = '';
+        return;
+      }
+      queueEl.className = 'image-queue show';
+      queueEl.innerHTML = queue.map((item) => {
+        const badge = item.status === 'done' ? '✓' : item.status === 'error' ? '!' : '';
+        return `<div class="queue-item ${item.status}"><img src="${item.url}"><span class="badge">${badge}</span></div>`;
+      }).join('');
+    }
+
+    function enqueueImage(file) {
+      if (!file || !file.type || !file.type.startsWith('image/')) return;
+      queue.push({ id: Math.random().toString(36).slice(2), file, status: 'pending', url: URL.createObjectURL(file) });
+      renderQueue();
+      processQueue();
+    }
+
+    async function ocrImage(file) {
       const dataUrl = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
@@ -286,37 +412,104 @@ $$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`;
         reader.readAsDataURL(file);
       });
       const imageBase64 = dataUrl.split(',')[1];
+      const res = await fetch('/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64, mimeType: file.type || 'image/png' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
+      return (data.text || '').trim();
+    }
 
+    async function processQueue() {
+      if (queueProcessing) return;
+      queueProcessing = true;
       ocrBtn.disabled = true;
-      setStatus('pending', '이미지에서 텍스트를 읽는 중입니다...');
+
+      let item;
+      while ((item = queue.find((q) => q.status === 'pending'))) {
+        item.status = 'processing';
+        renderQueue();
+        const idx = queue.indexOf(item) + 1;
+        setStatus('pending', `이미지 ${idx}/${queue.length} 처리 중...`);
+        try {
+          const text = await ocrImage(item.file);
+          appendText(text);
+          item.status = 'done';
+        } catch (err) {
+          item.status = 'error';
+          item.errorMsg = err.message;
+        }
+        renderQueue();
+      }
+
+      queueProcessing = false;
+      ocrBtn.disabled = false;
+
+      const done = queue.filter((q) => q.status === 'done').length;
+      const failed = queue.filter((q) => q.status === 'error');
+      if (failed.length) {
+        setStatus('error', `이미지 ${done}장 완료, ${failed.length}장 인식 실패(${failed[0].errorMsg}). 변환 전에 내용을 확인해주세요.`);
+      } else if (done) {
+        setStatus('ok', `이미지 ${done}장에서 텍스트를 가져왔습니다. 변환 전에 내용을 확인해주세요.`);
+      }
+
+      setTimeout(() => {
+        if (!queueProcessing) {
+          queue = [];
+          renderQueue();
+        }
+      }, 2500);
+    }
+
+    // ---- AI 문항 생성/변형 ----
+    const aiToggleBtn = document.getElementById('aiToggleBtn');
+    const aiPanel = document.getElementById('aiPanel');
+    const aiInstruction = document.getElementById('aiInstruction');
+    const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+
+    aiToggleBtn.addEventListener('click', () => {
+      const showing = aiPanel.classList.toggle('show');
+      aiToggleBtn.classList.toggle('active', showing);
+      if (showing) aiInstruction.focus();
+    });
+
+    async function submitAiRequest() {
+      const instruction = aiInstruction.value.trim();
+      if (!instruction) return;
+
+      aiSubmitBtn.disabled = true;
+      setStatus('pending', 'AI가 문제를 만드는 중입니다...');
 
       try {
-        const res = await fetch('/ocr', {
+        const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64, mimeType: file.type || 'image/png' }),
+          body: JSON.stringify({ instruction, context: textEl.value }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
-        }
+        if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
 
-        const extracted = (data.text || '').trim();
-        textEl.value = textEl.value.trim() ? textEl.value.trim() + '\n\n' + extracted : extracted;
-        setStatus('ok', '이미지에서 텍스트를 가져왔습니다. 변환 전에 내용을 확인해주세요.');
+        appendText(data.text || '');
+        aiInstruction.value = '';
+        setStatus('ok', 'AI가 생성한 내용입니다. 정답·해설을 확인한 뒤 변환해주세요.');
       } catch (err) {
         setStatus('error', err.message);
       } finally {
-        ocrBtn.disabled = false;
+        aiSubmitBtn.disabled = false;
+      }
+    }
+
+    aiSubmitBtn.addEventListener('click', submitAiRequest);
+    aiInstruction.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitAiRequest();
       }
     });
 
-    function setStatus(mode, text) {
-      statusEl.className = 'show ' + mode;
-      spinner.style.display = mode === 'pending' ? 'inline-block' : 'none';
-      statusMsg.textContent = text;
-    }
-
+    // ---- hwpx 변환 ----
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const text = textEl.value;
