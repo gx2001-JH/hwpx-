@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>한글 수식 변환기</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23C96442'/%3E%3Cpath d='M4 13l3.5 7L12 4h8' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -26,6 +27,8 @@
     --info: #4E7C93;
     --shadow: 0 1px 2px rgba(46, 43, 38, 0.05), 0 10px 30px rgba(46, 43, 38, 0.07);
     --shadow-sm: 0 1px 2px rgba(46, 43, 38, 0.06);
+    --shadow-lift: 0 6px 20px rgba(46, 43, 38, 0.10), 0 2px 6px rgba(46, 43, 38, 0.06);
+    --ease: cubic-bezier(.22,.85,.34,1);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -42,18 +45,47 @@
   svg { display: block; }
   input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex: none; }
 
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  }
+
+  /* ---------- 스크롤바 ---------- */
+  .sidebar, .main { scrollbar-width: thin; scrollbar-color: #D6D2C4 transparent; }
+  .sidebar::-webkit-scrollbar, .main::-webkit-scrollbar { width: 9px; }
+  .sidebar::-webkit-scrollbar-thumb, .main::-webkit-scrollbar-thumb { background: #D6D2C4; border-radius: 100px; border: 2.5px solid var(--bg); background-clip: padding-box; }
+  .sidebar::-webkit-scrollbar-thumb:hover, .main::-webkit-scrollbar-thumb:hover { background: #C4C0AE; background-clip: padding-box; }
+
+  /* ---------- 상단 액센트 바 ---------- */
+  .top-accent-bar {
+    flex: none;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent));
+    background-size: 200% 100%;
+    animation: ai-gradient-shift 8s ease infinite;
+  }
+
   /* ---------- 헤더 ---------- */
   header {
     flex: none;
-    padding: 18px 28px;
+    padding: 14px 28px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 14px;
     flex-wrap: wrap;
     background: var(--surface);
+    box-shadow: 0 1px 0 rgba(46,43,38,.02), 0 4px 14px rgba(46,43,38,.03);
+    position: relative;
+    z-index: 5;
   }
-  .brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 10px rgba(201,100,66,.38);
+  }
+  .brand-text { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   h1 {
     font-family: "Georgia", "Noto Serif KR", serif;
     font-size: 21px;
@@ -72,21 +104,30 @@
     padding: 3px 10px;
     border-radius: 100px;
   }
-  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: dot-pulse 2.4s ease infinite; }
+  @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(.75); } }
   .flow { display: flex; align-items: center; gap: 5px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
   .flow-chip {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 11.5px; font-weight: 600; color: var(--text-muted);
     background: var(--surface-2); border: 1px solid var(--border);
     border-radius: 100px; padding: 4px 11px 4px 8px;
+    transition: transform .18s var(--ease), border-color .18s ease;
   }
+  .flow-chip:hover { transform: translateY(-1px); border-color: #DCD8C8; }
   .flow-chip .icon { width: 12px; height: 12px; }
-  .flow-chip.ai { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+  .flow-chip.ai {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    background-size: 200% 200%;
+    animation: ai-gradient-shift 5s ease infinite;
+    color: #fff; border-color: transparent;
+  }
   .flow-chip.result { background: var(--accent-soft); color: var(--accent-hover); border-color: var(--accent-soft); font-weight: 700; }
   .flow-arrow { color: #C9C6B8; font-size: 13px; }
 
   /* ---------- 전체 레이아웃: 사이드바 + 리사이저 + 메인 ---------- */
-  .shell { flex: 1; display: flex; min-height: 0; }
+  .shell { flex: 1; display: flex; min-height: 0; animation: shell-in .4s var(--ease); }
+  @keyframes shell-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   .sidebar {
     flex: none;
@@ -115,10 +156,15 @@
     bottom: 0;
     width: 1px;
     background: var(--border);
+    transition: background .15s ease;
   }
   .resizer:hover::after, .resizer.dragging::after { background: var(--accent); width: 2px; left: 2.5px; }
 
   .icon { color: currentColor; flex: none; }
+
+  /* ---------- 리플 효과 ---------- */
+  @keyframes ripple-anim { from { transform: scale(0); opacity: .32; } to { transform: scale(1); opacity: 0; } }
+  .ripple { position: absolute; border-radius: 50%; background: currentColor; pointer-events: none; animation: ripple-anim .55s var(--ease) forwards; }
 
   .dropzone {
     border: 2px dashed var(--border);
@@ -127,7 +173,7 @@
     text-align: center;
     color: var(--text-muted);
     font-size: 12px;
-    transition: border-color .15s ease, background .15s ease;
+    transition: border-color .18s ease, background .18s ease, transform .18s var(--ease);
   }
   .dropzone .dz-icon {
     display: flex; align-items: center; justify-content: center;
@@ -135,15 +181,18 @@
     border-radius: 50%;
     background: var(--accent-soft);
     color: var(--accent);
+    transition: transform .25s var(--ease);
   }
   .dropzone:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
-  .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone.dragover { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.015); }
+  .dropzone.dragover .dz-icon { transform: scale(1.12) translateY(-2px); }
   .dz-title { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
   .dz-desc { font-size: 11px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
   .dz-hint { font-size: 11px; color: var(--text-muted); }
   .dropzone b { color: var(--text); font-weight: 600; }
   .dropzone kbd { background: var(--code-bg); border-radius: 4px; padding: 0 5px; font-size: 11px; font-family: inherit; }
   .dz-browse {
+    position: relative; overflow: hidden;
     display: inline-flex; align-items: center; gap: 6px;
     margin-top: 10px;
     background: var(--surface);
@@ -154,21 +203,27 @@
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, transform .12s var(--ease);
   }
   .dz-browse:hover { border-color: var(--accent); color: var(--accent); }
+  .dz-browse:active { transform: scale(.95); }
 
   .image-queue { display: none; gap: 8px; flex-wrap: wrap; }
   .image-queue.show { display: flex; }
-  .queue-item { position: relative; width: 34px; height: 34px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex: none; }
+  .queue-item { position: relative; width: 34px; height: 34px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex: none; animation: box-in .2s var(--ease); }
   .queue-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .queue-item.processing img { animation: img-pulse 1.3s ease-in-out infinite; }
+  @keyframes img-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
   .queue-item .badge {
     position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; border: 2px solid var(--surface);
+    transition: background .15s ease, transform .2s var(--ease);
   }
   .queue-item.pending .badge, .queue-item.processing .badge { background: var(--accent); }
-  .queue-item.done .badge { background: var(--ok); }
-  .queue-item.error .badge { background: var(--error); }
-  .queue-item.processing .badge { animation: spin 0.9s linear infinite; border-top-color: transparent; }
+  .queue-item.done .badge { background: var(--ok); animation: badge-pop .3s var(--ease); }
+  .queue-item.error .badge { background: var(--error); animation: badge-pop .3s var(--ease); }
+  @keyframes badge-pop { 0% { transform: scale(0); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .queue-item.processing .badge { animation: spin .9s linear infinite; border-top-color: transparent; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* AI 그라디언트 카드 (테두리를 그라디언트로) */
@@ -178,6 +233,7 @@
     background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent));
     background-size: 200% 200%;
     animation: ai-gradient-shift 6s ease infinite;
+    box-shadow: var(--shadow-sm);
   }
   @keyframes ai-gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
   .ai-card-inner { background: var(--surface); border-radius: 14px; padding: 12px; }
@@ -191,6 +247,7 @@
     font-size: 12.5px;
     padding: 6px 8px;
     margin-bottom: 6px;
+    transition: border-color .15s ease;
   }
   .ai-card textarea {
     width: 100%;
@@ -204,9 +261,11 @@
     min-height: 52px;
     font-family: inherit;
     margin-bottom: 8px;
+    transition: border-color .15s ease, box-shadow .15s ease;
   }
   .ai-card-actions { display: flex; justify-content: flex-end; }
   .btn-gradient {
+    position: relative; overflow: hidden;
     display: inline-flex; align-items: center; gap: 6px;
     border: none;
     border-radius: 9px;
@@ -216,20 +275,23 @@
     color: #fff;
     cursor: pointer;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    transition: filter .15s ease, transform .1s ease;
+    transition: filter .15s ease, transform .12s var(--ease), box-shadow .15s ease;
   }
-  .btn-gradient:hover:not(:disabled) { filter: brightness(1.08); }
-  .btn-gradient:active:not(:disabled) { transform: scale(0.98); }
+  .btn-gradient:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 4px 14px rgba(201,100,66,.35); }
+  .btn-gradient:active:not(:disabled) { transform: scale(0.96); }
   .btn-gradient:disabled { opacity: 0.5; cursor: default; }
 
   .side-actions { display: flex; flex-direction: column; gap: 6px; }
   .side-link-btn {
+    position: relative; overflow: hidden;
     display: flex; align-items: center; gap: 9px;
     background: none; border: 1px solid transparent; border-radius: 9px;
     color: var(--text); font-size: 12.5px; font-weight: 500;
     cursor: pointer; padding: 7px 9px; text-align: left;
+    transition: background .15s ease, border-color .15s ease, transform .12s var(--ease);
   }
   .side-link-btn:hover { background: var(--surface-2); border-color: var(--border); }
+  .side-link-btn:active { transform: scale(.98); }
 
   .sidebar-footer {
     margin-top: auto;
@@ -240,10 +302,11 @@
     gap: 8px;
   }
   .select-all { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
-  .box-count { font-size: 11.5px; color: var(--text-muted); }
-  input[type=text] { padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; background: var(--surface-2); color: var(--text); width: 100%; }
+  .box-count { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  input[type=text] { padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; background: var(--surface-2); color: var(--text); width: 100%; transition: border-color .15s ease, box-shadow .15s ease; }
   textarea:focus, input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   button[type=submit] {
+    position: relative; overflow: hidden;
     background: var(--accent);
     color: #fff;
     border: none;
@@ -253,17 +316,15 @@
     font-weight: 600;
     cursor: pointer;
     width: 100%;
-    transition: background 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: background 0.18s ease, transform .12s var(--ease), box-shadow .18s ease;
   }
   button[type=submit]:disabled { background: #D9B7A9; cursor: default; }
-  button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); }
+  button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(201,100,66,.3); }
+  button[type=submit]:active:not(:disabled) { transform: scale(.98); }
+  button[type=submit].success { background: var(--ok) !important; }
 
-  #status { font-size: 12px; display: none; align-items: center; gap: 8px; }
-  #status.show { display: flex; }
-  #status.error { color: var(--error); }
-  #status.ok { color: var(--ok); }
-  #status.pending { color: var(--text-muted); }
-  .spinner { width: 11px; height: 11px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex: none; }
+  button:focus-visible, .side-link-btn:focus-visible, .box-btn:focus-visible, .view-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .hint { font-size: 11px; color: var(--text-muted); line-height: 1.9; }
   .hint-row { display: flex; gap: 6px; }
@@ -276,11 +337,21 @@
     text-align: center;
     color: var(--text-muted);
     font-size: 13px;
-    padding: 60px 20px;
+    padding: 56px 20px;
     border: 1px dashed var(--border);
     border-radius: 16px;
     line-height: 1.8;
   }
+  .empty-icon {
+    width: 46px; height: 46px; margin: 0 auto 14px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: #C9C6B8;
+    animation: float-y 3.2s ease-in-out infinite;
+  }
+  @keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   .box-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -288,6 +359,7 @@
     align-content: start;
   }
   .box {
+    position: relative;
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 12px;
@@ -296,11 +368,12 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    transition: opacity .15s ease, box-shadow .2s ease, transform .15s ease, border-color .15s ease;
-    animation: box-in .2s ease;
+    transition: opacity .18s var(--ease), box-shadow .22s var(--ease), transform .18s var(--ease), border-color .18s ease;
+    animation: box-in .22s var(--ease);
   }
-  .box:not(.ai-processing):hover { box-shadow: var(--shadow); transform: translateY(-2px); border-color: #DCD8C8; }
-  @keyframes box-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .box:not(.ai-processing):hover { box-shadow: var(--shadow-lift); transform: translateY(-3px); border-color: #DCD8C8; }
+  @keyframes box-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
+  .box.removing { opacity: 0; transform: scale(.9); transition: opacity .18s ease, transform .18s ease; }
   .box.unchecked { opacity: 0.42; }
   .box-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .box-source {
@@ -318,6 +391,7 @@
   .box-source.src-manual { color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); }
   .box-controls { display: flex; gap: 3px; margin-left: auto; }
   .box-btn {
+    position: relative; overflow: hidden;
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -327,9 +401,11 @@
     cursor: pointer;
     color: var(--text-muted);
     padding: 0;
+    transition: border-color .15s ease, color .15s ease, background .15s ease, transform .12s var(--ease);
   }
   .box-btn:disabled { opacity: 0.3; cursor: default; }
   .box-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .box-btn:active:not(:disabled) { transform: scale(.88); }
   .box-btn.danger:hover:not(:disabled) { border-color: var(--error); color: var(--error); }
   .box-btn.ai-btn {
     width: auto;
@@ -342,11 +418,17 @@
     border-color: var(--accent-soft);
     color: var(--accent-hover);
   }
-  .box-btn.ai-btn:hover:not(:disabled) { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
-  .box-ai-caption { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--accent-2); font-weight: 600; }
+  .box-btn.ai-btn:hover:not(:disabled), .box-btn.ai-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+  .box-ai-caption {
+    display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--accent-2); font-weight: 600;
+    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+    transition: max-height .22s var(--ease), opacity .18s ease, margin-top .22s var(--ease);
+  }
+  .box-ai-caption.show { max-height: 20px; opacity: 1; margin-top: 2px; }
 
   .box-view-toggle { display: flex; gap: 4px; }
   .view-btn {
+    position: relative; overflow: hidden;
     display: inline-flex; align-items: center; gap: 5px;
     background: none;
     border: 1px solid var(--border);
@@ -355,6 +437,7 @@
     font-size: 10.5px;
     color: var(--text-muted);
     cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
   }
   .view-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
@@ -370,6 +453,7 @@
     background: var(--surface-2);
     color: var(--text);
     resize: vertical;
+    transition: border-color .15s ease, box-shadow .15s ease;
   }
   .box-preview {
     min-height: 88px;
@@ -383,11 +467,17 @@
     white-space: pre-wrap;
     word-break: break-word;
     overflow-x: auto;
+    animation: box-in .18s var(--ease);
   }
-  .box-ai-panel { display: none; gap: 6px; }
-  .box-ai-panel.show { display: flex; }
+  .box-ai-panel {
+    display: flex; gap: 6px;
+    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; pointer-events: none;
+    transition: max-height .25s var(--ease), opacity .2s ease, margin-top .25s var(--ease);
+  }
+  .box-ai-panel.show { max-height: 48px; opacity: 1; margin-top: 2px; pointer-events: auto; }
   .box-ai-panel input[type=text] { flex: 1; font-size: 12px; padding: 6px 9px; }
   .box-ai-panel button {
+    position: relative; overflow: hidden;
     flex: none;
     display: inline-flex; align-items: center; gap: 5px;
     border: none;
@@ -398,7 +488,10 @@
     color: #fff;
     cursor: pointer;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    transition: filter .15s ease, transform .12s var(--ease);
   }
+  .box-ai-panel button:hover:not(:disabled) { filter: brightness(1.08); }
+  .box-ai-panel button:active:not(:disabled) { transform: scale(.94); }
   .box-ai-panel button:disabled { opacity: 0.5; cursor: default; }
 
   /* AI 처리중 글로우 */
@@ -408,20 +501,76 @@
   }
   .box.ai-processing { animation: ai-pulse 1.5s ease-in-out infinite; border-color: transparent; }
 
+  /* ---------- 토스트 알림 ---------- */
+  .toast-container {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: 9px;
+    background: var(--text); color: #fff;
+    border-radius: 11px; padding: 10px 16px 10px 13px;
+    font-size: 12.5px; font-weight: 600;
+    box-shadow: 0 10px 28px rgba(0,0,0,.2);
+    opacity: 0; transform: translateY(12px) scale(.95);
+    transition: opacity .22s var(--ease), transform .22s var(--ease), background .2s ease;
+    max-width: min(86vw, 420px);
+  }
+  .toast.show { opacity: 1; transform: none; }
+  .toast.ok { background: var(--ok); }
+  .toast.error { background: var(--error); }
+  .toast.pending { background: #3A362F; }
+  .toast-icon { display: flex; align-items: center; flex: none; }
+  .toast-msg { line-height: 1.4; }
+  .toast .spinner { border-color: rgba(255,255,255,.35); border-top-color: #fff; }
+  @keyframes draw-check { to { stroke-dashoffset: 0; } }
+
+  #status { display: none; }
+  .spinner { width: 12px; height: 12px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex: none; }
+
+  /* ---------- 푸터 ---------- */
+  .app-footer {
+    flex: none;
+    padding: 7px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .app-footer .credit b { color: var(--text); font-weight: 700; }
+  .app-footer .sep { margin: 0 6px; opacity: .5; }
+
   @media (max-width: 860px) {
     .flow { display: none; }
     .shell { flex-direction: column; }
     .resizer { display: none; }
     .sidebar { width: 100% !important; max-width: none; border-right: none; border-bottom: 1px solid var(--border); max-height: 46vh; }
     .main { padding: 14px; }
+    .app-footer { flex-direction: column; gap: 2px; text-align: center; padding: 8px 14px; }
   }
 </style>
 </head>
 <body>
+  <div class="top-accent-bar"></div>
   <header>
     <div class="brand">
-      <h1>한글 수식 변환기</h1>
-      <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
+      <span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l3.5 7L12 4h8"/></svg></span>
+      <div class="brand-text">
+        <h1>한글 수식 변환기</h1>
+        <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
+      </div>
     </div>
     <div class="flow">
       <span class="flow-chip"><svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>이미지</span>
@@ -474,7 +623,7 @@
         <span class="box-count" id="boxCount"></span>
         <form id="convertForm">
           <input type="text" id="filename" name="filename" value="output" placeholder="파일 이름" style="margin-bottom:8px;">
-          <button type="submit" id="submitBtn">선택한 문제 hwpx로 변환</button>
+          <button type="submit" id="submitBtn"><span id="iconSubmit"></span><span id="submitLabel">선택한 문제 hwpx로 변환</span></button>
         </form>
         <div id="status"><span class="spinner" style="display:none"></span><span class="msg"></span></div>
         <div class="hint">
@@ -490,10 +639,20 @@
     <div class="resizer" id="resizer"></div>
 
     <main class="main">
-      <div class="empty-state" id="emptyState">아직 추가된 문제가 없습니다.<br>왼쪽에서 이미지를 넣거나, AI로 생성하거나, 박스를 직접 추가해보세요.</div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9h10M7 13h6"/></svg></div>
+        아직 추가된 문제가 없습니다.<br>왼쪽에서 이미지를 넣거나, AI로 생성하거나, 박스를 직접 추가해보세요.
+      </div>
       <div class="box-grid" id="boxList"></div>
     </main>
   </div>
+
+  <footer class="app-footer">
+    <span>© 2026 한글 수식 변환기</span>
+    <span class="credit">제작<span class="sep">·</span><b>월촌중학교 김재현</b></span>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
 
   <script>
     // ---- 플랫 아이콘(SVG, currentColor) ----
@@ -507,6 +666,9 @@
       edit: '<svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
       plus: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
       grid: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+      download: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M6 11l6 6 6-6M4 21h16"/></svg>',
+      check: '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l3.5 7L12 4h8" style="stroke-dasharray:40;stroke-dashoffset:40;animation:draw-check .45s ease forwards .05s"/></svg>',
+      alert: '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>',
     };
     document.getElementById('iconImage').innerHTML = ICONS.image;
     document.getElementById('iconPlusSmall').innerHTML = ICONS.plus;
@@ -514,15 +676,50 @@
     document.getElementById('iconSparkBtn').innerHTML = ICONS.spark;
     document.getElementById('iconPlus').innerHTML = ICONS.plus;
     document.getElementById('iconGrid').innerHTML = ICONS.grid;
+    document.getElementById('iconSubmit').innerHTML = ICONS.download;
 
-    const statusEl = document.getElementById('status');
-    const statusMsg = statusEl.querySelector('.msg');
-    const spinner = statusEl.querySelector('.spinner');
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- 리플 효과: 버튼류 클릭 시 파동 효과 ----
+    document.addEventListener('click', (e) => {
+      if (reduceMotion) return;
+      const el = e.target.closest('.btn-gradient, .box-btn, .side-link-btn, .dz-browse, button[type=submit], .view-btn, .box-ai-panel button');
+      if (!el || el.disabled) return;
+      const rect = el.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      const size = Math.max(rect.width, rect.height) * 1.5;
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      el.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    });
+
+    // ---- 토스트 알림 ----
+    const toastContainer = document.getElementById('toastContainer');
+    let currentToast = null;
+    let toastTimer = null;
+    const TOAST_ICON = { ok: ICONS.check, error: ICONS.alert, pending: '<span class="spinner"></span>' };
 
     function setStatus(mode, text) {
-      statusEl.className = 'show ' + mode;
-      spinner.style.display = mode === 'pending' ? 'inline-block' : 'none';
-      statusMsg.textContent = text;
+      clearTimeout(toastTimer);
+      if (!currentToast || !currentToast.isConnected) {
+        currentToast = document.createElement('div');
+        currentToast.className = 'toast';
+        toastContainer.appendChild(currentToast);
+      }
+      currentToast.className = 'toast ' + mode;
+      currentToast.innerHTML = `<span class="toast-icon">${TOAST_ICON[mode] || ''}</span><span class="toast-msg">${escapeHtml(text)}</span>`;
+      requestAnimationFrame(() => currentToast.classList.add('show'));
+
+      if (mode !== 'pending') {
+        const el = currentToast;
+        toastTimer = setTimeout(() => {
+          el.classList.remove('show');
+          setTimeout(() => el.remove(), 260);
+        }, 3800);
+      }
     }
 
     function escapeHtml(s) {
@@ -551,6 +748,31 @@
 
     const SOURCE_LABEL = { ocr: '이미지', ai: 'AI', manual: '직접입력' };
 
+    // FLIP 애니메이션: 박스 순서/개수가 바뀔 때 위치 이동을 부드럽게 보여준다.
+    function flipBoxes(mutate) {
+      if (reduceMotion) { mutate(); renderBoxList(); return; }
+      const prevRects = new Map();
+      boxListEl.querySelectorAll('.box').forEach((el) => prevRects.set(el.dataset.id, el.getBoundingClientRect()));
+      mutate();
+      renderBoxList();
+      requestAnimationFrame(() => {
+        boxListEl.querySelectorAll('.box').forEach((el) => {
+          const prev = prevRects.get(el.dataset.id);
+          if (!prev) return;
+          const next = el.getBoundingClientRect();
+          const dx = prev.left - next.left;
+          const dy = prev.top - next.top;
+          if (!dx && !dy) return;
+          el.style.transition = 'none';
+          el.style.transform = `translate(${dx}px, ${dy}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform .28s var(--ease)';
+            el.style.transform = '';
+          });
+        });
+      });
+    }
+
     function renderBoxList() {
       emptyStateEl.style.display = boxes.length ? 'none' : '';
       boxListEl.innerHTML = boxes.map((box, i) => {
@@ -564,7 +786,7 @@
             <input type="checkbox" class="box-chk" ${box.checked ? 'checked' : ''}>
             <span class="box-source src-${box.source}">${sourceIcon}${SOURCE_LABEL[box.source] || '문제'}</span>
             <span class="box-controls">
-              <button type="button" class="box-btn ai-btn" data-action="ai" title="AI로 이 문제 다시 쓰기" ${processing ? 'disabled' : ''}>${ICONS.spark}AI</button>
+              <button type="button" class="box-btn ai-btn${aiOpen ? ' active' : ''}" data-action="ai" title="AI로 이 문제 다시 쓰기" ${processing ? 'disabled' : ''}>${ICONS.spark}AI</button>
               <button type="button" class="box-btn" data-action="up" ${i === 0 ? 'disabled' : ''} title="위로">${ICONS.up}</button>
               <button type="button" class="box-btn" data-action="down" ${i === boxes.length - 1 ? 'disabled' : ''} title="아래로">${ICONS.down}</button>
               <button type="button" class="box-btn danger" data-action="delete" title="삭제">${ICONS.trash}</button>
@@ -577,7 +799,7 @@
           ${preview
             ? `<div class="box-preview" data-preview>${escapeHtml(box.text)}</div>`
             : `<textarea class="box-text" rows="5">${escapeHtml(box.text)}</textarea>`}
-          ${aiOpen ? `<div class="box-ai-caption">${ICONS.spark} AI에게 이 문제만 다시 써달라고 요청하세요</div>` : ''}
+          <div class="box-ai-caption${aiOpen ? ' show' : ''}">${ICONS.spark} AI에게 이 문제만 다시 써달라고 요청하세요</div>
           <div class="box-ai-panel${aiOpen ? ' show' : ''}">
             <input type="text" class="box-ai-input" placeholder="예: 더 어렵게 바꿔줘 / 객관식으로 바꿔줘" ${processing ? 'disabled' : ''}>
             <button type="button" class="box-ai-submit" ${processing ? 'disabled' : ''}>${processing ? '...' : ICONS.spark + '변형'}</button>
@@ -616,13 +838,14 @@
     function addBoxes(texts, source, afterId) {
       const newOnes = texts.filter((t) => t && t.trim()).map((t) => ({ id: genId(), text: t.trim(), checked: true, source }));
       if (!newOnes.length) return;
-      if (afterId) {
-        const idx = boxes.findIndex((b) => b.id === afterId);
-        boxes.splice(idx + 1, 0, ...newOnes);
-      } else {
-        boxes.push(...newOnes);
-      }
-      renderBoxList();
+      flipBoxes(() => {
+        if (afterId) {
+          const idx = boxes.findIndex((b) => b.id === afterId);
+          boxes.splice(idx + 1, 0, ...newOnes);
+        } else {
+          boxes.push(...newOnes);
+        }
+      });
     }
 
     selectAllChk.addEventListener('change', () => {
@@ -631,8 +854,7 @@
     });
 
     document.getElementById('addBoxBtn').addEventListener('click', () => {
-      boxes.push({ id: genId(), text: '', checked: true, source: 'manual' });
-      renderBoxList();
+      flipBoxes(() => { boxes.push({ id: genId(), text: '', checked: true, source: 'manual' }); });
       const last = boxListEl.querySelector('.box:last-child .box-text');
       if (last) last.focus();
     });
@@ -712,21 +934,48 @@
 
       const action = btn.dataset.action;
       if (action === 'ai') {
-        if (aiOpenBoxIds.has(id)) aiOpenBoxIds.delete(id); else aiOpenBoxIds.add(id);
-        renderBoxList();
-        const panel = boxListEl.querySelector(`.box[data-id="${id}"] .box-ai-input`);
-        if (panel) panel.focus();
+        // 패널 열고 닫기는 전체 리렌더 없이 클래스만 토글해 부드럽게 펼쳐지도록 한다.
+        const opening = !aiOpenBoxIds.has(id);
+        if (opening) aiOpenBoxIds.add(id); else aiOpenBoxIds.delete(id);
+        btn.classList.toggle('active', opening);
+        const caption = boxEl.querySelector('.box-ai-caption');
+        const panel = boxEl.querySelector('.box-ai-panel');
+        if (caption) caption.classList.toggle('show', opening);
+        if (panel) {
+          panel.classList.toggle('show', opening);
+          if (opening) setTimeout(() => panel.querySelector('.box-ai-input').focus(), 220);
+        }
       } else if (action === 'up' && idx > 0) {
-        [boxes[idx - 1], boxes[idx]] = [boxes[idx], boxes[idx - 1]];
-        renderBoxList();
+        flipBoxes(() => { [boxes[idx - 1], boxes[idx]] = [boxes[idx], boxes[idx - 1]]; });
       } else if (action === 'down' && idx < boxes.length - 1) {
-        [boxes[idx + 1], boxes[idx]] = [boxes[idx], boxes[idx + 1]];
-        renderBoxList();
+        flipBoxes(() => { [boxes[idx + 1], boxes[idx]] = [boxes[idx], boxes[idx + 1]]; });
       } else if (action === 'delete') {
         aiOpenBoxIds.delete(id);
         previewBoxIds.delete(id);
-        boxes.splice(idx, 1);
-        renderBoxList();
+        boxEl.classList.add('removing');
+        const prevRects = new Map();
+        boxListEl.querySelectorAll('.box').forEach((el) => { if (el !== boxEl) prevRects.set(el.dataset.id, el.getBoundingClientRect()); });
+        setTimeout(() => {
+          boxes.splice(idx, 1);
+          renderBoxList();
+          if (reduceMotion) return;
+          requestAnimationFrame(() => {
+            boxListEl.querySelectorAll('.box').forEach((el) => {
+              const prev = prevRects.get(el.dataset.id);
+              if (!prev) return;
+              const next = el.getBoundingClientRect();
+              const dx = prev.left - next.left;
+              const dy = prev.top - next.top;
+              if (!dx && !dy) return;
+              el.style.transition = 'none';
+              el.style.transform = `translate(${dx}px, ${dy}px)`;
+              requestAnimationFrame(() => {
+                el.style.transition = 'transform .28s var(--ease)';
+                el.style.transform = '';
+              });
+            });
+          });
+        }, reduceMotion ? 0 : 190);
       }
     });
 
@@ -943,6 +1192,8 @@
     // ---- hwpx 변환 (선택된 박스만) ----
     const form = document.getElementById('convertForm');
     const submitBtn = document.getElementById('submitBtn');
+    const submitLabel = document.getElementById('submitLabel');
+    const submitIcon = document.getElementById('iconSubmit');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -956,6 +1207,8 @@
       }
 
       submitBtn.disabled = true;
+      submitIcon.innerHTML = '<span class="spinner"></span>';
+      submitLabel.textContent = '변환하는 중...';
       setStatus('pending', '수식을 변환하는 중입니다...');
 
       try {
@@ -980,8 +1233,18 @@
         URL.revokeObjectURL(url);
 
         setStatus('ok', `문제 ${selected.length}개를 변환해 다운로드했습니다.`);
+        submitBtn.classList.add('success');
+        submitIcon.innerHTML = ICONS.check;
+        submitLabel.textContent = '완료!';
+        setTimeout(() => {
+          submitBtn.classList.remove('success');
+          submitIcon.innerHTML = ICONS.download;
+          submitLabel.textContent = '선택한 문제 hwpx로 변환';
+        }, 1500);
       } catch (err) {
         setStatus('error', err.message);
+        submitIcon.innerHTML = ICONS.download;
+        submitLabel.textContent = '선택한 문제 hwpx로 변환';
       } finally {
         submitBtn.disabled = false;
       }
