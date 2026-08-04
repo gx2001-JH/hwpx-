@@ -4,36 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>한글 수식 변환기</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23C96442'/%3E%3Cpath d='M4 13l3.5 7L12 4h8' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%237B5CFA'/%3E%3Cpath d='M4 13l3.5 7L12 4h8' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <style>
   :root {
     color-scheme: light;
-    --bg: #F5F4EE;
+    --bg: #EFEDF6;
     --surface: #FFFFFF;
-    --surface-2: #FAF9F5;
-    --border: #E6E4DA;
-    --text: #2E2B26;
-    --text-muted: #83807A;
-    --accent: #C96442;
-    --accent-hover: #B5573A;
-    --accent-soft: #F3E4DC;
-    --accent-2: #B0708F;
-    --code-bg: #EFEDE4;
-    --ok: #4C7A4C;
-    --error: #B0453B;
-    --info: #4E7C93;
-    --shadow: 0 1px 2px rgba(46, 43, 38, 0.05), 0 10px 30px rgba(46, 43, 38, 0.07);
-    --shadow-sm: 0 1px 2px rgba(46, 43, 38, 0.06);
-    --shadow-lift: 0 6px 20px rgba(46, 43, 38, 0.10), 0 2px 6px rgba(46, 43, 38, 0.06);
+    --surface-2: #F6F4FB;
+    --border: #E3E0EE;
+    --text: #211D2E;
+    --text-muted: #837FA0;
+    --accent: #7B5CFA;
+    --accent-hover: #6A47E8;
+    --accent-soft: #EEE8FE;
+    --accent-2: #C15CE0;
+    --code-bg: #F1EEF9;
+    --ok: #3F8F6C;
+    --error: #D1495B;
+    --info: #5B7FE0;
+    --shadow: 0 1px 2px rgba(33, 29, 46, 0.05), 0 10px 30px rgba(33, 29, 46, 0.08);
+    --shadow-sm: 0 1px 2px rgba(33, 29, 46, 0.06);
+    --shadow-lift: 0 8px 22px rgba(33, 29, 46, 0.12), 0 2px 6px rgba(33, 29, 46, 0.06);
     --ease: cubic-bezier(.22,.85,.34,1);
+    /* 사이드바 전용 다크 테마 색(레이어드 카드 느낌을 위해 사이드바만 어둡게) */
+    --sidebar-bg: #1E1A2C;
+    --sidebar-bg-2: #29233C;
+    --sidebar-text: #EDEAF7;
+    --sidebar-text-muted: #938EAA;
+    --sidebar-border: rgba(255,255,255,.09);
+    --sidebar-accent-soft: rgba(123,92,250,.22);
+    --sidebar-code-bg: rgba(255,255,255,.07);
+    --sidebar-shadow: 0 16px 40px rgba(20,16,32,.35), 0 2px 8px rgba(20,16,32,.2);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    font-family: -apple-system, "Pretendard", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
+    font-family: "Pretendard Variable", "Pretendard", -apple-system, "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
     margin: 0;
     color: var(--text);
     background: var(--bg);
@@ -50,19 +60,15 @@
   }
 
   /* ---------- 스크롤바 ---------- */
-  .sidebar, .main { scrollbar-width: thin; scrollbar-color: #D6D2C4 transparent; }
-  .sidebar::-webkit-scrollbar, .main::-webkit-scrollbar { width: 9px; }
-  .sidebar::-webkit-scrollbar-thumb, .main::-webkit-scrollbar-thumb { background: #D6D2C4; border-radius: 100px; border: 2.5px solid var(--bg); background-clip: padding-box; }
-  .sidebar::-webkit-scrollbar-thumb:hover, .main::-webkit-scrollbar-thumb:hover { background: #C4C0AE; background-clip: padding-box; }
+  .main { scrollbar-width: thin; scrollbar-color: #D4D0E4 transparent; }
+  .main::-webkit-scrollbar { width: 9px; }
+  .main::-webkit-scrollbar-thumb { background: #D4D0E4; border-radius: 100px; border: 2.5px solid var(--bg); background-clip: padding-box; }
+  .main::-webkit-scrollbar-thumb:hover { background: #C2BCD9; background-clip: padding-box; }
+  .sidebar { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
+  .sidebar::-webkit-scrollbar { width: 9px; }
+  .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 100px; border: 2.5px solid transparent; background-clip: padding-box; }
+  .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); background-clip: padding-box; }
 
-  /* ---------- 상단 액센트 바 ---------- */
-  .top-accent-bar {
-    flex: none;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent));
-    background-size: 200% 100%;
-    animation: ai-gradient-shift 8s ease infinite;
-  }
 
   /* ---------- 헤더 ---------- */
   header {
@@ -74,22 +80,21 @@
     gap: 14px;
     flex-wrap: wrap;
     background: var(--surface);
-    box-shadow: 0 1px 0 rgba(46,43,38,.02), 0 4px 14px rgba(46,43,38,.03);
+    box-shadow: 0 1px 0 rgba(33,29,46,.03), 0 4px 14px rgba(33,29,46,.04);
     position: relative;
     z-index: 5;
   }
   .brand { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
   .brand-mark {
     width: 30px; height: 30px; border-radius: 9px; flex: none;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    background: var(--accent);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 10px rgba(201,100,66,.38);
+    box-shadow: 0 3px 10px rgba(123,92,250,.35);
   }
   .brand-text { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   h1 {
-    font-family: "Georgia", "Noto Serif KR", serif;
     font-size: 21px;
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: -0.01em;
     margin: 0;
   }
@@ -104,8 +109,16 @@
     padding: 3px 10px;
     border-radius: 100px;
   }
-  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: dot-pulse 2.4s ease infinite; }
-  @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(.75); } }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .help-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+    background: none; border: 1px solid var(--border);
+    padding: 3px 11px 3px 9px; border-radius: 100px;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .help-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .flow { display: flex; align-items: center; gap: 5px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
   .flow-chip {
     display: inline-flex; align-items: center; gap: 5px;
@@ -114,51 +127,60 @@
     border-radius: 100px; padding: 4px 11px 4px 8px;
     transition: transform .18s var(--ease), border-color .18s ease;
   }
-  .flow-chip:hover { transform: translateY(-1px); border-color: #DCD8C8; }
+  .flow-chip:hover { transform: translateY(-1px); border-color: #D2CDE3; }
   .flow-chip .icon { width: 12px; height: 12px; }
   .flow-chip.ai {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    background-size: 200% 200%;
-    animation: ai-gradient-shift 5s ease infinite;
+    background: var(--accent);
     color: #fff; border-color: transparent;
   }
   .flow-chip.result { background: var(--accent-soft); color: var(--accent-hover); border-color: var(--accent-soft); font-weight: 700; }
-  .flow-arrow { color: #C9C6B8; font-size: 13px; }
+  .flow-arrow { color: #B7B2C9; font-size: 13px; }
 
-  /* ---------- 전체 레이아웃: 사이드바 + 리사이저 + 메인 ---------- */
-  .shell { flex: 1; display: flex; min-height: 0; animation: shell-in .4s var(--ease); }
+  /* ---------- 전체 레이아웃: 사이드바(다크 카드) + 리사이저 + 메인 ---------- */
+  .shell { flex: 1; display: flex; min-height: 0; padding: 14px; gap: 4px; animation: shell-in .4s var(--ease); }
   @keyframes shell-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   .sidebar {
+    /* 레퍼런스처럼 사이드바만 어두운 색으로 살짝 띄워, 메인 캔버스와 레이어가 나뉘어 보이게 한다 */
+    --surface: var(--sidebar-bg);
+    --surface-2: var(--sidebar-bg-2);
+    --text: var(--sidebar-text);
+    --text-muted: var(--sidebar-text-muted);
+    --border: var(--sidebar-border);
+    --accent-soft: var(--sidebar-accent-soft);
+    --code-bg: var(--sidebar-code-bg);
     flex: none;
     width: 340px;
     min-width: 240px;
     max-width: 560px;
-    padding: 16px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
     gap: 14px;
     overflow-y: auto;
     background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--sidebar-shadow);
   }
 
   .resizer {
     flex: none;
-    width: 7px;
+    width: 14px;
     cursor: col-resize;
     position: relative;
   }
   .resizer::after {
     content: '';
     position: absolute;
-    left: 3px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
+    left: 6px;
+    top: 10%;
+    bottom: 10%;
+    width: 2px;
+    border-radius: 100px;
     background: var(--border);
     transition: background .15s ease;
   }
-  .resizer:hover::after, .resizer.dragging::after { background: var(--accent); width: 2px; left: 2.5px; }
+  .resizer:hover::after, .resizer.dragging::after { background: var(--accent); }
 
   .icon { color: currentColor; flex: none; }
 
@@ -195,7 +217,7 @@
     position: relative; overflow: hidden;
     display: inline-flex; align-items: center; gap: 6px;
     margin-top: 10px;
-    background: var(--surface);
+    background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 6px 12px;
@@ -226,16 +248,12 @@
   .queue-item.processing .badge { animation: spin .9s linear infinite; border-top-color: transparent; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* AI 그라디언트 카드 (테두리를 그라디언트로) */
+  /* AI 카드 (테두리만 은은한 그라디언트, 움직임 없이 차분하게) */
   .ai-card {
     border-radius: 15px;
     padding: 1px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent));
-    background-size: 200% 200%;
-    animation: ai-gradient-shift 6s ease infinite;
-    box-shadow: var(--shadow-sm);
+    background: var(--accent);
   }
-  @keyframes ai-gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
   .ai-card-inner { background: var(--surface); border-radius: 14px; padding: 12px; }
   .ai-card-title { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; margin-bottom: 8px; color: var(--accent); }
   .ai-card select {
@@ -274,7 +292,7 @@
     font-weight: 600;
     color: #fff;
     cursor: pointer;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    background: var(--accent);
     transition: filter .15s ease, transform .12s var(--ease), box-shadow .15s ease;
   }
   .btn-gradient:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 4px 14px rgba(201,100,66,.35); }
@@ -319,17 +337,60 @@
     display: flex; align-items: center; justify-content: center; gap: 7px;
     transition: background 0.18s ease, transform .12s var(--ease), box-shadow .18s ease;
   }
-  button[type=submit]:disabled { background: #D9B7A9; cursor: default; }
+  button[type=submit]:disabled { background: #D6C9F5; cursor: default; }
   button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(201,100,66,.3); }
   button[type=submit]:active:not(:disabled) { transform: scale(.98); }
   button[type=submit].success { background: var(--ok) !important; }
 
   button:focus-visible, .side-link-btn:focus-visible, .box-btn:focus-visible, .view-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .hint { font-size: 11px; color: var(--text-muted); line-height: 1.9; }
-  .hint-row { display: flex; gap: 6px; }
-  .hint-row b { color: var(--text); font-weight: 600; flex: none; }
-  .hint code { background: var(--code-bg); color: var(--text); padding: 1px 5px; border-radius: 5px; font-size: 10px; }
+  .hint { font-size: 13px; color: var(--text-muted); }
+  .hint-row { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .hint-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .hint-row:first-child { padding-top: 0; }
+  .hint-row b { color: var(--text); font-weight: 700; }
+  .hint code { background: var(--code-bg); color: var(--text); padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+
+  /* ---------- 사용법 모달 ---------- */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 600;
+    background: rgba(20,16,32,.42);
+    align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity .18s ease;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-overlay.show.in { opacity: 1; }
+  .modal-card {
+    background: var(--surface);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    width: 100%; max-width: 420px;
+    max-height: 82vh;
+    display: flex; flex-direction: column;
+    transform: translateY(10px) scale(.98);
+    opacity: 0;
+    transition: transform .2s var(--ease), opacity .2s var(--ease);
+  }
+  .modal-overlay.show.in .modal-card { transform: none; opacity: 1; }
+  .modal-head {
+    flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 15px; font-weight: 700; }
+  .modal-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    border: none; background: var(--surface-2); border-radius: 8px;
+    color: var(--text-muted); cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .modal-close:hover { background: var(--accent-soft); color: var(--accent); }
+  .modal-body { padding: 4px 18px 18px; overflow-y: auto; }
 
   /* ---------- 메인: 박스 그리드 ---------- */
   .main { flex: 1; min-width: 0; padding: 18px 24px; overflow-y: auto; }
@@ -348,7 +409,7 @@
     background: var(--surface-2);
     border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
-    color: #C9C6B8;
+    color: #B7B2C9;
     animation: float-y 3.2s ease-in-out infinite;
   }
   @keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -371,7 +432,7 @@
     transition: opacity .18s var(--ease), box-shadow .22s var(--ease), transform .18s var(--ease), border-color .18s ease;
     animation: box-in .22s var(--ease);
   }
-  .box:not(.ai-processing):hover { box-shadow: var(--shadow-lift); transform: translateY(-3px); border-color: #DCD8C8; }
+  .box:not(.ai-processing):hover { box-shadow: var(--shadow-lift); transform: translateY(-3px); border-color: #D2CDE3; }
   @keyframes box-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
   .box.removing { opacity: 0; transform: scale(.9); transition: opacity .18s ease, transform .18s ease; }
   .box.unchecked { opacity: 0.42; }
@@ -387,7 +448,7 @@
     gap: 4px;
   }
   .box-source.src-ocr { color: var(--info); background: #E4EEF2; }
-  .box-source.src-ai { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .box-source.src-ai { color: #fff; background: var(--accent); }
   .box-source.src-manual { color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); }
   .box-controls { display: flex; gap: 3px; margin-left: auto; }
   .box-btn {
@@ -418,7 +479,7 @@
     border-color: var(--accent-soft);
     color: var(--accent-hover);
   }
-  .box-btn.ai-btn:hover:not(:disabled), .box-btn.ai-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+  .box-btn.ai-btn:hover:not(:disabled), .box-btn.ai-btn.active { background: var(--accent); border-color: transparent; color: #fff; }
   .box-ai-caption {
     display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--accent-2); font-weight: 600;
     max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
@@ -487,19 +548,15 @@
     font-weight: 600;
     color: #fff;
     cursor: pointer;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    background: var(--accent);
     transition: filter .15s ease, transform .12s var(--ease);
   }
   .box-ai-panel button:hover:not(:disabled) { filter: brightness(1.08); }
   .box-ai-panel button:active:not(:disabled) { transform: scale(.94); }
   .box-ai-panel button:disabled { opacity: 0.5; cursor: default; }
 
-  /* AI 처리중 글로우 */
-  @keyframes ai-pulse {
-    0%, 100% { box-shadow: 0 0 0 1px var(--accent), 0 0 14px 1px rgba(201,100,66,.35), 0 0 0 rgba(176,112,143,0); }
-    50% { box-shadow: 0 0 0 1px var(--accent-2), 0 0 30px 6px rgba(176,112,143,.5), 0 0 14px 2px rgba(201,100,66,.4); }
-  }
-  .box.ai-processing { animation: ai-pulse 1.5s ease-in-out infinite; border-color: transparent; }
+  /* AI 처리중 표시: 화려한 다색 글로우 대신 단색 테두리만 차분하게 */
+  .box.ai-processing { box-shadow: 0 0 0 1.5px var(--accent); border-color: transparent; }
 
   /* ---------- 토스트 알림 ---------- */
   .toast-container {
@@ -563,13 +620,13 @@
 </style>
 </head>
 <body>
-  <div class="top-accent-bar"></div>
   <header>
     <div class="brand">
       <span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l3.5 7L12 4h8"/></svg></span>
       <div class="brand-text">
         <h1>한글 수식 변환기</h1>
         <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
+        <button type="button" class="help-chip" id="helpBtn"><span id="iconHelp"></span>사용법</button>
       </div>
     </div>
     <div class="flow">
@@ -626,13 +683,6 @@
           <button type="submit" id="submitBtn"><span id="iconSubmit"></span><span id="submitLabel">선택한 문제 hwpx로 변환</span></button>
         </form>
         <div id="status"><span class="spinner" style="display:none"></span><span class="msg"></span></div>
-        <div class="hint">
-          <div class="hint-row"><b>이미지</b><span>왼쪽 점선 영역에 드래그, 클릭 후 Ctrl+V, 또는 파일 선택</span></div>
-          <div class="hint-row"><b>박스에 추가</b><span>박스의 텍스트 칸을 클릭한 뒤 Ctrl+V하면 그 박스에 바로 추가</span></div>
-          <div class="hint-row"><b>AI 생성</b><span>위 카드에 원하는 문제를 요청 (선택된 박스를 참고)</span></div>
-          <div class="hint-row"><b>AI 변형</b><span>각 박스의 반짝이 버튼으로 그 문제만 다시 작성</span></div>
-          <div class="hint-row"><b>수식</b><span><code>$...$</code>, <code>$$...$$</code>, <code>\[...\]</code>, <code>\(...\)</code></span></div>
-        </div>
       </div>
     </aside>
 
@@ -654,6 +704,22 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
+  <div class="modal-overlay" id="helpOverlay">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span class="modal-title">사용법</span>
+        <button type="button" class="modal-close" id="helpCloseBtn"><span id="iconClose"></span></button>
+      </div>
+      <div class="modal-body hint">
+        <div class="hint-row"><b>이미지</b><span>왼쪽 점선 영역에 드래그, 클릭 후 Ctrl+V, 또는 파일 선택</span></div>
+        <div class="hint-row"><b>박스에 추가</b><span>박스의 텍스트 칸을 클릭한 뒤 Ctrl+V하면 그 박스에 바로 추가</span></div>
+        <div class="hint-row"><b>AI 생성</b><span>사이드바 카드에 원하는 문제를 요청 (선택된 박스를 참고)</span></div>
+        <div class="hint-row"><b>AI 변형</b><span>각 박스의 반짝이 버튼으로 그 문제만 다시 작성</span></div>
+        <div class="hint-row"><b>수식</b><span><code>$...$</code>, <code>$$...$$</code>, <code>\[...\]</code>, <code>\(...\)</code></span></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ---- 플랫 아이콘(SVG, currentColor) ----
     const ICONS = {
@@ -669,6 +735,8 @@
       download: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M6 11l6 6 6-6M4 21h16"/></svg>',
       check: '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l3.5 7L12 4h8" style="stroke-dasharray:40;stroke-dashoffset:40;animation:draw-check .45s ease forwards .05s"/></svg>',
       alert: '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>',
+      help: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.6"/><path d="M12 17h.01"/></svg>',
+      close: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>',
     };
     document.getElementById('iconImage').innerHTML = ICONS.image;
     document.getElementById('iconPlusSmall').innerHTML = ICONS.plus;
@@ -677,6 +745,7 @@
     document.getElementById('iconPlus').innerHTML = ICONS.plus;
     document.getElementById('iconGrid').innerHTML = ICONS.grid;
     document.getElementById('iconSubmit').innerHTML = ICONS.download;
+    document.getElementById('iconHelp').innerHTML = ICONS.help;
 
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -993,6 +1062,22 @@
       `2. $0 < \\theta < \\frac{\\pi}{2}$ 이고 $\\sin\\theta \\ge \\frac{1}{2}$ 일 때, 다음을 구하시오.\n\n$$\\int_0^1 x^2 \\, dx = \\frac{1}{3}$$`,
     ];
     document.getElementById('exampleBtn').addEventListener('click', () => addBoxes(EXAMPLES, 'manual'));
+
+    // ---- 사용법 모달 ----
+    document.getElementById('iconClose').innerHTML = ICONS.close;
+    const helpOverlay = document.getElementById('helpOverlay');
+    function openHelp() {
+      helpOverlay.classList.add('show');
+      requestAnimationFrame(() => requestAnimationFrame(() => helpOverlay.classList.add('in')));
+    }
+    function closeHelp() {
+      helpOverlay.classList.remove('in');
+      setTimeout(() => helpOverlay.classList.remove('show'), 180);
+    }
+    document.getElementById('helpBtn').addEventListener('click', openHelp);
+    document.getElementById('helpCloseBtn').addEventListener('click', closeHelp);
+    helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) closeHelp(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && helpOverlay.classList.contains('show')) closeHelp(); });
 
     // ---- 이미지 입력: 드롭존(드래그/붙여넣기/파일선택) + 박스별 붙여넣기 공용 큐 ----
     const dropzone = document.getElementById('dropzone');
