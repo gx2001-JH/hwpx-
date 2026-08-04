@@ -280,7 +280,12 @@ function szMeasure(tokens) {
     }
 
     if (tok === "left" || tok === "right") {
-      i += 2; // 구분 기호(다음 토큰) 포함
+      // 변환기는 항상 "left ("처럼 구분 기호 앞에 공백을 하나 넣는데, "다음 토큰"을
+      // 그 공백으로 착각해 건너뛰면 진짜 구분 기호(괄호 등)가 그대로 남아 별도의
+      // 연산자 폭으로 한 번 더 중복 합산된다.
+      i += 1;
+      while (i < n && tokens[i].trim() === "") i += 1;
+      if (i < n) i += 1; // 진짜 구분 기호 건너뛰기
       out.push([350, BASE_H, null]);
       continue;
     }
