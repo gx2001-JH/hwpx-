@@ -38,7 +38,7 @@
     --ease: cubic-bezier(.22,.85,.34,1);
     /* 사이드바 전용 다크 테마 색(레이어드 카드 느낌을 위해 사이드바만 검게) */
     --sidebar-bg: #16161A;
-    --sidebar-bg-2: #201F24;
+    --sidebar-bg-2: #28262E;
     --sidebar-text: #EDEAF7;
     --sidebar-text-muted: #938EAA;
     --sidebar-border: rgba(255,255,255,.14);
@@ -178,13 +178,13 @@
   .ripple { position: absolute; border-radius: 50%; background: currentColor; pointer-events: none; animation: ripple-anim .55s var(--ease) forwards; }
 
   .dropzone {
+    position: relative;
     border: 2px dashed var(--border);
     border-radius: 14px;
     padding: 18px 12px;
     text-align: center;
     color: var(--text-muted);
     font-size: 12px;
-    background: var(--surface-2);
     transition: border-color .18s ease, background .18s ease, transform .18s var(--ease);
   }
   .dropzone .dz-icon {
@@ -246,13 +246,26 @@
     min-height: 0;
     border-radius: 15px;
     padding: 1px;
-    background: var(--accent);
+    background: rgba(123,92,250,.4);
     display: flex;
-    transition: box-shadow .2s ease;
+    transition: box-shadow .25s ease, background .2s ease;
   }
   .ai-card:focus-within { box-shadow: 0 0 0 4px var(--sidebar-accent-soft); }
-  .ai-card-inner { flex: 1; min-height: 0; background: var(--surface-2); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  /* 생성 요청이 진행되는 동안 테두리에 무지개빛 할로우(글로우) 효과 */
+  .ai-card.generating { animation: ai-card-halo 3s linear infinite; }
+  @keyframes ai-card-halo {
+    0%   { box-shadow: 0 0 0 1.5px #FF6B6B, 0 0 20px 3px rgba(255,107,107,.4); }
+    16%  { box-shadow: 0 0 0 1.5px #FFB86B, 0 0 20px 3px rgba(255,184,107,.4); }
+    33%  { box-shadow: 0 0 0 1.5px #FFE96B, 0 0 20px 3px rgba(255,233,107,.4); }
+    50%  { box-shadow: 0 0 0 1.5px #6BFFA0, 0 0 20px 3px rgba(107,255,160,.4); }
+    66%  { box-shadow: 0 0 0 1.5px #6BC7FF, 0 0 20px 3px rgba(107,199,255,.4); }
+    83%  { box-shadow: 0 0 0 1.5px #B06BFF, 0 0 20px 3px rgba(176,107,255,.4); }
+    100% { box-shadow: 0 0 0 1.5px #FF6B6B, 0 0 20px 3px rgba(255,107,107,.4); }
+  }
+  .ai-card-inner { flex: 1; min-height: 0; background: var(--surface); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
   .ai-card-title { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--accent); }
+  .api-key-chip.set { color: var(--ok); border-color: var(--ok); }
+  .api-key-chip.set:hover { color: var(--ok); background: rgba(63,143,108,.18); }
   .ai-card select {
     width: 100%;
     border: 1px solid var(--border);
@@ -334,6 +347,30 @@
   }
   .filename-field input[type=text]:focus { box-shadow: none; }
   .filename-ext { color: var(--text-muted); font-size: 12px; flex: none; white-space: nowrap; }
+
+  /* ---------- API 키 입력 ---------- */
+  .api-key-field {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-2);
+    padding: 0 8px 0 12px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .api-key-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .api-key-field input { flex: 1; border: none; background: none; padding: 10px 0; font-size: 13px; color: var(--text); font-family: inherit; }
+  .api-key-field input:focus { outline: none; box-shadow: none; }
+  .api-key-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; flex: none;
+    border: none; background: none; color: var(--text-muted);
+    cursor: pointer; border-radius: 6px;
+    transition: background .15s ease, color .15s ease;
+  }
+  .api-key-toggle:hover { background: var(--accent-soft); color: var(--accent); }
+  .api-key-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+  .api-key-status { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; margin-top: 10px; }
+  .api-key-status.set { color: var(--ok); }
+  .api-key-status.unset { color: var(--text-muted); }
   textarea:focus, input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   button[type=submit] {
     position: relative; overflow: hidden;
@@ -499,6 +536,19 @@
     color: var(--accent-hover);
   }
   .box-btn.ai-btn:hover:not(:disabled), .box-btn.ai-btn.active { background: var(--accent); border-color: transparent; color: #fff; }
+  .box-btn.ai-btn.locked { background: var(--surface-2); border-color: var(--border); color: var(--text-muted); }
+  .box-btn.ai-btn.locked:hover:not(:disabled) { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- API 키 잠금 표시(자물쇠) ---------- */
+  .locked { opacity: .72; }
+  .dz-lock-badge {
+    display: none; align-items: center; gap: 5px;
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(0,0,0,.5); color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px 3px 6px; border-radius: 100px;
+    pointer-events: none;
+  }
   .box-ai-caption {
     display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--accent-2); font-weight: 600;
     max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
@@ -645,6 +695,7 @@
         <h1>한글 수식 변환기</h1>
         <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
         <button type="button" class="help-chip" id="helpBtn"><span id="iconHelp"></span>사용법</button>
+        <button type="button" class="help-chip api-key-chip" id="apiKeyBtn"><span id="iconKey"></span><span id="apiKeyChipLabel">API 키 설정</span></button>
       </div>
     </div>
   </header>
@@ -652,6 +703,7 @@
   <div class="shell">
     <aside class="sidebar" id="sidebar">
       <div class="dropzone" id="dropzone" tabindex="0">
+        <div class="dz-lock-badge" id="dzLockBadge"><span id="iconDzLock"></span>API 키 필요</div>
         <div class="dz-icon" id="iconImage"></div>
         <div class="dz-title">이미지로 문제 가져오기</div>
         <div class="dz-desc">사진 속 문제와 수식을 자동으로 인식해<br>편집 가능한 텍스트로 바꿔줍니다</div>
@@ -665,7 +717,9 @@
 
       <div class="ai-card">
         <div class="ai-card-inner">
-          <div class="ai-card-title"><span id="iconSparkTitle"></span> AI로 새 문제 생성</div>
+          <div class="ai-card-title">
+            <span id="iconSparkTitle"></span> AI로 새 문제 생성
+          </div>
           <select id="aiType">
             <option value="">유형: 자동</option>
             <option value="객관식">객관식</option>
@@ -674,7 +728,7 @@
           </select>
           <textarea id="aiInstruction" placeholder="예: 이차함수 최댓값 문제 2개 만들어줘 (선택된 박스를 참고합니다)"></textarea>
           <div class="ai-card-actions">
-            <button type="button" class="btn-gradient" id="aiSubmitBtn"><span id="iconSparkBtn"></span><span id="aiSubmitLabel">생성하기</span></button>
+            <button type="button" class="btn-gradient" id="aiSubmitBtn" data-needs-key><span id="iconSparkBtn"></span><span id="aiSubmitLabel">생성하기</span></button>
           </div>
         </div>
       </div>
@@ -732,8 +786,8 @@
           <span><b>이미지로:</b> 왼쪽 점선 영역에 사진을 드래그하거나, 영역을 클릭한 뒤 <code>Ctrl+V</code>로 붙여넣거나, "파일 선택"으로 올리면 자동으로 글자와 수식을 읽어 박스를 만들어줘요.<br><b>직접 입력:</b> "박스 직접 추가"로 빈 박스를 만들고, 수식은 LaTeX 문법으로 <code>$...$</code>처럼 감싸 적으면 돼요.</span>
         </div>
         <div class="hint-row">
-          <b>② AI로 만들거나 다듬기</b>
-          <span><b>새로 만들기:</b> 사이드바의 "AI로 새 문제 생성" 카드에 원하는 내용을 적으면, 선택된 박스를 참고해 새 문제를 만들어줘요.<br><b>고쳐 쓰기:</b> 각 박스의 <b>✦ AI</b> 버튼을 눌러 "더 어렵게 바꿔줘"처럼 그 문제만 다시 쓰도록 요청할 수 있어요.</span>
+          <b>② AI로 만들거나 다듬기 (API 키 필요)</b>
+          <span>이미지 인식·문제 생성·고쳐 쓰기는 모두 Gemini AI를 쓰기 때문에, 먼저 화면 상단의 <b>API 키 설정</b>에서 본인의 무료 API 키를 등록해야 잠금이 풀려요(자물쇠 아이콘이 붙은 기능들). 등록하면 <b>새로 만들기:</b> 원하는 내용을 적어 선택된 박스를 참고해 새 문제를 만들고, <b>고쳐 쓰기:</b> 각 박스의 <b>✦ AI</b> 버튼으로 "더 어렵게 바꿔줘"처럼 그 문제만 다시 쓰도록 요청할 수 있어요.</span>
         </div>
         <div class="hint-row">
           <b>③ 박스 정리하기</b>
@@ -750,6 +804,44 @@
         <div class="hint-row">
           <b>수식 문법 참고</b>
           <span>본문 중간 수식 <code>$...$</code> · 줄 강조 수식 <code>$$...$$</code> 또는 <code>\[...\]</code> · 괄호식 수식 <code>\(...\)</code></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="apiKeyOverlay">
+    <div class="modal-card">
+      <div class="modal-head">
+        <span class="modal-title">Gemini API 키 설정</span>
+        <button type="button" class="modal-close" id="apiKeyCloseBtn"><span id="iconClose2"></span></button>
+      </div>
+      <div class="modal-body">
+        <p class="hint-intro" style="margin-bottom:12px; padding-bottom:0; border-bottom:none;">
+          이미지 인식(OCR)과 AI 문제 생성·변형은 Google Gemini를 사용해요. 본인의 무료 API 키를 아래에
+          넣으면 잠긴 기능들이 바로 풀립니다 — <b>이 키는 이 브라우저에만 저장되고 서버에는 저장되지
+          않아요.</b>
+        </p>
+        <div class="api-key-field">
+          <span class="filename-icon" id="iconKeyField"></span>
+          <input type="password" id="apiKeyInput" placeholder="AIza로 시작하는 API 키를 붙여넣으세요" autocomplete="off">
+          <button type="button" class="api-key-toggle" id="apiKeyToggleBtn" title="키 표시/숨기기"><span id="iconEye2"></span></button>
+        </div>
+        <div class="api-key-actions">
+          <button type="button" class="side-link-btn" id="apiKeyClearBtn"><span id="iconTrash2"></span>키 삭제</button>
+          <button type="button" class="btn-gradient" id="apiKeySaveBtn"><span id="iconSave2"></span>저장</button>
+        </div>
+        <div class="hint-row" style="margin-top:16px;">
+          <b>① 무료 API 키 발급받기</b>
+          <span><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>
+          접속 → Google 계정으로 로그인 → <b>Create API key</b> 클릭 → 생성된 키(<code>AIza...</code>로 시작)를
+          복사해서 위 입력창에 붙여넣고 저장하면 끝이에요.</span>
+        </div>
+        <div class="hint-row">
+          <b>② 무료 티어 사용량</b>
+          <span>Gemini 2.5 Flash 무료 티어는 분당·일일 요청 수에 제한이 있어요(대략 분당 10회, 하루
+          250회 안팎 — 모델·시점에 따라 바뀔 수 있습니다). 개인 학습·소규모 사용에는 충분하지만, 정확한
+          최신 한도는 <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener">공식 요금/한도 문서</a>에서
+          확인하세요. 한도를 넘으면 잠시 후 다시 시도하시면 됩니다.</span>
         </div>
       </div>
     </div>
@@ -776,6 +868,9 @@
       save: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>',
       load: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M12 11v6M9 14l3 3 3-3"/></svg>',
       file: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></svg>',
+      lock: '<svg class="icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M7 11V8a5 5 0 0110 0v3"/></svg>',
+      key: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.5 12.5L20 3M20 3v4M20 3h-4"/></svg>',
+      eye2: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>',
     };
     document.getElementById('iconImage').innerHTML = ICONS.image;
     document.getElementById('iconPlusSmall').innerHTML = ICONS.plus;
@@ -788,8 +883,62 @@
     document.getElementById('iconFilename').innerHTML = ICONS.file;
     document.getElementById('iconLoad').innerHTML = ICONS.load;
     document.getElementById('iconSave').innerHTML = ICONS.save;
+    document.getElementById('iconKey').innerHTML = ICONS.key;
+    document.getElementById('iconClose2').innerHTML = ICONS.close;
+    document.getElementById('iconEye2').innerHTML = ICONS.eye2;
+    document.getElementById('iconTrash2').innerHTML = ICONS.trash;
+    document.getElementById('iconSave2').innerHTML = ICONS.save;
+    document.getElementById('iconKeyField').innerHTML = ICONS.key;
+    document.getElementById('iconDzLock').innerHTML = ICONS.lock;
 
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- Gemini API 키 관리 (이 브라우저에만 저장, 서버로는 요청할 때만 실려서 전달됨) ----
+    const API_KEY_STORAGE = 'hwpeq_gemini_key';
+    function getApiKey() {
+      try {
+        return localStorage.getItem(API_KEY_STORAGE) || '';
+      } catch (err) {
+        return '';
+      }
+    }
+    function hasApiKey() {
+      return !!getApiKey();
+    }
+    function setApiKeyValue(key) {
+      try {
+        if (key) localStorage.setItem(API_KEY_STORAGE, key);
+        else localStorage.removeItem(API_KEY_STORAGE);
+      } catch (err) { /* localStorage를 못 쓰는 환경이면 그냥 무시 */ }
+      updateApiKeyUI();
+    }
+    // AI 관련 동작 직전에 호출: 키가 없으면 안내 토스트를 띄우고 설정 모달을 열어준 뒤 false를 반환한다.
+    function requireApiKey() {
+      if (hasApiKey()) return true;
+      setStatus('error', 'AI 기능을 쓰려면 먼저 API 키를 등록해주세요.');
+      openApiKeyModal();
+      return false;
+    }
+    // 잠긴(자물쇠) 기능 버튼들의 표시를 키 등록 상태에 맞춰 갱신한다.
+    function updateApiKeyUI() {
+      const set = hasApiKey();
+      const chip = document.getElementById('apiKeyBtn');
+      const chipLabel = document.getElementById('apiKeyChipLabel');
+      const chipIcon = document.getElementById('iconKey');
+      if (chip) {
+        chip.classList.toggle('set', set);
+        chipLabel.textContent = set ? 'API 키 연결됨' : 'API 키 설정';
+        if (chipIcon) chipIcon.innerHTML = set ? ICONS.check : ICONS.key;
+      }
+      document.querySelectorAll('[data-needs-key]').forEach((el) => {
+        el.classList.toggle('locked', !set);
+      });
+      const dzLockBadge = document.getElementById('dzLockBadge');
+      if (dzLockBadge) dzLockBadge.style.display = set ? 'none' : 'flex';
+      const sparkBtnIcon = document.getElementById('iconSparkBtn');
+      if (sparkBtnIcon) sparkBtnIcon.innerHTML = set ? ICONS.spark : ICONS.lock;
+      renderBoxList();
+    }
 
     // ---- 리플 효과: 버튼류 클릭 시 파동 효과 ----
     document.addEventListener('click', (e) => {
@@ -898,7 +1047,7 @@
             <input type="checkbox" class="box-chk" ${box.checked ? 'checked' : ''}>
             <span class="box-source src-${box.source}">${sourceIcon}${SOURCE_LABEL[box.source] || '문제'}</span>
             <span class="box-controls">
-              <button type="button" class="box-btn ai-btn${aiOpen ? ' active' : ''}" data-action="ai" title="AI로 이 문제 다시 쓰기" ${processing ? 'disabled' : ''}>${ICONS.spark}AI</button>
+              <button type="button" class="box-btn ai-btn${aiOpen ? ' active' : ''}${hasApiKey() ? '' : ' locked'}" data-action="ai" title="${hasApiKey() ? 'AI로 이 문제 다시 쓰기' : 'API 키를 등록하면 사용할 수 있어요'}" ${processing ? 'disabled' : ''}>${hasApiKey() ? ICONS.spark : ICONS.lock}AI</button>
               <button type="button" class="box-btn" data-action="up" ${i === 0 ? 'disabled' : ''} title="위로">${ICONS.up}</button>
               <button type="button" class="box-btn" data-action="down" ${i === boxes.length - 1 ? 'disabled' : ''} title="아래로">${ICONS.down}</button>
               <button type="button" class="box-btn danger" data-action="delete" title="삭제">${ICONS.trash}</button>
@@ -1006,6 +1155,7 @@
       const input = boxEl && boxEl.querySelector('.box-ai-input');
       const instruction = input ? input.value.trim() : '';
       if (!instruction) return;
+      if (!requireApiKey()) return;
 
       aiProcessingBoxIds.add(boxId);
       renderBoxList();
@@ -1014,7 +1164,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instruction, context: box.text, type: '' }),
+          body: JSON.stringify({ instruction, context: box.text, type: '', apiKey: getApiKey() }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
@@ -1054,6 +1204,7 @@
 
       const action = btn.dataset.action;
       if (action === 'ai') {
+        if (!requireApiKey()) return;
         // 패널 열고 닫기는 전체 리렌더 없이 클래스만 토글해 부드럽게 펼쳐지도록 한다.
         const opening = !aiOpenBoxIds.has(id);
         if (opening) aiOpenBoxIds.add(id); else aiOpenBoxIds.delete(id);
@@ -1167,6 +1318,45 @@
     helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) closeHelp(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && helpOverlay.classList.contains('show')) closeHelp(); });
 
+    // ---- API 키 설정 모달 ----
+    const apiKeyOverlay = document.getElementById('apiKeyOverlay');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    function openApiKeyModal() {
+      apiKeyInput.value = getApiKey();
+      apiKeyOverlay.classList.add('show');
+      requestAnimationFrame(() => requestAnimationFrame(() => apiKeyOverlay.classList.add('in')));
+      setTimeout(() => apiKeyInput.focus(), 200);
+    }
+    function closeApiKeyModal() {
+      apiKeyOverlay.classList.remove('in');
+      setTimeout(() => apiKeyOverlay.classList.remove('show'), 180);
+    }
+    document.getElementById('apiKeyBtn').addEventListener('click', openApiKeyModal);
+    document.getElementById('apiKeyCloseBtn').addEventListener('click', closeApiKeyModal);
+    apiKeyOverlay.addEventListener('click', (e) => { if (e.target === apiKeyOverlay) closeApiKeyModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && apiKeyOverlay.classList.contains('show')) closeApiKeyModal(); });
+
+    document.getElementById('apiKeyToggleBtn').addEventListener('click', () => {
+      const showing = apiKeyInput.type === 'text';
+      apiKeyInput.type = showing ? 'password' : 'text';
+      document.getElementById('iconEye2').innerHTML = showing ? ICONS.eye2 : ICONS.close;
+    });
+    document.getElementById('apiKeySaveBtn').addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        setStatus('error', '키를 입력해주세요.');
+        return;
+      }
+      setApiKeyValue(key);
+      setStatus('ok', 'API 키를 저장했습니다. 이제 AI 기능을 사용할 수 있어요.');
+      closeApiKeyModal();
+    });
+    document.getElementById('apiKeyClearBtn').addEventListener('click', () => {
+      apiKeyInput.value = '';
+      setApiKeyValue('');
+      setStatus('ok', 'API 키를 삭제했습니다.');
+    });
+
     // ---- 이미지 입력: 드롭존(드래그/붙여넣기/파일선택) + 박스별 붙여넣기 공용 큐 ----
     const dropzone = document.getElementById('dropzone');
     const ocrFile = document.getElementById('ocrFile');
@@ -1228,6 +1418,7 @@
 
     function enqueueImage(file, targetBoxId) {
       if (!file || !file.type || !file.type.startsWith('image/')) return;
+      if (!requireApiKey()) return;
       queue.push({ id: Math.random().toString(36).slice(2), file, status: 'pending', url: URL.createObjectURL(file), targetBoxId: targetBoxId || null });
       renderQueue();
       processQueue();
@@ -1244,7 +1435,7 @@
       const res = await fetch('/ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64, mimeType: file.type || 'image/png' }),
+        body: JSON.stringify({ imageBase64, mimeType: file.type || 'image/png', apiKey: getApiKey() }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
@@ -1302,12 +1493,16 @@
     const aiType = document.getElementById('aiType');
     const aiInstruction = document.getElementById('aiInstruction');
     const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+    const aiCardEl = aiSubmitBtn.closest('.ai-card');
 
     async function submitAiRequest() {
       const instruction = aiInstruction.value.trim();
       if (!instruction) return;
 
+      if (!requireApiKey()) return;
+
       aiSubmitBtn.disabled = true;
+      aiCardEl.classList.add('generating');
       setStatus('pending', 'AI가 문제를 만드는 중입니다...');
 
       try {
@@ -1315,7 +1510,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instruction, context, type: aiType.value }),
+          body: JSON.stringify({ instruction, context, type: aiType.value, apiKey: getApiKey() }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
@@ -1336,6 +1531,7 @@
         setStatus('error', err.message);
       } finally {
         aiSubmitBtn.disabled = false;
+        aiCardEl.classList.remove('generating');
       }
     }
 
@@ -1486,6 +1682,7 @@
     document.getElementById('loadBtn').addEventListener('click', () => restoreWork(false));
 
     restoreWork(true);
+    updateApiKeyUI();
     renderBoxList();
   </script>
 </body>

@@ -19,7 +19,12 @@ function buildPrompt(instruction, context, type) {
 아래 사용자 요청에 따라 수학 문제와 해설을 작성해줘.
 
 형식 규칙:
-- 수식은 반드시 LaTeX 문법으로 작성하고 $...$ 로 감싸줘 (여러 줄/블록 수식은 $$...$$).
+- 수식은 반드시 LaTeX 문법으로 작성하고 $...$ 로 감싸줘 (여러 줄/블록 수식은 $$...$$). 문장 중간에
+  단독으로 나오는 숫자나 변수 하나(예: 답이 "5이다"라고 쓸 때의 5)도 예외 없이 $5$처럼 LaTeX로
+  감싸줘 — 감싸지 않은 일반 텍스트 숫자로 남겨두지 마.
+- 객관식 보기 번호는 항상 ①, ②, ③, ④, ⑤ 기호만 사용해. "(1)", "(2)", "1)", "1." 같은 형태는
+  절대 쓰지 마 (문제 유형을 명시적으로 지정받지 않고 네가 알아서 객관식으로 판단해 만드는
+  경우에도 반드시 지켜야 하는 규칙이야).
 - 마크다운 문법(**굵게**, - 목록, # 제목 등)을 쓰지 말고 일반 텍스트로만 작성해줘.
 - 각 문제는 문제 본문 다음 줄에 "[해설]"로 시작하는 해설을 붙여줘.
 - 대한민국 수능/모의고사에서 실제로 쓰이는 어휘와 문장 형식을 따라줘 (예: "다음 중 옳은 것은?",
@@ -72,14 +77,6 @@ export default async (req) => {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "서버에 GEMINI_API_KEY가 설정되어 있지 않습니다. Netlify 환경 변수를 확인해주세요." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
   let body;
   try {
     body = await req.json();
@@ -88,6 +85,16 @@ export default async (req) => {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  // 사용자가 자기 API 키를 등록했으면 그 키를 우선 쓰고, 없으면(관리자가 설정해둔 경우)
+  // 서버 환경 변수로 폴백한다.
+  const apiKey = (body.apiKey || "").trim() || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: "API 키가 없습니다. 상단의 'API 키 설정'에서 본인의 Gemini API 키를 등록해주세요." }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   const instruction = (body.instruction || "").trim();

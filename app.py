@@ -39,7 +39,12 @@ def _build_generate_prompt(instruction: str, context: str, problem_type: str) ->
         "너는 대한민국 수능(대학수학능력시험)/모의고사 스타일 수학 문제를 출제하는 전문가야.\n"
         "아래 사용자 요청에 따라 수학 문제와 해설을 작성해줘.\n\n"
         "형식 규칙:\n"
-        "- 수식은 반드시 LaTeX 문법으로 작성하고 $...$ 로 감싸줘 (여러 줄/블록 수식은 $$...$$).\n"
+        "- 수식은 반드시 LaTeX 문법으로 작성하고 $...$ 로 감싸줘 (여러 줄/블록 수식은 $$...$$). 문장 "
+        "중간에 단독으로 나오는 숫자나 변수 하나(예: 답이 \"5이다\"라고 쓸 때의 5)도 예외 없이 $5$처럼 "
+        "LaTeX로 감싸줘 — 감싸지 않은 일반 텍스트 숫자로 남겨두지 마.\n"
+        "- 객관식 보기 번호는 항상 ①, ②, ③, ④, ⑤ 기호만 사용해. \"(1)\", \"(2)\", \"1)\", \"1.\" 같은 "
+        "형태는 절대 쓰지 마 (문제 유형을 명시적으로 지정받지 않고 네가 알아서 객관식으로 판단해 "
+        "만드는 경우에도 반드시 지켜야 하는 규칙이야).\n"
         "- 마크다운 문법(**굵게**, - 목록, # 제목 등)을 쓰지 말고 일반 텍스트로만 작성해줘.\n"
         "- 각 문제는 문제 본문 다음 줄에 \"[해설]\"로 시작하는 해설을 붙여줘.\n"
         "- 대한민국 수능/모의고사에서 실제로 쓰이는 어휘와 문장 형식을 따라줘 "
@@ -135,11 +140,12 @@ def convert():
 
 @app.route("/ocr", methods=["POST"])
 def ocr():
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return jsonify({"error": "서버에 GEMINI_API_KEY가 설정되어 있지 않습니다."}), 500
-
     body = request.get_json(silent=True) or {}
+    # 사용자가 자기 API 키를 등록했으면 그 키를 우선 쓰고, 없으면(관리자가 설정해둔 경우)
+    # 서버 환경 변수로 폴백한다.
+    api_key = (body.get("apiKey") or "").strip() or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "API 키가 없습니다. 상단의 'API 키 설정'에서 본인의 Gemini API 키를 등록해주세요."}), 401
     image_base64 = body.get("imageBase64")
     mime_type = body.get("mimeType")
     if not image_base64 or not mime_type:
@@ -172,11 +178,12 @@ def ocr():
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return jsonify({"error": "서버에 GEMINI_API_KEY가 설정되어 있지 않습니다."}), 500
-
     body = request.get_json(silent=True) or {}
+    # 사용자가 자기 API 키를 등록했으면 그 키를 우선 쓰고, 없으면(관리자가 설정해둔 경우)
+    # 서버 환경 변수로 폴백한다.
+    api_key = (body.get("apiKey") or "").strip() or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "API 키가 없습니다. 상단의 'API 키 설정'에서 본인의 Gemini API 키를 등록해주세요."}), 401
     instruction = (body.get("instruction") or "").strip()
     context = body.get("context") or ""
     problem_type = body.get("type") or ""
