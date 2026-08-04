@@ -56,15 +56,38 @@ def _strip_code_fence(text: str) -> str:
     return m.group(1) if m else text
 
 
+def _unwrap_nested(value) -> list:
+    """가끔 모델이 problems 배열의 원소 하나에 {"problems": [...]} JSON 문자열
+    전체를 그대로 한 번 더 넣어버린다(자기 자신이 출력해야 할 형식 설명을
+    내용으로 착각하는 경우). 그 결과가 그대로 박스에 노출되던 버그라, 원소가
+    다시 그 형태처럼 보이면 한 번 더 풀어서 실제 문제 텍스트까지 내려간다."""
+    trimmed = str(value).strip()
+    if trimmed.startswith("{") and '"problems"' in trimmed:
+        try:
+            inner = json.loads(_strip_code_fence(trimmed))
+            inner_problems = inner.get("problems")
+            if isinstance(inner_problems, list) and inner_problems:
+                result = []
+                for p in inner_problems:
+                    result.extend(_unwrap_nested(p))
+                return result
+        except Exception:
+            pass
+    return [trimmed]
+
+
 def _parse_problems(text: str):
     try:
         parsed = json.loads(_strip_code_fence(text))
         problems = parsed.get("problems")
         if isinstance(problems, list) and problems:
-            return [str(p).strip() for p in problems if str(p).strip()]
+            result = []
+            for p in problems:
+                result.extend(_unwrap_nested(p))
+            return [p.strip() for p in result if p.strip()]
     except Exception:
         pass
-    return [text.strip()] if text.strip() else []
+    return [p.strip() for p in _unwrap_nested(text) if p.strip()]
 
 
 def _call_gemini(api_key: str, parts: list, json_mode: bool = False):

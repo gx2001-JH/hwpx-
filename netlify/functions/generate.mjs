@@ -36,16 +36,35 @@ function stripCodeFence(text) {
   return m ? m[1] : text;
 }
 
+// 가끔 모델이 problems 배열의 원소 하나에 {"problems": [...]} JSON 문자열
+// 전체를 그대로 한 번 더 넣어버린다(자기 자신이 출력해야 할 형식 설명을
+// 내용으로 착각하는 경우). 그 결과가 그대로 박스에 노출되던 버그라, 원소가
+// 다시 그 형태처럼 보이면 한 번 더 풀어서 실제 문제 텍스트까지 내려간다.
+function unwrapNested(str) {
+  const trimmed = String(str).trim();
+  if (trimmed.startsWith("{") && trimmed.includes('"problems"')) {
+    try {
+      const inner = JSON.parse(stripCodeFence(trimmed));
+      if (Array.isArray(inner.problems) && inner.problems.length) {
+        return inner.problems.flatMap((p) => unwrapNested(p));
+      }
+    } catch {
+      // 풀리지 않으면 원문을 그대로 둔다
+    }
+  }
+  return [trimmed];
+}
+
 function parseProblems(text) {
   try {
     const parsed = JSON.parse(stripCodeFence(text));
     if (Array.isArray(parsed.problems) && parsed.problems.length) {
-      return parsed.problems.map((p) => String(p).trim()).filter(Boolean);
+      return parsed.problems.flatMap((p) => unwrapNested(p)).map((p) => p.trim()).filter(Boolean);
     }
   } catch {
     // JSON 파싱 실패 시 아래에서 원문 그대로 폴백
   }
-  return text.trim() ? [text.trim()] : [];
+  return unwrapNested(text).map((p) => p.trim()).filter(Boolean);
 }
 
 export default async (req) => {
