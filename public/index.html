@@ -624,8 +624,8 @@
   .box-ai-panel button:active:not(:disabled) { transform: scale(.94); }
   .box-ai-panel button:disabled { opacity: 0.5; cursor: default; }
 
-  /* AI 처리중 표시: 화려한 다색 글로우 대신 단색 테두리만 차분하게 */
-  .box.ai-processing { box-shadow: 0 0 0 1.5px var(--accent); border-color: transparent; }
+  /* AI 처리중 표시: AI 카드와 같은 무지개빛 할로우(글로우) 효과 */
+  .box.ai-processing { border-color: transparent; animation: ai-card-halo 3s linear infinite; }
 
   /* ---------- 토스트 알림 ---------- */
   .toast-container {
