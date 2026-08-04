@@ -10,12 +10,18 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <style>
+  /* Paperlogy (OFL) - 자체 호스팅. 굵기별로 필요한 것만 받아서 쓴다. */
+  @font-face { font-family: "Paperlogy"; src: url("fonts/Paperlogy-5Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+  @font-face { font-family: "Paperlogy"; src: url("fonts/Paperlogy-6SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "Paperlogy"; src: url("fonts/Paperlogy-7Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: "Paperlogy"; src: url("fonts/Paperlogy-8ExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+
   :root {
     color-scheme: light;
-    --bg: #EFEDF6;
+    --bg: #F5F4FA;
     --surface: #FFFFFF;
-    --surface-2: #F6F4FB;
-    --border: #E3E0EE;
+    --surface-2: #F6F5FA;
+    --border: #E7E5EF;
     --text: #211D2E;
     --text-muted: #837FA0;
     --accent: #7B5CFA;
@@ -30,20 +36,21 @@
     --shadow-sm: 0 1px 2px rgba(33, 29, 46, 0.06);
     --shadow-lift: 0 8px 22px rgba(33, 29, 46, 0.12), 0 2px 6px rgba(33, 29, 46, 0.06);
     --ease: cubic-bezier(.22,.85,.34,1);
-    /* 사이드바 전용 다크 테마 색(레이어드 카드 느낌을 위해 사이드바만 어둡게) */
-    --sidebar-bg: #1E1A2C;
-    --sidebar-bg-2: #29233C;
+    /* 사이드바 전용 다크 테마 색(레이어드 카드 느낌을 위해 사이드바만 검게) */
+    --sidebar-bg: #16161A;
+    --sidebar-bg-2: #201F24;
     --sidebar-text: #EDEAF7;
     --sidebar-text-muted: #938EAA;
     --sidebar-border: rgba(255,255,255,.09);
     --sidebar-accent-soft: rgba(123,92,250,.22);
     --sidebar-code-bg: rgba(255,255,255,.07);
-    --sidebar-shadow: 0 16px 40px rgba(20,16,32,.35), 0 2px 8px rgba(20,16,32,.2);
+    --sidebar-shadow: 0 16px 40px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    font-family: "Pretendard Variable", "Pretendard", -apple-system, "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
+    font-family: "Paperlogy", "Pretendard Variable", "Pretendard", -apple-system, "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
+    font-weight: 500;
     margin: 0;
     color: var(--text);
     background: var(--bg);
@@ -73,14 +80,12 @@
   /* ---------- 헤더 ---------- */
   header {
     flex: none;
-    padding: 14px 28px;
-    border-bottom: 1px solid var(--border);
+    padding: 14px 28px 6px;
     display: flex;
     align-items: center;
     gap: 14px;
     flex-wrap: wrap;
-    background: var(--surface);
-    box-shadow: 0 1px 0 rgba(33,29,46,.03), 0 4px 14px rgba(33,29,46,.04);
+    background: var(--bg);
     position: relative;
     z-index: 5;
   }
@@ -94,7 +99,7 @@
   .brand-text { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   h1 {
     font-size: 21px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.01em;
     margin: 0;
   }
@@ -119,29 +124,12 @@
     transition: border-color .15s ease, color .15s ease, background .15s ease;
   }
   .help-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-  .flow { display: flex; align-items: center; gap: 5px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
-  .flow-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11.5px; font-weight: 600; color: var(--text-muted);
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: 100px; padding: 4px 11px 4px 8px;
-    transition: transform .18s var(--ease), border-color .18s ease;
-  }
-  .flow-chip:hover { transform: translateY(-1px); border-color: #D2CDE3; }
-  .flow-chip .icon { width: 12px; height: 12px; }
-  .flow-chip.ai {
-    background: var(--accent);
-    color: #fff; border-color: transparent;
-  }
-  .flow-chip.result { background: var(--accent-soft); color: var(--accent-hover); border-color: var(--accent-soft); font-weight: 700; }
-  .flow-arrow { color: #B7B2C9; font-size: 13px; }
-
   /* ---------- 전체 레이아웃: 사이드바(다크 카드) + 리사이저 + 메인 ---------- */
   .shell { flex: 1; display: flex; min-height: 0; padding: 14px; gap: 4px; animation: shell-in .4s var(--ease); }
   @keyframes shell-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   .sidebar {
-    /* 레퍼런스처럼 사이드바만 어두운 색으로 살짝 띄워, 메인 캔버스와 레이어가 나뉘어 보이게 한다 */
+    /* 레퍼런스처럼 사이드바만 검은색으로 살짝 띄워, 메인 캔버스와 레이어가 나뉘어 보이게 한다 */
     --surface: var(--sidebar-bg);
     --surface-2: var(--sidebar-bg-2);
     --text: var(--sidebar-text);
@@ -295,7 +283,7 @@
     background: var(--accent);
     transition: filter .15s ease, transform .12s var(--ease), box-shadow .15s ease;
   }
-  .btn-gradient:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 4px 14px rgba(201,100,66,.35); }
+  .btn-gradient:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 4px 14px rgba(123,92,250,.35); }
   .btn-gradient:active:not(:disabled) { transform: scale(0.96); }
   .btn-gradient:disabled { opacity: 0.5; cursor: default; }
 
@@ -303,49 +291,51 @@
   .side-link-btn {
     position: relative; overflow: hidden;
     display: flex; align-items: center; gap: 9px;
-    background: none; border: 1px solid transparent; border-radius: 9px;
+    background: none; border: 1px solid var(--border); border-radius: 9px;
     color: var(--text); font-size: 12.5px; font-weight: 500;
-    cursor: pointer; padding: 7px 9px; text-align: left;
+    cursor: pointer; padding: 7px 12px; text-align: left; white-space: nowrap;
     transition: background .15s ease, border-color .15s ease, transform .12s var(--ease);
   }
-  .side-link-btn:hover { background: var(--surface-2); border-color: var(--border); }
+  .side-link-btn:hover { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
   .side-link-btn:active { transform: scale(.98); }
 
-  .sidebar-footer {
-    margin-top: auto;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .select-all { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
-  .box-count { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  /* ---------- 메인 상단 툴바(박스 추가/예시/저장 + 선택·변환) ---------- */
+  /* 한 줄로 넉넉하게: 왼쪽은 박스 조작, 오른쪽은 선택·변환. 좁아지면만 두 줄로 감싼다 */
+  .main-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 22px; }
+  .toolbar-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .toolbar-convert { margin-left: auto; }
+  .select-all { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
+  .box-count { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+  .toolbar-convert form { display: flex; align-items: center; gap: 8px; }
   input[type=text] { padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; font-size: 13px; background: var(--surface-2); color: var(--text); width: 100%; transition: border-color .15s ease, box-shadow .15s ease; }
+  .toolbar-convert input[type=text] { width: 160px; }
   textarea:focus, input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   button[type=submit] {
     position: relative; overflow: hidden;
     background: var(--accent);
     color: #fff;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 18px;
     border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     width: 100%;
+    white-space: nowrap;
     display: flex; align-items: center; justify-content: center; gap: 7px;
     transition: background 0.18s ease, transform .12s var(--ease), box-shadow .18s ease;
   }
+  .toolbar-convert button[type=submit] { width: auto; }
   button[type=submit]:disabled { background: #D6C9F5; cursor: default; }
-  button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(201,100,66,.3); }
+  button[type=submit]:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(123,92,250,.3); }
   button[type=submit]:active:not(:disabled) { transform: scale(.98); }
   button[type=submit].success { background: var(--ok) !important; }
 
   button:focus-visible, .side-link-btn:focus-visible, .box-btn:focus-visible, .view-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .hint { font-size: 13px; color: var(--text-muted); }
-  .hint-row { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .hint { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .hint-intro { margin: 0 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .hint-row { display: flex; flex-direction: column; gap: 5px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .hint-row:last-child { border-bottom: none; padding-bottom: 0; }
   .hint-row:first-child { padding-top: 0; }
   .hint-row b { color: var(--text); font-weight: 700; }
@@ -367,7 +357,7 @@
     background: var(--surface);
     border-radius: 18px;
     box-shadow: var(--shadow);
-    width: 100%; max-width: 420px;
+    width: 100%; max-width: 500px;
     max-height: 82vh;
     display: flex; flex-direction: column;
     transform: translateY(10px) scale(.98);
@@ -437,6 +427,10 @@
   .box.removing { opacity: 0; transform: scale(.9); transition: opacity .18s ease, transform .18s ease; }
   .box.unchecked { opacity: 0.42; }
   .box-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .box-grip { color: var(--text-muted); opacity: .5; cursor: grab; flex: none; }
+  .box[draggable="true"]:hover .box-grip { opacity: 1; }
+  .box.dragging { opacity: .45; cursor: grabbing; }
+  .box.dragging .box-grip { cursor: grabbing; }
   .box-source {
     font-size: 10px;
     font-weight: 600;
@@ -610,7 +604,6 @@
   .app-footer .sep { margin: 0 6px; opacity: .5; }
 
   @media (max-width: 860px) {
-    .flow { display: none; }
     .shell { flex-direction: column; }
     .resizer { display: none; }
     .sidebar { width: 100% !important; max-width: none; border-right: none; border-bottom: 1px solid var(--border); max-height: 46vh; }
@@ -628,15 +621,6 @@
         <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
         <button type="button" class="help-chip" id="helpBtn"><span id="iconHelp"></span>사용법</button>
       </div>
-    </div>
-    <div class="flow">
-      <span class="flow-chip"><svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>이미지</span>
-      <span class="flow-arrow">→</span>
-      <span class="flow-chip ai"><svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>AI</span>
-      <span class="flow-arrow">→</span>
-      <span class="flow-chip"><svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>직접입력</span>
-      <span class="flow-arrow">→</span>
-      <span class="flow-chip result">hwpx 변환</span>
     </div>
   </header>
 
@@ -670,28 +654,30 @@
         </div>
       </div>
 
-      <div class="side-actions">
-        <button type="button" class="side-link-btn" id="addBoxBtn"><span id="iconPlus"></span>박스 직접 추가</button>
-        <button type="button" class="side-link-btn" id="exampleBtn"><span id="iconGrid"></span>예시 불러오기</button>
-      </div>
-
-      <div class="sidebar-footer">
-        <label class="select-all"><input type="checkbox" id="selectAllChk">전체 선택</label>
-        <span class="box-count" id="boxCount"></span>
-        <form id="convertForm">
-          <input type="text" id="filename" name="filename" value="output" placeholder="파일 이름" style="margin-bottom:8px;">
-          <button type="submit" id="submitBtn"><span id="iconSubmit"></span><span id="submitLabel">선택한 문제 hwpx로 변환</span></button>
-        </form>
-        <div id="status"><span class="spinner" style="display:none"></span><span class="msg"></span></div>
-      </div>
     </aside>
 
     <div class="resizer" id="resizer"></div>
 
     <main class="main">
+      <div class="main-toolbar">
+        <div class="toolbar-row toolbar-actions">
+          <button type="button" class="side-link-btn" id="addBoxBtn"><span id="iconPlus"></span>박스 직접 추가</button>
+          <button type="button" class="side-link-btn" id="exampleBtn"><span id="iconGrid"></span>예시 불러오기</button>
+          <button type="button" class="side-link-btn" id="saveBtn"><span id="iconSave"></span>저장</button>
+          <button type="button" class="side-link-btn" id="loadBtn"><span id="iconLoad"></span>저장 불러오기</button>
+        </div>
+        <div class="toolbar-row toolbar-convert">
+          <label class="select-all"><input type="checkbox" id="selectAllChk">전체 선택</label>
+          <span class="box-count" id="boxCount"></span>
+          <form id="convertForm">
+            <input type="text" id="filename" name="filename" value="output" placeholder="파일 이름">
+            <button type="submit" id="submitBtn"><span id="iconSubmit"></span><span id="submitLabel">hwpx로 변환</span></button>
+          </form>
+        </div>
+      </div>
       <div class="empty-state" id="emptyState">
         <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9h10M7 13h6"/></svg></div>
-        아직 추가된 문제가 없습니다.<br>왼쪽에서 이미지를 넣거나, AI로 생성하거나, 박스를 직접 추가해보세요.
+        아직 추가된 문제가 없습니다.<br>왼쪽에서 이미지를 넣거나, AI로 생성하거나, 위에서 박스를 직접 추가해보세요.
       </div>
       <div class="box-grid" id="boxList"></div>
     </main>
@@ -711,11 +697,31 @@
         <button type="button" class="modal-close" id="helpCloseBtn"><span id="iconClose"></span></button>
       </div>
       <div class="modal-body hint">
-        <div class="hint-row"><b>이미지</b><span>왼쪽 점선 영역에 드래그, 클릭 후 Ctrl+V, 또는 파일 선택</span></div>
-        <div class="hint-row"><b>박스에 추가</b><span>박스의 텍스트 칸을 클릭한 뒤 Ctrl+V하면 그 박스에 바로 추가</span></div>
-        <div class="hint-row"><b>AI 생성</b><span>사이드바 카드에 원하는 문제를 요청 (선택된 박스를 참고)</span></div>
-        <div class="hint-row"><b>AI 변형</b><span>각 박스의 반짝이 버튼으로 그 문제만 다시 작성</span></div>
-        <div class="hint-row"><b>수식</b><span><code>$...$</code>, <code>$$...$$</code>, <code>\[...\]</code>, <code>\(...\)</code></span></div>
+        <p class="hint-intro">사진이나 텍스트 속 수식을 실제 한글(HWP)에서 편집 가능한 수식 개체로 바꿔주는 도구예요. 아래 순서대로 따라 하면 돼요.</p>
+        <div class="hint-row">
+          <b>① 문제 가져오기</b>
+          <span><b>이미지로:</b> 왼쪽 점선 영역에 사진을 드래그하거나, 영역을 클릭한 뒤 <code>Ctrl+V</code>로 붙여넣거나, "파일 선택"으로 올리면 자동으로 글자와 수식을 읽어 박스를 만들어줘요.<br><b>직접 입력:</b> "박스 직접 추가"로 빈 박스를 만들고, 수식은 LaTeX 문법으로 <code>$...$</code>처럼 감싸 적으면 돼요.</span>
+        </div>
+        <div class="hint-row">
+          <b>② AI로 만들거나 다듬기</b>
+          <span><b>새로 만들기:</b> 사이드바의 "AI로 새 문제 생성" 카드에 원하는 내용을 적으면, 선택된 박스를 참고해 새 문제를 만들어줘요.<br><b>고쳐 쓰기:</b> 각 박스의 <b>✦ AI</b> 버튼을 눌러 "더 어렵게 바꿔줘"처럼 그 문제만 다시 쓰도록 요청할 수 있어요.</span>
+        </div>
+        <div class="hint-row">
+          <b>③ 박스 정리하기</b>
+          <span>박스 왼쪽 위 손잡이(⠿)를 마우스로 끌거나 ↑↓ 버튼으로 순서를 바꾸고, 체크박스로 변환할 것만 골라요. "미리보기" 탭에서 수식이 실제로 어떻게 보일지 확인할 수 있고, 필요 없는 박스는 휴지통 아이콘으로 지워요.</span>
+        </div>
+        <div class="hint-row">
+          <b>④ 저장해두기</b>
+          <span>"저장" 버튼을 누르면 지금까지 만든 박스들이 이 브라우저에만 저장돼요(서버로 전송되지 않음). 나중에 같은 브라우저로 다시 열면 자동으로 이어서 작업할 수 있어요.</span>
+        </div>
+        <div class="hint-row">
+          <b>⑤ hwpx로 변환</b>
+          <span>체크된 박스만 모아 하나의 .hwpx 파일로 만들어요. 파일 이름을 정하고 "hwpx로 변환"을 누르면 다운로드되고, 한글(HWP)에서 열면 수식이 실제 수식 개체로 들어가 있어 그대로 수정할 수 있어요.</span>
+        </div>
+        <div class="hint-row">
+          <b>수식 문법 참고</b>
+          <span>본문 중간 수식 <code>$...$</code> · 줄 강조 수식 <code>$$...$$</code> 또는 <code>\[...\]</code> · 괄호식 수식 <code>\(...\)</code></span>
+        </div>
       </div>
     </div>
   </div>
@@ -737,6 +743,9 @@
       alert: '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>',
       help: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.6"/><path d="M12 17h.01"/></svg>',
       close: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>',
+      grip: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+      save: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>',
+      load: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M12 11v6M9 14l3 3 3-3"/></svg>',
     };
     document.getElementById('iconImage').innerHTML = ICONS.image;
     document.getElementById('iconPlusSmall').innerHTML = ICONS.plus;
@@ -746,6 +755,8 @@
     document.getElementById('iconGrid').innerHTML = ICONS.grid;
     document.getElementById('iconSubmit').innerHTML = ICONS.download;
     document.getElementById('iconHelp').innerHTML = ICONS.help;
+    document.getElementById('iconLoad').innerHTML = ICONS.load;
+    document.getElementById('iconSave').innerHTML = ICONS.save;
 
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -850,8 +861,9 @@
         const preview = previewBoxIds.has(box.id);
         const sourceIcon = box.source === 'ai' ? ICONS.spark : '';
         return `
-        <div class="box${box.checked ? '' : ' unchecked'}${processing ? ' ai-processing' : ''}" data-id="${box.id}">
+        <div class="box${box.checked ? '' : ' unchecked'}${processing ? ' ai-processing' : ''}" data-id="${box.id}" draggable="true">
           <div class="box-head">
+            <span class="box-grip" title="드래그해서 순서 변경">${ICONS.grip}</span>
             <input type="checkbox" class="box-chk" ${box.checked ? 'checked' : ''}>
             <span class="box-source src-${box.source}">${sourceIcon}${SOURCE_LABEL[box.source] || '문제'}</span>
             <span class="box-controls">
@@ -1054,6 +1066,43 @@
         const id = e.target.closest('.box').dataset.id;
         submitBoxAi(id);
       }
+    });
+
+    // ---- 마우스로 박스 드래그해서 순서 변경 ----
+    // 텍스트 편집/버튼 클릭과 겹치지 않도록, 실제로 DOM 노드를 옮기는 동안은
+    // renderBoxList()를 호출하지 않는다(다시 그리면 드래그 중인 노드가 사라져
+    // 네이티브 드래그 세션이 끊긴다). 데이터 배열은 드래그가 끝날 때 DOM 순서를
+    // 그대로 읽어와서 한 번만 맞춘다.
+    let dragId = null;
+
+    boxListEl.addEventListener('dragstart', (e) => {
+      const boxEl = e.target.closest('.box');
+      if (!boxEl) return;
+      if (e.target.closest('button, textarea, input, a, .box-preview')) { e.preventDefault(); return; }
+      dragId = boxEl.dataset.id;
+      boxEl.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragId);
+    });
+
+    boxListEl.addEventListener('dragover', (e) => {
+      if (!dragId) return;
+      e.preventDefault();
+      const draggingEl = boxListEl.querySelector('.box.dragging');
+      const overEl = e.target.closest('.box');
+      if (!draggingEl || !overEl || overEl === draggingEl) return;
+      const rect = overEl.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height / 2;
+      boxListEl.insertBefore(draggingEl, before ? overEl : overEl.nextSibling);
+    });
+
+    boxListEl.addEventListener('dragend', () => {
+      const draggingEl = boxListEl.querySelector('.box.dragging');
+      if (draggingEl) draggingEl.classList.remove('dragging');
+      const domOrder = Array.from(boxListEl.querySelectorAll('.box')).map((el) => el.dataset.id);
+      boxes.sort((a, b) => domOrder.indexOf(a.id) - domOrder.indexOf(b.id));
+      dragId = null;
+      renderBoxList();
     });
 
     // ---- 예시 불러오기 ----
@@ -1324,17 +1373,72 @@
         setTimeout(() => {
           submitBtn.classList.remove('success');
           submitIcon.innerHTML = ICONS.download;
-          submitLabel.textContent = '선택한 문제 hwpx로 변환';
+          submitLabel.textContent = 'hwpx로 변환';
         }, 1500);
       } catch (err) {
         setStatus('error', err.message);
         submitIcon.innerHTML = ICONS.download;
-        submitLabel.textContent = '선택한 문제 hwpx로 변환';
+        submitLabel.textContent = 'hwpx로 변환';
       } finally {
         submitBtn.disabled = false;
       }
     });
 
+    // ---- 현재 작업을 브라우저에 저장/복원 (서버로는 전송되지 않고 이 브라우저에만 남는다) ----
+    const SAVE_KEY = 'hwpeq_autosave_v1';
+
+    function saveWork() {
+      try {
+        const payload = {
+          boxes,
+          filename: document.getElementById('filename').value || 'output',
+          savedAt: Date.now(),
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+        setStatus('ok', `현재 작업(${boxes.length}개 박스)을 이 브라우저에 저장했습니다.`);
+      } catch (err) {
+        setStatus('error', '저장에 실패했습니다: ' + err.message);
+      }
+    }
+    document.getElementById('saveBtn').addEventListener('click', saveWork);
+
+    function restoreWork(silent) {
+      let raw;
+      try {
+        raw = localStorage.getItem(SAVE_KEY);
+      } catch (err) {
+        if (!silent) setStatus('error', '저장된 작업을 읽을 수 없습니다.');
+        return;
+      }
+      if (!raw) {
+        if (!silent) setStatus('error', '저장된 작업이 없습니다.');
+        return;
+      }
+      let payload;
+      try {
+        payload = JSON.parse(raw);
+      } catch (err) {
+        if (!silent) setStatus('error', '저장된 작업을 읽을 수 없습니다.');
+        return;
+      }
+      if (!payload || !Array.isArray(payload.boxes) || !payload.boxes.length) {
+        if (!silent) setStatus('error', '저장된 작업이 없습니다.');
+        return;
+      }
+      boxes = payload.boxes;
+      // 새 박스를 추가할 때 id가 겹치지 않도록, 복원된 박스들의 번호보다 큰 값부터 이어서 발급한다.
+      idCounter = boxes.reduce((max, b) => {
+        const n = parseInt(String(b.id).slice(1), 10);
+        return Number.isFinite(n) ? Math.max(max, n) : max;
+      }, 0);
+      if (payload.filename) document.getElementById('filename').value = payload.filename;
+      if (!silent) renderBoxList();
+      const when = payload.savedAt ? new Date(payload.savedAt).toLocaleString('ko-KR') : '';
+      setStatus('ok', `이전 작업(${boxes.length}개 박스, ${when} 저장)을 불러왔습니다.`);
+    }
+    document.getElementById('loadBtn').addEventListener('click', () => restoreWork(false));
+
+    restoreWork(true);
     renderBoxList();
   </script>
 </body>
