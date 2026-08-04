@@ -744,6 +744,7 @@
           <button type="button" class="side-link-btn" id="exampleBtn"><span id="iconGrid"></span>예시 불러오기</button>
           <button type="button" class="side-link-btn" id="saveBtn"><span id="iconSave"></span>저장</button>
           <button type="button" class="side-link-btn" id="loadBtn"><span id="iconLoad"></span>저장 불러오기</button>
+          <input type="file" id="loadFileInput" accept="application/json,.json" style="display:none">
         </div>
         <div class="toolbar-row toolbar-convert">
           <label class="select-all"><input type="checkbox" id="selectAllChk">전체 선택</label>
@@ -1627,46 +1628,50 @@
       }
     });
 
-    // ---- 현재 작업을 브라우저에 저장/복원 (서버로는 전송되지 않고 이 브라우저에만 남는다) ----
+    // ---- 현재 작업을 JSON 파일로 저장/복원 (서버로는 전송되지 않고 파일로만 오간다) ----
+    // 같은 브라우저를 다시 열었을 때 이어서 작업할 수 있도록 최근 상태를 이 브라우저에도
+    // 조용히 함께 저장해두지만(SAVE_KEY), 실제 "저장"/"저장 불러오기" 버튼은 JSON 파일을
+    // 내려받고 그 파일을 다시 불러오는 방식으로 동작한다.
     const SAVE_KEY = 'hwpeq_autosave_v1';
+
+    function buildSavePayload() {
+      return {
+        boxes,
+        filename: document.getElementById('filename').value || 'output',
+        savedAt: Date.now(),
+      };
+    }
 
     function saveWork() {
       try {
-        const payload = {
-          boxes,
-          filename: document.getElementById('filename').value || 'output',
-          savedAt: Date.now(),
-        };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
-        setStatus('ok', `현재 작업(${boxes.length}개 박스)을 이 브라우저에 저장했습니다.`);
+        const payload = buildSavePayload();
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); } catch (err) { /* 무시 */ }
+
+        const stamp = new Date(payload.savedAt);
+        const pad = (n) => String(n).padStart(2, '0');
+        const stampStr = `${stamp.getFullYear()}${pad(stamp.getMonth() + 1)}${pad(stamp.getDate())}-${pad(stamp.getHours())}${pad(stamp.getMinutes())}`;
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${payload.filename}-작업-${stampStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        setStatus('ok', `현재 작업(${boxes.length}개 박스)을 JSON 파일로 저장했습니다.`);
       } catch (err) {
         setStatus('error', '저장에 실패했습니다: ' + err.message);
       }
     }
     document.getElementById('saveBtn').addEventListener('click', saveWork);
 
-    function restoreWork(silent) {
-      let raw;
-      try {
-        raw = localStorage.getItem(SAVE_KEY);
-      } catch (err) {
-        if (!silent) setStatus('error', '저장된 작업을 읽을 수 없습니다.');
-        return;
-      }
-      if (!raw) {
-        if (!silent) setStatus('error', '저장된 작업이 없습니다.');
-        return;
-      }
-      let payload;
-      try {
-        payload = JSON.parse(raw);
-      } catch (err) {
-        if (!silent) setStatus('error', '저장된 작업을 읽을 수 없습니다.');
-        return;
-      }
+    // payload({boxes, filename, savedAt})를 실제 작업 상태에 반영한다.
+    function applyWorkPayload(payload, silent) {
       if (!payload || !Array.isArray(payload.boxes) || !payload.boxes.length) {
-        if (!silent) setStatus('error', '저장된 작업이 없습니다.');
-        return;
+        if (!silent) setStatus('error', '불러올 작업 내용이 없습니다.');
+        return false;
       }
       boxes = payload.boxes;
       // 새 박스를 추가할 때 id가 겹치지 않도록, 복원된 박스들의 번호보다 큰 값부터 이어서 발급한다.
@@ -1675,11 +1680,54 @@
         return Number.isFinite(n) ? Math.max(max, n) : max;
       }, 0);
       if (payload.filename) document.getElementById('filename').value = payload.filename;
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); } catch (err) { /* 무시 */ }
       if (!silent) renderBoxList();
-      const when = payload.savedAt ? new Date(payload.savedAt).toLocaleString('ko-KR') : '';
-      setStatus('ok', `이전 작업(${boxes.length}개 박스, ${when} 저장)을 불러왔습니다.`);
+      return true;
     }
-    document.getElementById('loadBtn').addEventListener('click', () => restoreWork(false));
+
+    // 브라우저를 다시 열었을 때 조용히 이어서 작업할 수 있도록 마지막 상태를 복원한다.
+    function restoreWork(silent) {
+      let raw;
+      try {
+        raw = localStorage.getItem(SAVE_KEY);
+      } catch (err) {
+        return;
+      }
+      if (!raw) return;
+      let payload;
+      try {
+        payload = JSON.parse(raw);
+      } catch (err) {
+        return;
+      }
+      if (applyWorkPayload(payload, true) && !silent) {
+        const when = payload.savedAt ? new Date(payload.savedAt).toLocaleString('ko-KR') : '';
+        setStatus('ok', `이전 작업(${boxes.length}개 박스, ${when} 저장)을 불러왔습니다.`);
+      }
+    }
+
+    const loadFileInput = document.getElementById('loadFileInput');
+    document.getElementById('loadBtn').addEventListener('click', () => loadFileInput.click());
+    loadFileInput.addEventListener('change', () => {
+      const file = loadFileInput.files && loadFileInput.files[0];
+      loadFileInput.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        let payload;
+        try {
+          payload = JSON.parse(String(reader.result));
+        } catch (err) {
+          setStatus('error', 'JSON 파일을 읽을 수 없습니다. 이 앱에서 저장한 파일인지 확인해주세요.');
+          return;
+        }
+        if (applyWorkPayload(payload, false)) {
+          setStatus('ok', `"${file.name}" 파일의 작업(${boxes.length}개 박스)을 불러왔습니다.`);
+        }
+      };
+      reader.onerror = () => setStatus('error', '파일을 읽는 중 오류가 발생했습니다.');
+      reader.readAsText(file);
+    });
 
     restoreWork(true);
     updateApiKeyUI();
