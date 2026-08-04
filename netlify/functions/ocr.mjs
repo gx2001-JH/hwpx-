@@ -2,6 +2,31 @@
 // 반환된 텍스트는 그대로 hwpx로 변환하지 않고, 사용자가 검토/수정할 수 있도록
 // textarea에 채워 넣는 용도로만 쓴다 (OCR은 완벽하지 않으므로).
 
+// 기본 모델. 구글이 이 모델을 특정 API 키(주로 새로 발급된 키)에 막아버리면
+// isModelUnavailableError()가 이를 감지해 FALLBACK_MODEL로 한 번 더 시도한다.
+const PRIMARY_MODEL = "gemini-2.5-flash";
+const FALLBACK_MODEL = "gemini-flash-latest";
+
+async function callGeminiModel(apiKey, model, requestBody) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    }
+  );
+  const data = await res.json();
+  return { res, data };
+}
+
+// 구글이 특정 API 키에 대해 모델을 막아둔 경우("no longer available"/모델 미존재) 감지.
+function isModelUnavailableError(res, data) {
+  if (res.status !== 404) return false;
+  const msg = data?.error?.message || "";
+  return /no longer available|not found for API version/i.test(msg);
+}
+
 const PROMPT = `다음 이미지에 있는 수학 문제 텍스트를 그대로 옮겨 적어줘.
 
 규칙:
@@ -44,25 +69,21 @@ export default async (req) => {
   }
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: PROMPT },
-                { inline_data: { mime_type: mimeType, data: imageBase64 } },
-              ],
-            },
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            { text: PROMPT },
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
           ],
-        }),
-      }
-    );
+        },
+      ],
+    };
 
-    const data = await res.json();
+    let { res, data } = await callGeminiModel(apiKey, PRIMARY_MODEL, requestBody);
+    if (!res.ok && isModelUnavailableError(res, data)) {
+      ({ res, data } = await callGeminiModel(apiKey, FALLBACK_MODEL, requestBody));
+    }
 
     if (!res.ok) {
       const msg = data?.error?.message || `Gemini API 오류 (${res.status})`;

@@ -95,20 +95,62 @@ def _parse_problems(text: str):
     return [p.strip() for p in _unwrap_nested(text) if p.strip()]
 
 
-def _call_gemini(api_key: str, parts: list, json_mode: bool = False):
-    body = {"contents": [{"parts": parts}]}
-    if json_mode:
-        body["generationConfig"] = {"responseMimeType": "application/json"}
+# 기본 모델. 구글이 이 모델을 특정 API 키(주로 새로 발급된 키)에 막아버리면
+# _is_model_unavailable_error()가 이를 감지해 _FALLBACK_MODEL로 한 번 더 시도한다.
+_PRIMARY_MODEL = "gemini-2.5-flash"
+_FALLBACK_MODEL = "gemini-flash-latest"
+
+
+def _call_gemini_model(api_key: str, model: str, body: dict):
     payload = json.dumps(body).encode("utf-8")
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.5-flash:generateContent?key={api_key}"
+        f"{model}:generateContent?key={api_key}"
     )
     req = urllib.request.Request(
         url, data=payload, headers={"Content-Type": "application/json"}, method="POST"
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
         return json.loads(resp.read().decode("utf-8"))
+
+
+class GeminiApiError(Exception):
+    """HTTPError는 본문을 한 번만 읽을 수 있어서, 라우트에서 다시 읽으려다
+    실패하는 일이 없도록 메시지를 미리 뽑아 담아두는 래퍼."""
+
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
+def _read_http_error_message(err: urllib.error.HTTPError) -> str:
+    try:
+        body = json.loads(err.read().decode("utf-8"))
+        return body.get("error", {}).get("message") or f"Gemini API 오류 ({err.code})"
+    except Exception:
+        return f"Gemini API 오류 ({err.code})"
+
+
+def _is_model_unavailable_message(msg: str) -> bool:
+    lowered = msg.lower()
+    return "no longer available" in lowered or "not found for api version" in lowered
+
+
+def _call_gemini(api_key: str, parts: list, json_mode: bool = False):
+    body = {"contents": [{"parts": parts}]}
+    if json_mode:
+        body["generationConfig"] = {"responseMimeType": "application/json"}
+    try:
+        return _call_gemini_model(api_key, _PRIMARY_MODEL, body)
+    except urllib.error.HTTPError as e:
+        msg = _read_http_error_message(e)
+        if e.code == 404 and _is_model_unavailable_message(msg):
+            try:
+                return _call_gemini_model(api_key, _FALLBACK_MODEL, body)
+            except urllib.error.HTTPError as e2:
+                raise GeminiApiError(e2.code, _read_http_error_message(e2)) from e2
+        raise GeminiApiError(e.code, msg) from e
 
 
 @app.route("/")
@@ -158,13 +200,8 @@ def ocr():
 
     try:
         data = _call_gemini(api_key, parts)
-    except urllib.error.HTTPError as e:
-        try:
-            err_body = json.loads(e.read().decode("utf-8"))
-            msg = err_body.get("error", {}).get("message", f"Gemini API 오류 ({e.code})")
-        except Exception:
-            msg = f"Gemini API 오류 ({e.code})"
-        return jsonify({"error": msg}), 502
+    except GeminiApiError as e:
+        return jsonify({"error": e.message}), 502
     except Exception as e:
         return jsonify({"error": f"OCR 처리 중 오류: {e}"}), 500
 
@@ -194,13 +231,8 @@ def generate():
 
     try:
         data = _call_gemini(api_key, parts, json_mode=True)
-    except urllib.error.HTTPError as e:
-        try:
-            err_body = json.loads(e.read().decode("utf-8"))
-            msg = err_body.get("error", {}).get("message", f"Gemini API 오류 ({e.code})")
-        except Exception:
-            msg = f"Gemini API 오류 ({e.code})"
-        return jsonify({"error": msg}), 502
+    except GeminiApiError as e:
+        return jsonify({"error": e.message}), 502
     except Exception as e:
         return jsonify({"error": f"생성 처리 중 오류: {e}"}), 500
 
