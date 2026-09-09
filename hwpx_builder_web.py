@@ -301,6 +301,15 @@ def _sz_measure(tokens):
             out.append([350, BASE_H, None])
             continue
 
+        if tok in _FONT_SWITCHES:
+            # 글꼴 스위치는 아무것도 그리지 않는다. 바로 뒤의 공백도 키워드를
+            # 떼어놓기 위한 구문일 뿐이라 폭을 차지하지 않는다("{rm AB}").
+            i += 1
+            while i < n and tokens[i].strip() == "":
+                i += 1
+            out.append([0, BASE_H, "ws"])
+            continue
+
         w, h, tag = _sz_classify_plain(tok)
         out.append([w, h, tag])
         i += 1

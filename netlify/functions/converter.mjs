@@ -82,19 +82,25 @@ function isAlpha(ch) {
   return !!ch && /[A-Za-z]/.test(ch);
 }
 
-// 점·선분 이름 등으로 쓰이는 라틴 대문자. 한글 수식은 기본이 이탤릭이라
-// 정자체로 보이도록 rm을 적용한다. (g 플래그는 lastIndex 상태가 남으므로 쓰지 않는다)
-const UPPER_RUN_RE = /[A-Z]+/;
-const UPPER_RUN_RE_G = /[A-Z]+/g;
+// 라틴 문자 런. 대소문자가 섞여 있어도 각각 따로 잡히도록 둘로 나눠 쓴다.
+// (g 플래그는 lastIndex 상태가 남으므로 test용은 따로 둔다)
+const LETTER_RUN_RE = /[A-Z]+|[a-z]+/;
+const LETTER_RUN_RE_G = /[A-Z]+|[a-z]+/g;
 
-// rm은 뒤따르는 내용까지 계속 영향을 주는 스위치라서, 적용 범위가 새지 않도록
-// 반드시 중괄호로 묶는다.
-function rmWrap(run) {
-  return "{rm" + run + "}";
+// 점·선분 이름으로 쓰이는 대문자는 정자체(rm), 변수로 쓰이는 소문자는
+// 이탤릭(it)으로 서식을 '항상 명시해서' 적용한다. rm/it은 뒤따르는 내용까지
+// 계속 영향을 주는 스위치라서, 한쪽만 지정하고 나머지를 한글 기본 서식에
+// 맡기면 앞에서 쓴 rm이 뒤 소문자까지 정자체로 만들어버린다.
+function styleWrap(run) {
+  // 키워드와 글자 사이에 공백을 둔다. "{itx}"처럼 붙여 쓰면 한글이 이것을
+  // "itx"라는 낱말 하나로 읽어 그대로 찍어버릴 수 있다(대문자는 "rmAB"처럼
+  // 붙여도 대소문자가 바뀌는 지점에서 갈라지지만, 소문자끼리는 그 단서가 없다).
+  const prefix = /[A-Z]/.test(run[0]) ? "{rm " : "{it ";
+  return prefix + run + "}";
 }
 
-function wrapUppercaseRuns(text) {
-  return text.replace(UPPER_RUN_RE_G, (m) => rmWrap(m));
+function wrapLetterRuns(text) {
+  return text.replace(LETTER_RUN_RE_G, (m) => styleWrap(m));
 }
 
 // 문자열 전체가 중괄호 그룹 하나인지 판정한다 ("{rmAB}" -> true, "{a}+{b}" -> false).
@@ -116,10 +122,6 @@ class Parser {
     this.tokens = tokens;
     this.i = 0;
     this.n = tokens.length;
-    // rm(정자체) 그룹을 막 내보낸 상태. 다음 내용이 나오기 직전에 it을 넣어
-    // 이탤릭으로 되돌린다. 중첩 그룹에서도 같은 Parser 인스턴스를 쓰므로,
-    // 안쪽 그룹에서 켜진 플래그가 바깥 문맥까지 자연스럽게 전달된다.
-    this.pendingIt = false;
   }
 
   peek() {
@@ -172,44 +174,36 @@ class Parser {
       return text[text.length - 1];
     };
 
-    // 일반 텍스트 토큰을 방출한다. 라틴 대문자 런은 {rm...}으로 감싸 정자체로
-    // 만들고(원자로 취급), 그 뒤 내용은 다시 이탤릭이 되도록 it을 예약한다.
+    // 일반 텍스트 토큰을 방출한다. 라틴 문자 런은 대문자면 {rm ...},
+    // 소문자면 {it ...}으로 감싸 서식을 명시한다(각각 원자로 취급).
     const emitTextRun = (txt) => {
-      if (!UPPER_RUN_RE.test(txt)) {
+      if (!LETTER_RUN_RE.test(txt)) {
         emitText(txt);
         return;
       }
-      // "AB^2"은 A·B²이므로, 바로 뒤에 첨자가 오면 마지막 대문자만 따로 감싸야
+      // "AB^2"은 A·B²이므로, 바로 뒤에 첨자가 오면 마지막 글자만 따로 감싸야
       // 첨자가 마지막 글자에만 붙는다(takeBase가 원자 단위로 떼어가기 때문).
       const nextTok = this.peek();
       const nextIsScript = nextTok === "^" || nextTok === "_";
       let pos = 0;
-      for (const m of txt.matchAll(UPPER_RUN_RE_G)) {
+      for (const m of txt.matchAll(LETTER_RUN_RE_G)) {
         emitText(txt.slice(pos, m.index));
         const run = m[0];
         const end = m.index + run.length;
         if (nextIsScript && end === txt.length && run.length > 1) {
-          emitAtom(rmWrap(run.slice(0, -1)));
-          emitAtom(rmWrap(run.slice(-1)));
+          emitAtom(styleWrap(run.slice(0, -1)));
+          emitAtom(styleWrap(run.slice(-1)));
         } else {
-          emitAtom(rmWrap(run));
+          emitAtom(styleWrap(run));
         }
         pos = end;
       }
       emitText(txt.slice(pos));
-      this.pendingIt = true;
     };
 
     while (this.i < this.n) {
       const tok = this.peek();
       if (stopAtBrace && tok === "}") break;
-      // rm 그룹이 닫혔으면 다음 내용 앞에 it을 넣어 이탤릭으로 되돌린다.
-      // ^/_ 는 바로 앞 원자에 붙는 것이라 그 사이에 끼워 넣으면 안 되고,
-      // 그룹 맨 앞이면 이 그룹이 아니라 바깥 문맥에 넣어야 하므로 건너뛴다.
-      if (this.pendingIt && out.length && tok !== "^" && tok !== "_") {
-        this.pendingIt = false;
-        emitText("it ");
-      }
       this.next();
 
       if (tok === "^" || tok === "_") {
@@ -326,9 +320,8 @@ class Parser {
       this.n += 1;
       single = tok[0];
     }
-    if (/^[A-Z]$/.test(single)) {
-      this.pendingIt = true;
-      return [rmWrap(single), false];
+    if (/^[A-Za-z]$/.test(single)) {
+      return [styleWrap(single), false];
     }
     return [single, false];
   }
@@ -360,10 +353,9 @@ class Parser {
 
     if (name in ACCENTS) {
       let arg = this.parseBracedGroup();
-      // 중괄호 없이 쓴 경우(\bar A)는 여기서만 대문자 처리를 할 수 있다.
-      if (!arg.includes("{") && UPPER_RUN_RE.test(arg)) {
-        arg = wrapUppercaseRuns(arg);
-        this.pendingIt = true;
+      // 중괄호 없이 쓴 경우(\bar A)는 여기서만 서식 처리를 할 수 있다.
+      if (!arg.includes("{") && LETTER_RUN_RE.test(arg)) {
+        arg = wrapLetterRuns(arg);
       }
       const kw = ACCENTS[name];
       const inner = isSingleAtom(arg) || isFullyBraced(arg)

@@ -303,6 +303,15 @@ function szMeasure(tokens) {
       continue;
     }
 
+    if (FONT_SWITCHES.has(tok)) {
+      // 글꼴 스위치는 아무것도 그리지 않는다. 바로 뒤의 공백도 키워드를
+      // 떼어놓기 위한 구문일 뿐이라 폭을 차지하지 않는다("{rm AB}").
+      i += 1;
+      while (i < n && tokens[i].trim() === "") i += 1;
+      out.push([0, BASE_H, "ws"]);
+      continue;
+    }
+
     const [w, h, tag] = szClassifyPlain(tok);
     out.push([w, h, tag]);
     i += 1;
