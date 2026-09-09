@@ -75,8 +75,14 @@ const KEYWORD_GLYPHS = new Set([
 // 뒤따르는 그룹/토큰에 강세표시를 얹는 접두 키워드 (그 자체는 폭을 거의 차지하지 않음)
 const ACCENTS = new Set([
   "bar", "vec", "dot", "ddot", "hat", "tilde", "check", "breve", "acute",
-  "grave", "under", "rm", "bold", "it",
+  "grave", "under",
 ]);
+// 글꼴만 바꾸는 스위치. 강세표시와 달리 인자를 감싸지 않고 그 자리에서 상태만
+// 바꾸므로, 폭·높이를 전혀 차지하지 않는다. 변환기가 대문자에 붙이는 "{rmAB}"
+// 처럼 뒤 글자에 바로 붙어 한 토큰으로 잡히는 형태도 함께 처리해야 한다
+// (그러지 않으면 "rmAB"를 4글자 낱말로 재서 상자가 두 배로 넓어진다).
+const FONT_SWITCHES = new Set(["rm", "it", "bold"]);
+const GLUED_SWITCH_RE = /^(?:rm|it|bold)([A-Z]+)$/;
 // 위/아래첨자(극한)가 붙으면 훨씬 더 큰 세로 공간이 필요한 큰 연산자 기호
 const BIG_OPS = new Set(["int", "oint", "sum", "prod", "lim", "iint", "iiint"]);
 
@@ -125,6 +131,13 @@ function szClassifyPlain(tok) {
   if (tok.startsWith('"') && tok.endsWith('"')) {
     const text = tok.slice(1, -1);
     return [Math.max(MIN_ATOM_W, text.length * CHAR_W), BASE_H, null];
+  }
+  // 글꼴 상태만 바꾸고 아무것도 그리지 않는다.
+  if (FONT_SWITCHES.has(tok)) return [0, BASE_H, "ws"];
+  const glued = GLUED_SWITCH_RE.exec(tok);
+  if (glued) {
+    // "rmAB" -> 스위치는 폭 0, 실제로 그려지는 것은 뒤의 "AB"뿐이다.
+    return [Math.max(MIN_ATOM_W, glued[1].length * CHAR_W), BASE_H, null];
   }
   if (BIG_OPS.has(tok)) return [KEYWORD_GLYPH_W, BASE_H, "bigop"];
   if (KEYWORD_GLYPHS.has(tok)) return [KEYWORD_GLYPH_W, BASE_H, null];

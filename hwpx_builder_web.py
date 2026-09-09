@@ -88,8 +88,14 @@ _KEYWORD_GLYPHS = {
 # 뒤따르는 그룹/토큰에 강세표시를 얹는 접두 키워드 (그 자체는 폭을 거의 차지하지 않음)
 _ACCENTS = {
     "bar", "vec", "dot", "ddot", "hat", "tilde", "check", "breve", "acute",
-    "grave", "under", "rm", "bold", "it",
+    "grave", "under",
 }
+# 글꼴만 바꾸는 스위치. 강세표시와 달리 인자를 감싸지 않고 그 자리에서 상태만
+# 바꾸므로, 폭·높이를 전혀 차지하지 않는다. 변환기가 대문자에 붙이는 "{rmAB}"
+# 처럼 뒤 글자에 바로 붙어 한 토큰으로 잡히는 형태도 함께 처리해야 한다
+# (그러지 않으면 "rmAB"를 4글자 낱말로 재서 상자가 두 배로 넓어진다).
+_FONT_SWITCHES = {"rm", "it", "bold"}
+_GLUED_SWITCH_RE = re.compile(r"^(rm|it|bold)([A-Z]+)$")
 # 위/아래첨자(극한)가 붙으면 훨씬 더 큰 세로 공간이 필요한 큰 연산자 기호
 _BIG_OPS = {"int", "oint", "sum", "prod", "lim", "iint", "iiint"}
 _ZERO_WIDTH_KEYWORDS = {"over", "sqrt", "matrix", "left", "right", "atop", "root"}
@@ -135,6 +141,13 @@ def _sz_classify_plain(tok):
     if tok.startswith('"') and tok.endswith('"'):
         text = tok[1:-1]
         return max(MIN_ATOM_W, len(text) * CHAR_W), BASE_H, None
+    if tok in _FONT_SWITCHES:
+        # 글꼴 상태만 바꾸고 아무것도 그리지 않는다.
+        return 0, BASE_H, "ws"
+    m = _GLUED_SWITCH_RE.match(tok)
+    if m:
+        # "rmAB" -> 스위치는 폭 0, 실제로 그려지는 것은 뒤의 "AB"뿐이다.
+        return max(MIN_ATOM_W, len(m.group(2)) * CHAR_W), BASE_H, None
     if tok in _BIG_OPS:
         return KEYWORD_GLYPH_W, BASE_H, "bigop"
     if tok in _KEYWORD_GLYPHS:

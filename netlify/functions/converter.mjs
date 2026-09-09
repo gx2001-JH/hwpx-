@@ -82,11 +82,44 @@ function isAlpha(ch) {
   return !!ch && /[A-Za-z]/.test(ch);
 }
 
+// 점·선분 이름 등으로 쓰이는 라틴 대문자. 한글 수식은 기본이 이탤릭이라
+// 정자체로 보이도록 rm을 적용한다. (g 플래그는 lastIndex 상태가 남으므로 쓰지 않는다)
+const UPPER_RUN_RE = /[A-Z]+/;
+const UPPER_RUN_RE_G = /[A-Z]+/g;
+
+// rm은 뒤따르는 내용까지 계속 영향을 주는 스위치라서, 적용 범위가 새지 않도록
+// 반드시 중괄호로 묶는다.
+function rmWrap(run) {
+  return "{rm" + run + "}";
+}
+
+function wrapUppercaseRuns(text) {
+  return text.replace(UPPER_RUN_RE_G, (m) => rmWrap(m));
+}
+
+// 문자열 전체가 중괄호 그룹 하나인지 판정한다 ("{rmAB}" -> true, "{a}+{b}" -> false).
+function isFullyBraced(s) {
+  if (s.length < 2 || !s.startsWith("{") || !s.endsWith("}")) return false;
+  let depth = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    if (s[i] === "{") depth += 1;
+    else if (s[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return i === s.length - 1;
+    }
+  }
+  return false;
+}
+
 class Parser {
   constructor(tokens) {
     this.tokens = tokens;
     this.i = 0;
     this.n = tokens.length;
+    // rm(정자체) 그룹을 막 내보낸 상태. 다음 내용이 나오기 직전에 it을 넣어
+    // 이탤릭으로 되돌린다. 중첩 그룹에서도 같은 Parser 인스턴스를 쓰므로,
+    // 안쪽 그룹에서 켜진 플래그가 바깥 문맥까지 자연스럽게 전달된다.
+    this.pendingIt = false;
   }
 
   peek() {
@@ -139,9 +172,44 @@ class Parser {
       return text[text.length - 1];
     };
 
+    // 일반 텍스트 토큰을 방출한다. 라틴 대문자 런은 {rm...}으로 감싸 정자체로
+    // 만들고(원자로 취급), 그 뒤 내용은 다시 이탤릭이 되도록 it을 예약한다.
+    const emitTextRun = (txt) => {
+      if (!UPPER_RUN_RE.test(txt)) {
+        emitText(txt);
+        return;
+      }
+      // "AB^2"은 A·B²이므로, 바로 뒤에 첨자가 오면 마지막 대문자만 따로 감싸야
+      // 첨자가 마지막 글자에만 붙는다(takeBase가 원자 단위로 떼어가기 때문).
+      const nextTok = this.peek();
+      const nextIsScript = nextTok === "^" || nextTok === "_";
+      let pos = 0;
+      for (const m of txt.matchAll(UPPER_RUN_RE_G)) {
+        emitText(txt.slice(pos, m.index));
+        const run = m[0];
+        const end = m.index + run.length;
+        if (nextIsScript && end === txt.length && run.length > 1) {
+          emitAtom(rmWrap(run.slice(0, -1)));
+          emitAtom(rmWrap(run.slice(-1)));
+        } else {
+          emitAtom(rmWrap(run));
+        }
+        pos = end;
+      }
+      emitText(txt.slice(pos));
+      this.pendingIt = true;
+    };
+
     while (this.i < this.n) {
       const tok = this.peek();
       if (stopAtBrace && tok === "}") break;
+      // rm 그룹이 닫혔으면 다음 내용 앞에 it을 넣어 이탤릭으로 되돌린다.
+      // ^/_ 는 바로 앞 원자에 붙는 것이라 그 사이에 끼워 넣으면 안 되고,
+      // 그룹 맨 앞이면 이 그룹이 아니라 바깥 문맥에 넣어야 하므로 건너뛴다.
+      if (this.pendingIt && out.length && tok !== "^" && tok !== "_") {
+        this.pendingIt = false;
+        emitText("it ");
+      }
       this.next();
 
       if (tok === "^" || tok === "_") {
@@ -191,7 +259,7 @@ class Parser {
       }
 
       // 일반 텍스트/숫자 런
-      emitText(tok);
+      emitTextRun(tok);
     }
 
     return out.map((seg) => seg[0]).join("");
@@ -203,6 +271,9 @@ class Parser {
   }
 
   parseBracedGroup() {
+    // "\overline {AB}"처럼 명령과 인자 사이에 공백이 있어도 인자로 인식해야 한다.
+    // (공백을 인자로 삼아버리면 "bar { }"처럼 빈 강조기호가 만들어진다)
+    while (this.peek() !== null && this.peek().trim() === "") this.next();
     if (this.peek() === "{") {
       this.next();
       const inner = this.parseGroupBody(true);
@@ -245,6 +316,7 @@ class Parser {
     if (tok.startsWith("\\") && tok.length === 2) {
       return [tok[1], false];
     }
+    let single = tok;
     if (tok.length > 1) {
       // 토크나이저는 "n+b"처럼 특수문자가 아닌 문자들을 한 토큰으로 묶어서
       // 반환하는데, 중괄호 없는 위/아래첨자는 LaTeX 규칙상 문자 1개만 가져가야
@@ -252,9 +324,13 @@ class Parser {
       // 되돌려 넣어야 그 다음 "+b_n"이 정상적으로 이어서 파싱된다.
       this.tokens.splice(this.i, 0, tok.slice(1));
       this.n += 1;
-      return [tok[0], false];
+      single = tok[0];
     }
-    return [tok, false];
+    if (/^[A-Z]$/.test(single)) {
+      this.pendingIt = true;
+      return [rmWrap(single), false];
+    }
+    return [single, false];
   }
 
   renderCommand(name) {
@@ -283,9 +359,20 @@ class Parser {
     }
 
     if (name in ACCENTS) {
-      const arg = this.parseBracedGroup();
+      let arg = this.parseBracedGroup();
+      // 중괄호 없이 쓴 경우(\bar A)는 여기서만 대문자 처리를 할 수 있다.
+      if (!arg.includes("{") && UPPER_RUN_RE.test(arg)) {
+        arg = wrapUppercaseRuns(arg);
+        this.pendingIt = true;
+      }
       const kw = ACCENTS[name];
-      return isSingleAtom(arg) ? kw + " " + arg : kw + " {" + arg + "}";
+      const inner = isSingleAtom(arg) || isFullyBraced(arg)
+        ? kw + " " + arg
+        : kw + " {" + arg + "}";
+      // 강조기호 전체를 중괄호로 한 번 더 묶는다. 그래야 뒤에 붙는 지수가
+      // bar가 끝난 뒤에 적용된다("bar {AB}^{2}"는 지수가 bar 안쪽으로
+      // 들어간 것처럼 해석될 수 있다).
+      return "{" + inner + "}";
     }
 
     if (["text", "mbox", "textrm", "operatorname"].includes(name)) {

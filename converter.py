@@ -73,6 +73,10 @@ TOKEN_RE = re.compile(
     r"\\[a-zA-Z]+|\\.|[{}\[\]_^&]|[0-9]+\.?[0-9]*|[^\s{}\[\]_^&\\]+|\s+"
 )
 
+# 점·선분 이름 등으로 쓰이는 라틴 대문자. 한글 수식은 기본이 이탤릭이라
+# 정자체로 보이도록 rm을 적용한다.
+UPPER_RUN_RE = re.compile(r"[A-Z]+")
+
 
 def tokenize(s: str):
     return [t for t in TOKEN_RE.findall(s) if t != ""]
@@ -82,11 +86,40 @@ def is_single_atom(text: str) -> bool:
     return len(text) == 1
 
 
+def rm_wrap(run: str) -> str:
+    """대문자에 rm(정자체)을 적용한다. rm은 뒤따르는 내용까지 계속 영향을 주는
+    스위치라서, 적용 범위가 새지 않도록 반드시 중괄호로 묶는다."""
+    return "{rm" + run + "}"
+
+
+def wrap_uppercase_runs(text: str) -> str:
+    return UPPER_RUN_RE.sub(lambda m: rm_wrap(m.group(0)), text)
+
+
+def is_fully_braced(s: str) -> bool:
+    """문자열 전체가 중괄호 그룹 하나인지 판정한다 ("{rmAB}" -> True, "{a}+{b}" -> False)."""
+    if len(s) < 2 or not s.startswith("{") or not s.endswith("}"):
+        return False
+    depth = 0
+    for i, ch in enumerate(s):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i == len(s) - 1
+    return False
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.i = 0
         self.n = len(tokens)
+        # rm(정자체) 그룹을 막 내보낸 상태. 다음 내용이 나오기 직전에 it을 넣어
+        # 이탤릭으로 되돌린다. 중첩 그룹에서도 같은 Parser 인스턴스를 쓰므로,
+        # 안쪽 그룹에서 켜진 플래그가 바깥 문맥까지 자연스럽게 전달된다.
+        self.pending_it = False
 
     def peek(self):
         return self.tokens[self.i] if self.i < self.n else None
@@ -129,10 +162,38 @@ class Parser:
             out[-1][0] = text[:-1]
             return text[-1]
 
+        def emit_text_run(txt):
+            """일반 텍스트 토큰을 방출한다. 라틴 대문자 런은 {rm...}으로 감싸 정자체로
+            만들고(원자로 취급), 그 뒤 내용은 다시 이탤릭이 되도록 it을 예약한다."""
+            if not UPPER_RUN_RE.search(txt):
+                emit_text(txt)
+                return
+            # "AB^2"은 A·B²이므로, 바로 뒤에 첨자가 오면 마지막 대문자만 따로 감싸야
+            # 첨자가 마지막 글자에만 붙는다(take_base가 원자 단위로 떼어가기 때문).
+            next_is_script = self.peek() in ("^", "_")
+            pos = 0
+            for m in UPPER_RUN_RE.finditer(txt):
+                emit_text(txt[pos:m.start()])
+                run = m.group(0)
+                if next_is_script and m.end() == len(txt) and len(run) > 1:
+                    emit_atom(rm_wrap(run[:-1]))
+                    emit_atom(rm_wrap(run[-1]))
+                else:
+                    emit_atom(rm_wrap(run))
+                pos = m.end()
+            emit_text(txt[pos:])
+            self.pending_it = True
+
         while self.i < self.n:
             tok = self.peek()
             if stop_at_brace and tok == "}":
                 break
+            # rm 그룹이 닫혔으면 다음 내용 앞에 it을 넣어 이탤릭으로 되돌린다.
+            # ^/_ 는 바로 앞 원자에 붙는 것이라 그 사이에 끼워 넣으면 안 되고,
+            # 그룹 맨 앞이면 이 그룹이 아니라 바깥 문맥에 넣어야 하므로 건너뛴다.
+            if self.pending_it and out and tok not in ("^", "_"):
+                self.pending_it = False
+                emit_text("it ")
             self.next()
 
             if tok in ("^", "_"):
@@ -175,7 +236,7 @@ class Parser:
                 continue
 
             # 일반 텍스트/숫자 런
-            emit_text(tok)
+            emit_text_run(tok)
 
         return "".join(seg[0] for seg in out)
 
@@ -186,6 +247,10 @@ class Parser:
 
     def parse_braced_group(self):
         """다음 토큰이 '{' 여야 하며, 그 내용을 렌더링해 반환."""
+        # "\overline {AB}"처럼 명령과 인자 사이에 공백이 있어도 인자로 인식해야 한다.
+        # (공백을 인자로 삼아버리면 "bar { }"처럼 빈 강조기호가 만들어진다)
+        while self.peek() is not None and self.peek().strip() == "":
+            self.next()
         if self.peek() == "{":
             self.next()
             inner = self.parse_group_body(stop_at_brace=True)
@@ -229,7 +294,10 @@ class Parser:
             # 되돌려 넣어야 그 다음 "+b_n"이 정상적으로 이어서 파싱된다.
             self.tokens.insert(self.i, tok[1:])
             self.n += 1
-            return tok[0], False
+            tok = tok[0]
+        if UPPER_RUN_RE.fullmatch(tok):
+            self.pending_it = True
+            return rm_wrap(tok), False
         return tok, False
 
     def render_command(self, name):
@@ -254,8 +322,19 @@ class Parser:
 
         if name in ACCENTS:
             arg = self.parse_braced_group()
+            # 중괄호 없이 쓴 경우(\bar A)는 여기서만 대문자 처리를 할 수 있다.
+            if "{" not in arg and UPPER_RUN_RE.search(arg):
+                arg = wrap_uppercase_runs(arg)
+                self.pending_it = True
             kw = ACCENTS[name]
-            return kw + " " + arg if is_single_atom(arg) else kw + " {" + arg + "}"
+            if is_single_atom(arg) or is_fully_braced(arg):
+                inner = kw + " " + arg
+            else:
+                inner = kw + " {" + arg + "}"
+            # 강조기호 전체를 중괄호로 한 번 더 묶는다. 그래야 뒤에 붙는 지수가
+            # bar가 끝난 뒤에 적용된다("bar {AB}^{2}"는 지수가 bar 안쪽으로
+            # 들어간 것처럼 해석될 수 있다).
+            return "{" + inner + "}"
 
         if name in ("text", "mbox", "textrm", "operatorname"):
             raw = self.consume_raw_group()

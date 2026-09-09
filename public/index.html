@@ -467,7 +467,9 @@
   @keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   .box-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    /* 폭이 좁으면 박스가 답답해서, 넓은 화면에서는 3열까지만 쓰고 각 박스를 넓게 유지한다.
+       (auto-fill을 쓰면 화면이 넓을수록 열이 계속 늘어나 박스가 좁아졌다) */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
     align-content: start;
   }
@@ -677,6 +679,10 @@
   }
   .app-footer .credit b { color: var(--text); font-weight: 700; }
   .app-footer .sep { margin: 0 6px; opacity: .5; }
+
+  /* 3열을 유지할 만큼 넓지 않으면 단계적으로 열 수를 줄인다 */
+  @media (max-width: 1280px) { .box-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 860px) { .box-grid { grid-template-columns: minmax(0, 1fr); } }
 
   @media (max-width: 860px) {
     .shell { flex-direction: column; }
