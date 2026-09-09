@@ -3,30 +3,7 @@
 // problems 배열의 개별 원소로 나눠서 반환한다(프런트엔드에서 박스 하나씩으로 표시).
 // OCR과 마찬가지로 결과는 자동 변환되지 않고 사용자가 검토한 뒤 직접 변환하도록 한다.
 
-// 기본 모델. 구글이 이 모델을 특정 API 키(주로 새로 발급된 키)에 막아버리면
-// isModelUnavailableError()가 이를 감지해 FALLBACK_MODEL로 한 번 더 시도한다.
-const PRIMARY_MODEL = "gemini-2.5-flash";
-const FALLBACK_MODEL = "gemini-flash-latest";
-
-async function callGeminiModel(apiKey, model, requestBody) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    }
-  );
-  const data = await res.json();
-  return { res, data };
-}
-
-// 구글이 특정 API 키에 대해 모델을 막아둔 경우("no longer available"/모델 미존재) 감지.
-function isModelUnavailableError(res, data) {
-  if (res.status !== 404) return false;
-  const msg = data?.error?.message || "";
-  return /no longer available|not found for API version/i.test(msg);
-}
+import { callGemini, errorMessageOf } from "./geminiClient.mjs";
 
 const TYPE_INSTRUCTIONS = {
   객관식: "문제 유형은 객관식으로 작성해줘. 보기는 ①, ②, ③, ④, ⑤ 기호를 사용하고, [해설] 마지막에 정답 번호를 명시해줘.",
@@ -138,19 +115,16 @@ export default async (req) => {
       generationConfig: { responseMimeType: "application/json" },
     };
 
-    let { res, data } = await callGeminiModel(apiKey, PRIMARY_MODEL, requestBody);
-    if (!res.ok && isModelUnavailableError(res, data)) {
-      ({ res, data } = await callGeminiModel(apiKey, FALLBACK_MODEL, requestBody));
-    }
+    const result = await callGemini(apiKey, requestBody);
 
-    if (!res.ok) {
-      const msg = data?.error?.message || `Gemini API 오류 (${res.status})`;
-      return new Response(JSON.stringify({ error: msg }), {
+    if (!result || !result.ok) {
+      return new Response(JSON.stringify({ error: errorMessageOf(result) }), {
         status: 502,
         headers: { "Content-Type": "application/json" },
       });
     }
 
+    const data = result.data;
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     const problems = text ? parseProblems(text) : [];
     if (!problems.length) {
@@ -160,7 +134,8 @@ export default async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ problems }), {
+    // 실제로 어떤 모델이 응답했는지 함께 돌려준다(문제 생길 때 원인 파악용).
+    return new Response(JSON.stringify({ problems, model: result.model }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

@@ -2,36 +2,19 @@
 // 반환된 텍스트는 그대로 hwpx로 변환하지 않고, 사용자가 검토/수정할 수 있도록
 // textarea에 채워 넣는 용도로만 쓴다 (OCR은 완벽하지 않으므로).
 
-// 기본 모델. 구글이 이 모델을 특정 API 키(주로 새로 발급된 키)에 막아버리면
-// isModelUnavailableError()가 이를 감지해 FALLBACK_MODEL로 한 번 더 시도한다.
-const PRIMARY_MODEL = "gemini-2.5-flash";
-const FALLBACK_MODEL = "gemini-flash-latest";
-
-async function callGeminiModel(apiKey, model, requestBody) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    }
-  );
-  const data = await res.json();
-  return { res, data };
-}
-
-// 구글이 특정 API 키에 대해 모델을 막아둔 경우("no longer available"/모델 미존재) 감지.
-function isModelUnavailableError(res, data) {
-  if (res.status !== 404) return false;
-  const msg = data?.error?.message || "";
-  return /no longer available|not found for API version/i.test(msg);
-}
+import { callGemini, errorMessageOf } from "./geminiClient.mjs";
 
 const PROMPT = `다음 이미지에 있는 수학 문제 텍스트를 그대로 옮겨 적어줘.
 
 규칙:
 - 수식 부분은 LaTeX 문법으로 작성하고 반드시 $...$ 로 감싸줘. 여러 줄에 걸치거나 별도 줄로 강조해야 하는 블록 수식은 $$...$$ 로 감싸줘.
-- 수식이 아닌 일반 텍스트(문제 번호, 설명, 보기 등)는 이미지에 있는 그대로 옮기고, 문단/줄바꿈 구조도 최대한 유지해줘.
+- 점·선분·각·삼각형의 이름으로 쓰인 라틴 대문자와, 수학적인 값으로 쓰인 숫자·변수는 한 글자여도 예외 없이 $...$ 로 감싸줘.
+  (예: "삼각형 ABC" -> "삼각형 $ABC$", "점 A를 중심으로" -> "점 $A$를 중심으로", "길이가 3" -> "길이가 $3$", "$2 : 1$로 내분")
+  이렇게 감싼 것만 한글 수식으로 변환되면서 대문자 정자체(rm) 서식이 적용되므로, 맨 텍스트로 남겨두지 마.
+- 다만 문제 번호("14.")나 배점("[4점]")처럼 수학적 값이 아닌 것은 감싸지 마.
+- 선분·직선 위에 줄이 그어져 있으면 \\overline{AB} 로, 벡터 화살표는 \\vec{AB} 로 옮겨줘.
+- 객관식 보기 번호는 이미지에 있는 그대로 ①, ②, ③, ④, ⑤ 기호를 써줘.
+- 수식이 아닌 일반 텍스트(설명, 보기 등)는 이미지에 있는 그대로 옮기고, 문단/줄바꿈 구조도 최대한 유지해줘.
 - 이미지에 없는 내용을 추가하거나 문제를 풀지 마. 오직 옮겨 적기만 해.
 - 설명이나 코드블록 없이, 옮겨 적은 텍스트만 출력해줘.`;
 
@@ -80,20 +63,16 @@ export default async (req) => {
       ],
     };
 
-    let { res, data } = await callGeminiModel(apiKey, PRIMARY_MODEL, requestBody);
-    if (!res.ok && isModelUnavailableError(res, data)) {
-      ({ res, data } = await callGeminiModel(apiKey, FALLBACK_MODEL, requestBody));
-    }
+    const result = await callGemini(apiKey, requestBody);
 
-    if (!res.ok) {
-      const msg = data?.error?.message || `Gemini API 오류 (${res.status})`;
-      return new Response(JSON.stringify({ error: msg }), {
+    if (!result || !result.ok) {
+      return new Response(JSON.stringify({ error: errorMessageOf(result) }), {
         status: 502,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
       return new Response(JSON.stringify({ error: "이미지에서 텍스트를 추출하지 못했습니다." }), {
         status: 502,
@@ -101,7 +80,8 @@ export default async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ text: text.trim() }), {
+    // 실제로 어떤 모델이 응답했는지 함께 돌려준다(문제 생길 때 원인 파악용).
+    return new Response(JSON.stringify({ text: text.trim(), model: result.model }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

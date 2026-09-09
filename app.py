@@ -11,11 +11,17 @@ from hwpx_builder_web import build_hwpx_bytes
 
 app = Flask(__name__)
 
-OCR_PROMPT = """다음 이미지에 있는 수학 문제 텍스트를 그대로 옮겨 적어줘.
+OCR_PROMPT = r"""다음 이미지에 있는 수학 문제 텍스트를 그대로 옮겨 적어줘.
 
 규칙:
 - 수식 부분은 LaTeX 문법으로 작성하고 반드시 $...$ 로 감싸줘. 여러 줄에 걸치거나 별도 줄로 강조해야 하는 블록 수식은 $$...$$ 로 감싸줘.
-- 수식이 아닌 일반 텍스트(문제 번호, 설명, 보기 등)는 이미지에 있는 그대로 옮기고, 문단/줄바꿈 구조도 최대한 유지해줘.
+- 점·선분·각·삼각형의 이름으로 쓰인 라틴 대문자와, 수학적인 값으로 쓰인 숫자·변수는 한 글자여도 예외 없이 $...$ 로 감싸줘.
+  (예: "삼각형 ABC" -> "삼각형 $ABC$", "점 A를 중심으로" -> "점 $A$를 중심으로", "길이가 3" -> "길이가 $3$", "$2 : 1$로 내분")
+  이렇게 감싼 것만 한글 수식으로 변환되면서 대문자 정자체(rm) 서식이 적용되므로, 맨 텍스트로 남겨두지 마.
+- 다만 문제 번호("14.")나 배점("[4점]")처럼 수학적 값이 아닌 것은 감싸지 마.
+- 선분·직선 위에 줄이 그어져 있으면 \overline{AB} 로, 벡터 화살표는 \vec{AB} 로 옮겨줘.
+- 객관식 보기 번호는 이미지에 있는 그대로 ①, ②, ③, ④, ⑤ 기호를 써줘.
+- 수식이 아닌 일반 텍스트(설명, 보기 등)는 이미지에 있는 그대로 옮기고, 문단/줄바꿈 구조도 최대한 유지해줘.
 - 이미지에 없는 내용을 추가하거나 문제를 풀지 마. 오직 옮겨 적기만 해.
 - 설명이나 코드블록 없이, 옮겨 적은 텍스트만 출력해줘."""
 
@@ -95,10 +101,19 @@ def _parse_problems(text: str):
     return [p.strip() for p in _unwrap_nested(text) if p.strip()]
 
 
-# 기본 모델. 구글이 이 모델을 특정 API 키(주로 새로 발급된 키)에 막아버리면
-# _is_model_unavailable_error()가 이를 감지해 _FALLBACK_MODEL로 한 번 더 시도한다.
-_PRIMARY_MODEL = "gemini-2.5-flash"
-_FALLBACK_MODEL = "gemini-flash-latest"
+# 무료 티어에서 쓸 수 있는 최신 모델부터 차례로 시도한다. 그 키로 막혀 있거나
+# (404 - 구글은 새로 발급된 키에 옛 모델을 막아둔다) 무료 한도를 다 썼거나(429)
+# 일시적으로 과부하면(5xx) 다음 모델로 자동으로 넘어간다.
+# netlify/functions/geminiClient.mjs의 MODELS와 같은 순서로 유지할 것.
+_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    # 위 ID들이 언젠가 모두 정리되더라도 최소 하나는 살아 있도록 하는 안전망.
+    "gemini-flash-latest",
+]
 
 
 def _call_gemini_model(api_key: str, model: str, body: dict):
@@ -132,25 +147,33 @@ def _read_http_error_message(err: urllib.error.HTTPError) -> str:
         return f"Gemini API 오류 ({err.code})"
 
 
-def _is_model_unavailable_message(msg: str) -> bool:
+def _is_invalid_key_message(code: int, msg: str) -> bool:
+    """키 자체가 잘못된 경우엔 어떤 모델로 바꿔도 똑같이 실패하므로, 남은 모델을
+    헛되이 다 두드리지 말고 즉시 중단한다."""
+    if code not in (400, 403):
+        return False
     lowered = msg.lower()
-    return "no longer available" in lowered or "not found for api version" in lowered
+    return (
+        "api key not valid" in lowered
+        or "api_key_invalid" in lowered
+        or "api key expired" in lowered
+    )
 
 
 def _call_gemini(api_key: str, parts: list, json_mode: bool = False):
     body = {"contents": [{"parts": parts}]}
     if json_mode:
         body["generationConfig"] = {"responseMimeType": "application/json"}
-    try:
-        return _call_gemini_model(api_key, _PRIMARY_MODEL, body)
-    except urllib.error.HTTPError as e:
-        msg = _read_http_error_message(e)
-        if e.code == 404 and _is_model_unavailable_message(msg):
-            try:
-                return _call_gemini_model(api_key, _FALLBACK_MODEL, body)
-            except urllib.error.HTTPError as e2:
-                raise GeminiApiError(e2.code, _read_http_error_message(e2)) from e2
-        raise GeminiApiError(e.code, msg) from e
+    last_err = None
+    for model in _MODELS:
+        try:
+            return _call_gemini_model(api_key, model, body)
+        except urllib.error.HTTPError as e:
+            msg = _read_http_error_message(e)
+            last_err = GeminiApiError(e.code, msg)
+            if _is_invalid_key_message(e.code, msg):
+                break
+    raise last_err if last_err else GeminiApiError(502, "Gemini API 호출에 실패했습니다.")
 
 
 @app.route("/")
