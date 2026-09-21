@@ -1,0 +1,13 @@
+# Cloudflare Pages 설정.
+#
+# 정적 파일은 public/, 서버리스 함수는 functions/ 아래 파일 이름이 그대로
+# URL 경로가 된다(functions/convert.js -> /convert).
+#
+# GEMINI_API_KEY는 여기에 적지 말고 Cloudflare 대시보드의
+# Settings -> Environment variables 에 Secret으로 넣는다.
+name = "hwp-eq-converter"
+pages_build_output_dir = "public"
+compatibility_date = "2026-09-21"
+
+# node:* 내장 모듈을 쓰지 않으므로 nodejs_compat 플래그가 필요 없다.
+# (zipWriter는 Uint8Array/TextEncoder만 쓰도록 되어 있다)

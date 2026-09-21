@@ -55,6 +55,36 @@ netlify deploy --prod
 `export const config = { path: "/convert" }`로 라우팅을 직접 선언하므로 별도 리다이렉트
 설정이 필요 없습니다. 함수는 외부 npm 패키지 의존성이 전혀 없습니다.
 
+### Cloudflare Pages (같은 코드, 다른 런타임)
+
+`functions/` 디렉터리가 Cloudflare Pages Functions입니다. 파일 이름이 곧 URL 경로라
+(`functions/convert.js` → `/convert`) 별도 라우팅 설정이 없습니다.
+
+**로직은 Netlify와 한 줄도 나누지 않았습니다.** Netlify 핸들러가 이미 표준
+`Request`/`Response` 시그니처여서, Cloudflare 쪽 파일은 그것을 그대로 호출하는
+세 줄짜리 래퍼입니다. 두 플랫폼의 차이는 단 하나, 서버에 설정해둔 API 키를 읽는
+방법뿐입니다:
+
+- Netlify(Node): `process.env.GEMINI_API_KEY`
+- Cloudflare(Workers): 요청 컨텍스트의 `env.GEMINI_API_KEY` — Workers에는 `process`
+  전역이 아예 없습니다.
+
+이 차이는 `geminiClient.mjs`의 `serverApiKey(ctx)` 하나가 흡수합니다.
+
+Workers는 Node 런타임이 아니므로 `node:*` 내장 모듈을 쓰면 안 됩니다. 그래서
+`zipWriter.mjs`는 `Buffer`와 `node:zlib`(crc32)를 걷어내고 `Uint8Array`/`TextEncoder`와
+직접 구현한 CRC-32만 쓰도록 바꿨습니다. 덕분에 Node·Workers·브라우저 어디서나 같은
+코드가 돕니다(`nodejs_compat` 플래그도 필요 없음).
+
+대시보드에서 연결할 때:
+
+| 항목 | 값 |
+| --- | --- |
+| Framework preset | None |
+| Build command | *(비워둠)* |
+| Build output directory | `public` |
+| 환경 변수 | `GEMINI_API_KEY` (선택 — 사용자가 자기 키를 넣는 방식이면 불필요) |
+
 ## 문제 박스 UI
 
 문제는 텍스트 하나에 이어붙는 대신 **박스 단위**로 관리합니다. 각 박스는 체크박스(변환

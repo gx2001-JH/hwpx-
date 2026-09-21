@@ -2,7 +2,7 @@
 // 반환된 텍스트는 그대로 hwpx로 변환하지 않고, 사용자가 검토/수정할 수 있도록
 // textarea에 채워 넣는 용도로만 쓴다 (OCR은 완벽하지 않으므로).
 
-import { callGemini, errorMessageOf } from "./geminiClient.mjs";
+import { callGemini, errorMessageOf, serverApiKey } from "./geminiClient.mjs";
 
 const PROMPT = `다음 이미지에 있는 수학 문제 텍스트를 그대로 옮겨 적어줘.
 
@@ -18,7 +18,7 @@ const PROMPT = `다음 이미지에 있는 수학 문제 텍스트를 그대로 
 - 이미지에 없는 내용을 추가하거나 문제를 풀지 마. 오직 옮겨 적기만 해.
 - 설명이나 코드블록 없이, 옮겨 적은 텍스트만 출력해줘.`;
 
-export default async (req) => {
+export default async (req, ctx) => {
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -35,7 +35,7 @@ export default async (req) => {
 
   // 사용자가 자기 API 키를 등록했으면 그 키를 우선 쓰고, 없으면(관리자가 설정해둔 경우)
   // 서버 환경 변수로 폴백한다.
-  const apiKey = (body.apiKey || "").trim() || process.env.GEMINI_API_KEY;
+  const apiKey = (body.apiKey || "").trim() || serverApiKey(ctx);
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: "API 키가 없습니다. 상단의 'API 키 설정'에서 본인의 Gemini API 키를 등록해주세요." }),

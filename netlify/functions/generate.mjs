@@ -3,7 +3,7 @@
 // problems 배열의 개별 원소로 나눠서 반환한다(프런트엔드에서 박스 하나씩으로 표시).
 // OCR과 마찬가지로 결과는 자동 변환되지 않고 사용자가 검토한 뒤 직접 변환하도록 한다.
 
-import { callGemini, errorMessageOf } from "./geminiClient.mjs";
+import { callGemini, errorMessageOf, serverApiKey } from "./geminiClient.mjs";
 
 const TYPE_INSTRUCTIONS = {
   객관식: "문제 유형은 객관식으로 작성해줘. 보기는 ①, ②, ③, ④, ⑤ 기호를 사용하고, [해설] 마지막에 정답 번호를 명시해줘.",
@@ -74,7 +74,7 @@ function parseProblems(text) {
   return unwrapNested(text).map((p) => p.trim()).filter(Boolean);
 }
 
-export default async (req) => {
+export default async (req, ctx) => {
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -91,7 +91,7 @@ export default async (req) => {
 
   // 사용자가 자기 API 키를 등록했으면 그 키를 우선 쓰고, 없으면(관리자가 설정해둔 경우)
   // 서버 환경 변수로 폴백한다.
-  const apiKey = (body.apiKey || "").trim() || process.env.GEMINI_API_KEY;
+  const apiKey = (body.apiKey || "").trim() || serverApiKey(ctx);
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: "API 키가 없습니다. 상단의 'API 키 설정'에서 본인의 Gemini API 키를 등록해주세요." }),

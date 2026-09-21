@@ -51,6 +51,18 @@ export async function callGemini(apiKey, requestBody) {
   return last;
 }
 
+/**
+ * 서버에 설정해둔 API 키를 런타임에 맞게 읽는다.
+ * - Netlify(Node): process.env
+ * - Cloudflare Workers: 요청 컨텍스트의 env (process 전역이 아예 없다)
+ * 둘 다 같은 핸들러를 쓰기 위한 어댑터.
+ */
+export function serverApiKey(ctx) {
+  if (ctx && ctx.env && ctx.env.GEMINI_API_KEY) return ctx.env.GEMINI_API_KEY;
+  if (typeof process !== "undefined" && process.env) return process.env.GEMINI_API_KEY;
+  return undefined;
+}
+
 export function errorMessageOf(result) {
   const msg = result && result.data && result.data.error && result.data.error.message;
   if (msg) return msg;
