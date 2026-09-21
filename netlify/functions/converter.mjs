@@ -10,6 +10,14 @@ const VAR_GREEK = {
   varepsilon: "epsilon", vartheta: "theta", varpi: "pi",
   varrho: "rho", varsigma: "sigma", varphi: "phi", varkappa: "kappa",
 };
+// 대문자 그리스 문자는 한글 수식에서도 대문자 키워드로 써야 한다("DELTA" -> Δ).
+// 소문자로 내려버리면 Δ가 δ로 바뀌어 뜻이 달라진다(실제로 그런 버그가 있었다).
+// LaTeX에 대문자 명령이 있는 글자는 라틴 문자와 모양이 다른 이 11개뿐이다.
+const UPPER_GREEK = {
+  Gamma: "GAMMA", Delta: "DELTA", Theta: "THETA", Lambda: "LAMBDA",
+  Xi: "XI", Pi: "PI", Sigma: "SIGMA", Upsilon: "UPSILON",
+  Phi: "PHI", Psi: "PSI", Omega: "OMEGA",
+};
 
 const SYMBOL_MAP = {
   times: "times", div: "div", cdot: "cdot", cdotp: "cdot",
@@ -39,8 +47,25 @@ const SYMBOL_MAP = {
   leftrightarrow: "<->", Leftrightarrow: "⇔",
   aleph: "aleph", hbar: "hbar", Re: "Re", Im: "Im",
   prime: "prime", degree: "circ",
+  mid: "|", vert: "|", lvert: "|", rvert: "|", Vert: "||",
   "%": "%", "&": "&", _: "_", "#": "#", $: "$",
 };
+
+// 눈에 보이는 중괄호. 그냥 "{"를 내보내면 한글이 그룹 묶음 기호로 읽어버려서
+// 집합 표기 {x | x>0}의 중괄호가 화면에서 사라진다.
+const LITERAL_BRACES = { "{": "lbrace", "}": "rbrace" };
+
+// 서식/배치만 바꾸는 명령. 한글 수식에는 대응이 없으니 흔적을 남기지 말고 지운다.
+// (그대로 두면 "displaystyle" 같은 글자가 수식 안에 찍혀 나온다)
+const DROP_COMMANDS = new Set([
+  "displaystyle", "textstyle", "scriptstyle", "scriptscriptstyle",
+  "limits", "nolimits", "phantom",
+]);
+
+// 글꼴만 바꾸는 명령. 인자 내용만 그대로 살린다.
+const TRANSPARENT_COMMANDS = new Set([
+  "mathbb", "mathcal", "mathfrak", "mathsf", "mathtt", "mathnormal", "boxed",
+]);
 
 // 뒤에 아래/위첨자로 상하한이 자연스럽게 붙는 연산자·함수 (별도 처리 불필요, 텍스트로 그대로 출력)
 const PASSTHROUGH_WORDS = new Set([
@@ -207,7 +232,10 @@ class Parser {
       this.next();
 
       if (tok === "^" || tok === "_") {
-        const base = takeBase();
+        let base = takeBase();
+        // 조합 기호 "{}_n C_r"처럼 밑이 없는 첨자는 스크립트가 "_"로 시작해
+        // 한글이 붙일 대상을 못 찾는다. 빈 그룹을 밑으로 세워준다.
+        if (!base) base = "{}";
         const [content] = this.parseSupsubArg();
         // 위/아래첨자 뒤에 공백 없이 다른 문자가 바로 이어지면("a_n+b_n") 한글 자체
         // 수식 파서가 첨자 뒤 경계를 잘못 인식해 뒤 내용까지 첨자에 삼켜버리는
@@ -228,7 +256,11 @@ class Parser {
 
       if (tok.startsWith("\\") && tok.length > 1 && isAlpha(tok[1])) {
         const name = tok.slice(1);
-        emitCommandAtom(this.renderCommand(name));
+        const rendered = this.renderCommand(name);
+        // 지워야 하는 명령(\limits 등)은 빈 문자열이 온다. 빈 원자를 넣어두면
+        // 뒤따르는 첨자가 그 빈 원자에 붙어버려 "sum{}_{k=1}"처럼 상하한이
+        // 큰 연산자에서 떨어져 나간다.
+        if (rendered) emitCommandAtom(rendered);
         continue;
       }
 
@@ -236,6 +268,8 @@ class Parser {
         const ch = tok[1];
         if ([",", ";", ":", "!", " "].includes(ch)) {
           emitText(" ");
+        } else if (ch in LITERAL_BRACES) {
+          emitText(" " + LITERAL_BRACES[ch] + " ");
         } else {
           emitText(ch);
         }
@@ -403,10 +437,14 @@ class Parser {
       return " ";
     }
 
+    if (DROP_COMMANDS.has(name)) return "";
+
+    if (TRANSPARENT_COMMANDS.has(name)) return this.parseBracedGroup();
+
     if (GREEK.has(name)) return name;
     if (name in VAR_GREEK) return VAR_GREEK[name];
+    if (name in UPPER_GREEK) return UPPER_GREEK[name];
     const lname = name.toLowerCase();
-    if (GREEK.has(lname)) return lname;
     if (lname in VAR_GREEK) return VAR_GREEK[lname];
 
     if (name in SYMBOL_MAP) return SYMBOL_MAP[name];

@@ -63,9 +63,12 @@ const KEYWORD_GLYPHS = new Set([
   "subset", "subseteq", "supset", "supseteq", "UNION", "INTER", "FORALL", "exists",
   "infty", "partial", "nabla", "therefore", "because", "angle", "bot", "parallel",
   "wedge", "vee", "oplus", "ominus", "otimes", "oslash", "aleph", "hbar", "Re", "Im",
-  "prime", "neq", "Rightarrow", "Leftarrow", "phi", "theta", "pi", "alpha", "beta",
+  "prime", "neq", "Rightarrow", "Leftarrow", "phi", "lbrace", "rbrace", "theta", "pi", "alpha", "beta",
   "gamma", "delta", "epsilon", "zeta", "eta", "iota", "kappa", "lambda", "mu", "nu",
   "xi", "rho", "sigma", "tau", "upsilon", "chi", "psi", "omega",
+  // 대문자 그리스 문자도 글리프 하나다(이름 길이만큼 넓어지지 않는다)
+  "GAMMA", "DELTA", "THETA", "LAMBDA", "XI", "PI", "SIGMA", "UPSILON",
+  "PHI", "PSI", "OMEGA",
   // 함수 이름도 글자 수만큼 넓어지지 않고 압축된 기호처럼 렌더링된다
   // (실측: "sin theta"=1875, "cos x + sin y"=5080 — 문자수 폭 공식보다 훨씬 좁음).
   "sin", "cos", "tan", "csc", "sec", "cot", "sinh", "cosh", "tanh",
