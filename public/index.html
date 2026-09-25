@@ -19,6 +19,7 @@
   @font-face { font-family: "CircledNum"; src: local("Malgun Gothic"), local("MalgunGothic"), local("Apple SD Gothic Neo"), local("AppleSDGothicNeo-Regular"), url("fonts/Paperlogy-5Medium.woff2") format("woff2"); unicode-range: U+2460-24FF, U+3251-325F, U+32B1-32BF; }
 
   :root {
+    --scissors: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237B5CFA' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cpath d='M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12'/%3E%3C/svg%3E");
     color-scheme: light;
     --bg: #F3F2F8;
     --surface: #FFFFFF;
@@ -1433,6 +1434,77 @@
   .box-text:hover:not(:focus) { border-color: #C9C0EA; }
   .box-text::placeholder { color: #A39DBE; }
   /* 빈 박스를 미리보기로 두면 흰 칸만 남아 고장 난 것처럼 보여, 할 일을 적어 둔다 */
+  /* ---------- 박스 나누기 ---------- */
+  /* 미리보기는 '나눌 수 있는 덩어리'(수식이 끊기지 않는 줄 경계)마다 나뉘어 그려진다 */
+  .pv-chunk { white-space: pre-wrap; border-radius: 8px; transition: background-color .15s ease, box-shadow .15s ease; }
+  .pv-chunk.gap { margin-bottom: .75em; }
+  /* 나누기 표시가 있으면 나올 박스마다 한 칸으로 감싸 번호를 단다 (번갈아 옅은 보라 / 흰색) */
+  .pv-piece {
+    position: relative; margin: 0 -6px; padding: 6px 30px 6px 10px; border-radius: 10px;
+    border: 1px solid #E4DDFB; background: #fff;
+  }
+  .pv-piece.odd { background: #F7F4FF; border-color: #DCD2FB; }
+  .pv-piece .pv-chunk.gap:last-of-type, .pv-piece .pv-chunk:last-child { margin-bottom: 0; }
+  .pv-piece-no {
+    position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent); color: #fff; font-size: 10.5px; font-weight: 800; white-space: normal;
+  }
+  .pv-piece.even .pv-piece-no { background: #fff; color: var(--accent-hover); box-shadow: inset 0 0 0 1.5px var(--accent); }
+  /* 줄 사이의 가위 자리: 평소엔 보이지 않고, 올리면 점선과 '여기서 나누기'가 나온다 */
+  .pv-cut {
+    display: block; position: relative; width: 100%; height: 14px; margin: -5px 0; padding: 0;
+    border: none; background: none; cursor: pointer; z-index: 1; font: inherit;
+  }
+  .pv-cut .cut-line { position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed transparent; transform: translateY(-1px); transition: border-color .12s ease; }
+  .pv-cut .cut-pill {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.92);
+    display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 10px 0 8px;
+    border-radius: var(--pill); border: 1px solid var(--accent); background: #fff; color: var(--accent-hover);
+    font-size: 10.5px; font-weight: 800; white-space: nowrap; opacity: 0; pointer-events: none;
+    box-shadow: 0 2px 8px rgba(123,92,250,.18); transition: opacity .12s ease, transform .12s ease;
+  }
+  .pv-cut .cut-pill svg { width: 12px; height: 12px; }
+  /* 박스 위에 올리면 왼쪽 여백에 작은 가위가 옅게 보여 '여기를 누르면 나뉜다'를 알린다 */
+  .pv-cut::before {
+    content: ''; position: absolute; left: -11px; top: 50%; width: 10px; height: 10px; transform: translateY(-50%);
+    background: var(--scissors) center / 10px no-repeat; opacity: 0; transition: opacity .15s ease;
+  }
+  .box-preview:hover .pv-cut::before { opacity: .3; }
+  .pv-cut:hover .cut-line, .pv-cut:focus-visible .cut-line { border-color: rgba(123,92,250,.55); }
+  .pv-cut:hover .cut-pill, .pv-cut:focus-visible .cut-pill { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .pv-cut:hover::before { opacity: 0; }
+  .pv-cut:focus-visible { outline: none; }
+  /* 표시한 자리: 진한 보라 점선 + 보라 알약 */
+  .pv-cut.on { height: 24px; margin: 2px 0; }
+  .pv-cut.on .cut-line { border-color: var(--accent); }
+  .pv-cut.on .cut-pill { opacity: 1; transform: translate(-50%, -50%) scale(1); background: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(123,92,250,.35); }
+  .pv-cut.on::before { opacity: 0; }
+  .pv-cut.on:hover .cut-pill { background: #fff; color: var(--accent-hover); }
+  /* 나누기 줄: 표시가 있을 때 박스 아래에 뜬다 */
+  .cut-bar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding: 5px 5px 5px 12px;
+    border-radius: 18px; background: var(--panel-head); border: 1px solid var(--panel-line);
+    animation: box-in .18s var(--ease);
+  }
+  .cut-bar .cut-info { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: var(--accent-hover); margin-right: auto; white-space: nowrap; }
+  .cut-bar .cut-info svg { width: 13px; height: 13px; }
+  .cut-bar button {
+    height: 26px; padding: 0 12px; border-radius: var(--pill); font: inherit; font-size: 11.5px; font-weight: 800;
+    cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .cut-bar .cut-go { border: 1px solid var(--accent); background: var(--accent); color: #fff; box-shadow: var(--pill-shadow); }
+  .cut-bar .cut-go:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .cut-bar .cut-go svg { width: 13px; height: 13px; }
+  .cut-bar .cut-clear { border: 1px solid var(--panel-line); background: #fff; color: var(--text-muted); }
+  .cut-bar .cut-clear:hover { border-color: var(--accent); color: var(--accent-hover); }
+  /* 표시가 없을 때: 문항 번호가 여러 개면 한 번에 표시하는 제안 알약 하나만 (점선 테두리로 가볍게) */
+  .cut-bar.suggest { background: transparent; border: 1px dashed var(--panel-line); padding: 4px; animation: none; }
+  .cut-bar.suggest .cut-auto { border: none; background: transparent; color: var(--accent-hover); }
+  .cut-bar.suggest .cut-auto:hover { background: var(--hover-tint); }
+  .cut-bar.suggest .cut-auto svg { width: 13px; height: 13px; }
+  .box.unchecked .cut-bar { opacity: 1; }
+
   .box-preview:empty::before { content: "비어 있어요 — 위의 '편집'을 눌러 입력하세요"; color: #A39DBE; font-size: 12.5px; }
   /* 글 길이만큼 자라게 해 스크롤바에 잘리지 않게 (지원하는 브라우저만, 나머지는 손잡이로 늘린다) */
   @supports (field-sizing: content) { .box-text { field-sizing: content; max-height: 520px; resize: none; } }
@@ -2059,6 +2131,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <ul class="hs-list">
             <li>박스 머리의 <b>편집 · 미리보기 · 한글 문법</b>으로 보기를 바꿔요. <b>보라 알약</b>이 지금 보고 있는 보기예요. <b>한글 문법</b>은 한/글 수식편집기에 그대로 붙여 넣을 수 있는 글이에요.</li>
             <li>박스 머리띠(⠿)를 끌거나 ↑↓ 로 순서를 바꾸고, 체크한 박스만 변환돼요. 여러 개를 고르면 <b>하나로 합치기 · 복제 · 삭제</b>를 한꺼번에 할 수 있어요. <b>전체 선택</b>(<code>Ctrl+A</code>)으로 모두 고르고 <code>Esc</code>로 풀어요. 체크 상자를 누른 뒤 다른 체크 상자를 <b>Shift+클릭</b>하면 그 사이가 한꺼번에 골라져요.</li>
+            <li><b>박스 나누기</b>: 미리보기에서 줄과 줄 사이에 마우스를 올리면 <b>✂ 여기서 나누기</b>가 나와요. 눌러서 표시한 뒤 박스 아래의 <b>박스 N개로 나누기</b>를 누르면 표시한 곳마다 따로 박스가 돼요. 문항 번호가 여러 개인 박스는 <b>문항 번호마다 나누기 표시</b> 한 번으로 표시할 수 있어요.</li>
             <li>수식에 흔한 실수(짝이 없는 <code>$</code>, 중괄호 짝, 미리보기에서 깨지는 수식)가 있으면 박스 위에 <b>⚠ 띠</b>가 뜨고, 누르면 그 자리로 가서 고칠 수 있어요. 변환할 때도 한 번 더 알려 줘요.</li>
             <li><b>🔍 찾아 바꾸기</b>(<code>Ctrl+H</code>)로 모든 박스의 글자를 한 번에 바꿔요 (예: [4점] → [3점]). <b>정렬 ▾ → 문항 번호 다시 매기기</b>로 "1. 2. 3."을 차례대로 다시 붙여요.</li>
             <li><b>정렬</b>로 출처별 · 길이순 · 역순 정리, <b>↶ ↷</b>(<code>Ctrl+Z</code>)로 되돌리기.</li>
@@ -2183,6 +2256,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       down: '<svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>',
       trash: '<svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
       eye: '<svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+      scissors: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/></svg>',
       // 한글 수식 문법 보기 (꺾쇠 괄호 — '코드'를 뜻하는 흔한 기호)
       code: '<svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7.5L4 12l4.5 4.5M15.5 7.5L20 12l-4.5 4.5"/></svg>',
       edit: '<svg class="icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
@@ -2581,6 +2655,79 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       return issues;
     }
 
+    // ---- 박스 나누기 ----
+    // 미리보기를 '나눌 수 있는 덩어리'로 나눠 그리고, 덩어리 사이의 가위 자리를 누르면 표시한다.
+    // 줄바꿈이 수식 안(여러 줄 $$...$$ 등)에 있으면 거기서는 나누지 않는다 — 수식이 두 박스로
+    // 갈라지면 둘 다 깨진다. 빈 줄은 앞 덩어리에 붙여 간격으로만 보여 준다.
+    function chunksOf(text) {
+      const spans = [];
+      for (const m of text.matchAll(MATH_SPLIT_RE)) spans.push([m.index, m.index + m[0].length]);
+      const insideMath = (pos) => spans.some(([a, z]) => a < pos && pos < z);
+      const out = [];   // { text, gap }
+      let cur = '', gap = false, pos = 0;
+      const lines = text.split('\n');
+      lines.forEach((line, i) => {
+        if (i === 0) { cur = line; pos = line.length; return; }
+        const nl = pos;   // 이 줄 앞의 줄바꿈 자리
+        pos += 1 + line.length;
+        if (!line.trim()) { if (cur.trim()) gap = true; else cur += '\n' + line; return; }
+        if (!insideMath(nl) && cur.trim()) { out.push({ text: cur, gap }); cur = line; gap = false; }
+        else { cur += (gap ? '\n\n' : '\n') + line; gap = false; }
+      });
+      if (cur.trim() || !out.length) out.push({ text: cur, gap: false });
+      return out;
+    }
+    const NUM_START_RE = /^\s*\d{1,3}\s*[.)．]/;
+
+    // 박스마다 표시한 자리 (다음 덩어리의 번호). 글이 바뀌면 자리도 달라지므로 글과 함께 적어 둔다
+    const cutMarks = new Map();   // id → { text, set }
+    function marksOf(box) {
+      const m = cutMarks.get(box.id);
+      if (!m || m.text !== box.text) { cutMarks.delete(box.id); return new Set(); }
+      return m.set;
+    }
+
+    function previewHtml(box) {
+      if (!box.text) return '<div class="box-preview" data-preview></div>';
+      const chunks = chunksOf(box.text);
+      if (chunks.length < 2) return `<div class="box-preview" data-preview>${escapeHtml(box.text)}</div>`;
+      const marks = marksOf(box);
+      const cutBtn = (k, on) => `<button type="button" class="pv-cut${on ? ' on' : ''}" data-cut="${k}" aria-pressed="${on}" title="${on ? '이 나누기 표시 지우기' : '여기서 박스를 나눕니다'}">`
+        + `<span class="cut-line"></span><span class="cut-pill">${ICONS.scissors}${on ? '여기서 나눔' : '여기서 나누기'}</span></button>`;
+      // 표시한 자리마다 조각(= 나올 박스)을 하나의 칸으로 감싸 번호를 단다 — 어떻게 나뉘는지 한눈에.
+      // pre-wrap 이라 태그 사이에 빈칸·줄바꿈이 있으면 그대로 보인다 — 붙여서 만든다
+      let html = '', piece = 0, open = false;
+      chunks.forEach((c, k) => {
+        const on = k > 0 && marks.has(k);
+        if (on) { html += '</div>' + cutBtn(k, true); open = false; }
+        else if (k > 0) html += cutBtn(k, false);
+        if (marks.size && !open) {
+          piece += 1;
+          html += `<div class="pv-piece ${piece % 2 ? 'odd' : 'even'}"><span class="pv-piece-no" aria-hidden="true">${piece}</span>`;
+          open = true;
+        }
+        html += `<div class="pv-chunk${c.gap ? ' gap' : ''}">${escapeHtml(c.text)}</div>`;
+      });
+      if (open) html += '</div>';
+      return `<div class="box-preview${marks.size ? ' cutting' : ''}" data-preview>${html}</div>`;
+    }
+
+    function cutBarHtml(box) {
+      const chunks = box.text ? chunksOf(box.text) : [];
+      if (chunks.length < 2) return '';
+      const marks = marksOf(box);
+      if (marks.size) {
+        return `<div class="cut-bar"><span class="cut-info">${ICONS.scissors}나누기 표시 ${marks.size}곳</span>`
+          + `<button type="button" class="cut-clear" data-action="cut-clear">표시 지우기</button>`
+          + `<button type="button" class="cut-go" data-action="cut-go">${ICONS.scissors}박스 ${marks.size + 1}개로 나누기</button></div>`;
+      }
+      const numbered = chunks.filter((c, k) => k > 0 && NUM_START_RE.test(c.text)).length;
+      if (numbered >= 1 && NUM_START_RE.test(chunks[0].text)) {
+        return `<div class="cut-bar suggest"><button type="button" class="cut-auto" data-action="cut-auto" title="'1.' '2.' 처럼 번호로 시작하는 줄마다 나누기 표시를 합니다">${ICONS.scissors}문항 번호마다 나누기 표시 (${numbered + 1}개)</button></div>`;
+      }
+      return '';
+    }
+
     function issueStripHtml(issues) {
       if (!issues.length) return '';
       const first = issues[0].msg + (issues.length > 1 ? ` 외 ${issues.length - 1}건` : '');
@@ -2767,7 +2914,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           ${hwpView
             ? `<div class="box-hwp" data-hwp data-id="${box.id}"><div class="hwp-note">불러오는 중…</div></div>`
             : preview
-            ? `<div class="box-preview" data-preview>${escapeHtml(box.text)}</div>`
+            ? previewHtml(box) + cutBarHtml(box)
             : `<textarea class="box-text" rows="5" placeholder="문제를 입력하세요. 수식은 $x^2$ 처럼 $ 로 감쌉니다.">${escapeHtml(box.text)}</textarea>`}
           <div class="box-ai-caption${aiOpen ? ' show' : ''}">${ICONS.spark} AI에게 이 문제만 다시 써달라고 요청하세요</div>
           <div class="box-ai-panel${aiOpen ? ' show' : ''}">
@@ -3185,6 +3332,71 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       if (b) closeConfirm(b.dataset.v);
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && confirmOverlay.classList.contains('show')) closeConfirm(null); });
+
+    // ---- 박스 나누기: 가위 자리 · 번호마다 표시 · 지우기 · 나누기 ----
+    // 표시만 바꿀 때는 그 박스 하나만 다시 그린다 (전체를 다시 그리면 다른 박스의 수식까지 다시 그린다)
+    function rerenderPreview(boxEl, box) {
+      const body = boxEl.querySelector('.box-body');
+      const old = body.querySelector('[data-preview]');
+      const bar = body.querySelector('.cut-bar');
+      if (bar) bar.remove();
+      old.insertAdjacentHTML('afterend', previewHtml(box) + cutBarHtml(box));
+      old.remove();
+      const pv = body.querySelector('[data-preview]');
+      pv.style.animation = 'none';
+      if (typeof renderMathInElement === 'function') {
+        try { renderMathInElement(pv, { delimiters: KATEX_DELIMS, throwOnError: false }); } catch (e) { /* 원문 그대로 */ }
+      }
+    }
+    function setMarks(box, set) {
+      if (set.size) cutMarks.set(box.id, { text: box.text, set }); else cutMarks.delete(box.id);
+    }
+    boxListEl.addEventListener('click', (e) => {
+      const cut = e.target.closest('.pv-cut');
+      const act = e.target.closest('[data-action^="cut-"]');
+      if (!cut && !act) return;
+      e.stopPropagation();
+      const boxEl = e.target.closest('.box');
+      const box = boxes.find((b) => b.id === boxEl.dataset.id);
+      if (!box) return;
+      const marks = new Set(marksOf(box));
+      if (cut) {
+        const k = +cut.dataset.cut;
+        if (marks.has(k)) marks.delete(k); else marks.add(k);
+        setMarks(box, marks);
+        rerenderPreview(boxEl, box);
+        const again = boxEl.querySelector(`.pv-cut[data-cut="${k}"]`);
+        if (again) again.focus({ preventScroll: true });
+        return;
+      }
+      const what = act.dataset.action;
+      if (what === 'cut-clear') { setMarks(box, new Set()); rerenderPreview(boxEl, box); return; }
+      if (what === 'cut-auto') {
+        const chunks = chunksOf(box.text);
+        const set = new Set();
+        chunks.forEach((c, k) => { if (k > 0 && NUM_START_RE.test(c.text)) set.add(k); });
+        setMarks(box, set);
+        rerenderPreview(boxEl, box);
+        return;
+      }
+      if (what === 'cut-go') {
+        const chunks = chunksOf(box.text);
+        const pieces = [];
+        let curText = '';
+        chunks.forEach((c, k) => {
+          if (k > 0 && marks.has(k)) { pieces.push(curText); curText = ''; }
+          curText += (curText ? '\n' : '') + c.text + (c.gap ? '\n' : '');
+        });
+        pieces.push(curText);
+        const texts = pieces.map((t) => tidyBlankLines(t).trim()).filter(Boolean);
+        if (texts.length < 2) return;
+        const idx = boxes.indexOf(box);
+        const made = texts.map((t) => ({ id: genId(), text: t, checked: box.checked, source: box.source }));
+        cutMarks.delete(box.id);
+        flipBoxes(() => { boxes.splice(idx, 1, ...made); });
+        setStatus('ok', `박스를 ${made.length}개로 나눴습니다. Ctrl+Z 로 되돌릴 수 있어요.`);
+      }
+    });
 
     // ---- Shift+클릭 범위 선택 ----
     // 마지막으로 누른 박스(기준점)부터 지금 누른 박스까지를 같은 상태로 맞춘다 (탐색기와 같은 방식).
