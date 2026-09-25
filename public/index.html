@@ -2,8 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- viewport-fit=cover: 아이폰 아래쪽 홈 막대 자리(safe-area)를 알아야 탭 막대를 그 위에 올린다 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>한글 수식 변환기</title>
+<!-- 휴대폰 홈 화면에 앱으로 추가 (주소창 없는 전체 화면으로 열린다) -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#F3F2F8">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="수식 변환기">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%237B5CFA'/%3E%3Cpath d='M4 13l3.5 7L12 4h8' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -1806,6 +1815,239 @@
     .filename-field input[type=text] { flex: 1 1 auto; max-width: none; }
     .app-footer { flex-direction: column; gap: 2px; text-align: center; padding: 8px 14px; }
   }
+
+  /* =====================================================================
+     휴대폰(760px 이하): 도형 생성기 휴대폰 화면과 같은 짜임
+     - 화면은 고정(주소창이 숨었다 나타나며 높이가 흔들리지 않게), 박스 카드만 스크롤
+     - 아래 탭 막대: 박스 · 문제 입력 · 도구 · 목록 (도형 생성기: 그림 · 문제 입력 · 도구 · 요소 와 같은 자리)
+     - 문제 입력 · 도구 · 목록은 밑에서 올라오는 시트 (뒤는 어둡게, 누르면 닫힘)
+     값은 도형 생성기를 390×844 에서 잰 것 그대로다.
+     ===================================================================== */
+  .m-tabbar, .m-scrim, .m-panel, .main-bar .tray-hint, .es-phone { display: none; }
+  /* 빈 화면 안내: 휴대폰에서는 입력 패널이 왼쪽이 아니라 아래 탭이다 */
+  @media (max-width: 760px) { .es-desk { display: none; } .es-phone { display: inline; } }
+  @media (max-width: 760px) {
+    html, body { height: 100%; overflow: hidden !important; overscroll-behavior: none; }
+    body { display: flex; flex-direction: column; height: 100dvh; }
+    .app-footer, .resizer { display: none !important; }
+    .shell {
+      flex: 1 1 auto; min-height: 0; overflow: hidden !important; flex-direction: column;
+      padding: 0 6px calc(62px + env(safe-area-inset-bottom)) !important; gap: 0 !important; animation: none;
+    }
+    .workspace { display: flex !important; flex: 1 1 auto; min-height: 0; flex-direction: column; }
+
+    /* 머리글: 왼쪽 로고 아이콘 + 두 줄(모델·파일·사용법·키 / 문서 탭) */
+    header {
+      order: 0; display: grid !important; grid-template-columns: 32px minmax(0, 1fr); column-gap: 8px; row-gap: 6px;
+      align-items: start; height: auto; margin: 0; padding: 8px 2px 6px !important;
+    }
+    header .brand { grid-column: 1; grid-row: 1; }
+    header .brand-text { display: none; }
+    header .brand-mark { width: 32px; height: 32px; border-radius: 9px; }
+    .hdr-actions {
+      grid-column: 2; grid-row: 1; min-width: 0; height: 32px; margin: 0 !important; padding: 0;
+      gap: 4px; background: transparent; border: none; box-shadow: none; align-items: flex-start;
+    }
+    #modelPickBtn { flex: 1 1 auto; min-width: 0; max-width: none; height: 30px; padding: 0 8px 0 7px; gap: 5px; }
+    #modelPickBtn .mm-name { font-size: 11.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    #modelChipBadge { font-size: 9.5px; padding: 0 6px; height: 16px; }
+    /* 파일·사용법: 흰 네모 단추 (도형 생성기 34×30 · 30×30, 모서리 8) */
+    #fileMenuBtn, #helpBtn {
+      flex: none; height: 30px; padding: 0; justify-content: center; font-size: 0; gap: 0;
+      background: #fff; color: var(--text); border: 1px solid #E7E5EF; border-radius: 8px; box-shadow: var(--shadow-sm);
+    }
+    #fileMenuBtn { width: 34px; }
+    #helpBtn { width: 30px; }
+    #fileMenuBtn .chev { display: none; }
+    #fileMenuBtn svg, #helpBtn svg { width: 16px; height: 16px; }
+    #fileMenuBtn:hover, #fileMenuBtn.active, #helpBtn:hover { background: var(--accent-soft); color: var(--accent-hover); }
+    #apiKeyBtn { flex: none; height: 32px; padding: 0 9px 0 7px; font-size: 11px; box-shadow: 0 2px 8px rgba(123,92,250,.3); }
+    #apiKeyBtn .k-api { display: none; }
+    #apiKeyBtn.has-key { box-shadow: none; }
+    .doc-bar { grid-column: 2; grid-row: 2; order: 0; margin: 0 !important; padding: 0 !important; gap: 6px; min-width: 0; }
+    /* 문서 탭: 흰 독 없이 알약만 (지금 탭은 연보라 + 보라 테두리) */
+    .doc-tabs { flex: 1 1 0; height: 34px; padding: 2px 0; gap: 6px; background: transparent; border: none; box-shadow: none; }
+    .doc-tab { height: 30px; padding: 0 13px; border: 1px solid var(--panel-line); background: #fff; box-shadow: var(--shadow-sm); }
+    .doc-tab.can-close { padding-right: 7px; }
+    .doc-tab.active { background: #EEE8FE; border-color: var(--accent); color: #6A47E8; font-weight: 600; }
+    .doc-tab.active .dt-n { background: #fff; color: var(--accent-hover); }
+    .doc-tab.active .close { color: #6A47E8; }
+    .doc-tab.active:hover { background: #E4DBFD; color: #6A47E8; }
+    .doc-add { height: 32px; padding: 0 10px; background: #EEE8FE; border-color: #DCD2FF; color: #6A47E8; }
+
+    /* 박스 카드: 위 막대와 아래 탭 막대 사이를 꽉 채우고, 안쪽만 스크롤 */
+    .main { flex: 1 1 auto; min-height: 0; padding: 0 !important; overflow: hidden !important; }
+    .main-card { flex: 1 1 auto !important; min-height: 0; border-radius: 14px; }
+    .main-card-body { flex: 1 1 auto !important; min-height: 0; overflow-y: auto !important; padding: 10px; }
+    /* 카드 머리띠: 한 줄로 두고 옆으로 밀어서 (도형 생성기 조정 막대). 내보내기 묶음이 맨 앞 */
+    .main-bar {
+      display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+      gap: 6px !important; padding: 7px 12px !important; justify-content: flex-start !important; scroll-behavior: smooth;
+      position: relative;
+    }
+    .main-bar::-webkit-scrollbar { display: none; }
+    .main-bar > * { flex: 0 0 auto !important; }
+    .main-bar .bar-sec { flex-wrap: nowrap !important; width: auto !important; min-width: 0 !important; }
+    .main-bar .bar-export { order: -1; flex: 0 0 auto !important; flex-wrap: nowrap !important; }
+    .main-bar .bar-list { order: 1; }
+    .main-bar .bar-add { order: 2; }
+    .main-bar .filename-field { flex: 0 0 auto !important; }
+    .filename-field input[type=text] { flex: 0 0 auto; }
+    /* 가장 자주 누르는 'hwpx로 변환'을 맨 앞에 (도형 생성기 조정 막대의 '저장'·복사 자리) */
+    .main-bar #submitBtn { order: -2; }
+    .main-bar .filename-field { order: -1; }
+    /* 고른 박스 줄도 한 줄로 두고 옆으로 민다 (잘리지 않게) */
+    .toolbar-bulk { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; }
+    .toolbar-bulk::-webkit-scrollbar { display: none; }
+    .toolbar-bulk > * { flex: none; }
+    /* 시트가 열려 있으면 알림은 위쪽에 (시트의 주 단추를 가리지 않게) */
+    body.m-sheet .toast-container { bottom: auto; top: 10px; }
+    /* 밀어서 더 있다는 표시: 막대 색에 스며드는 가는 화살표 (도형 생성기 .tray-hint) */
+    .main-bar .tray-hint {
+      position: sticky; order: 99; right: 0; flex: 0 0 auto !important; align-self: stretch; margin-left: auto !important;
+      display: none; align-items: center; padding: 0 2px 0 20px; border: none; cursor: pointer; color: var(--accent-hover);
+      background: linear-gradient(90deg, rgba(223,217,241,0), #DFD9F1 42%); box-shadow: 12px 0 0 #DFD9F1; z-index: 3;
+    }
+    .main-bar .tray-hint.left {
+      order: -99; left: 0; right: auto; margin: 0 !important; padding: 0 20px 0 2px;
+      background: linear-gradient(270deg, rgba(223,217,241,0), #DFD9F1 42%); box-shadow: -12px 0 0 #DFD9F1;
+    }
+    .main-bar.swipe-more .tray-hint:not(.left) { display: inline-flex; }
+    .main-bar.swiped .tray-hint.left { display: inline-flex; }
+    .main-bar .tray-hint b { display: inline-flex; animation: tray-nudge-r 1.4s ease-in-out infinite; }
+    .main-bar .tray-hint.left b { animation-name: tray-nudge-l; }
+    @keyframes tray-nudge-r { 0%, 100% { transform: translateX(0); opacity: .75; } 50% { transform: translateX(3px); opacity: 1; } }
+    @keyframes tray-nudge-l { 0%, 100% { transform: translateX(0); opacity: .75; } 50% { transform: translateX(-3px); opacity: 1; } }
+    .toolbar-bulk, .find-bar, .restore-bar { max-width: calc(100% - 20px); margin-left: 10px; margin-right: 10px; }
+    .find-field input[type=text] { width: 110px; }
+
+    /* 문제 입력 · 도구 · 목록: 밑에서 올라오는 시트 */
+    #sidebar, .m-panel {
+      display: flex; flex-direction: column;
+      position: fixed !important; left: 0 !important; right: 0 !important; top: auto !important;
+      bottom: calc(60px + env(safe-area-inset-bottom)) !important;
+      width: auto !important; min-width: 0 !important; max-width: none !important; height: auto !important; max-height: 74dvh !important;
+      margin: 0 !important; border-radius: 22px 22px 0 0 !important; z-index: 400;
+      box-shadow: 0 -12px 40px rgba(20,16,50,.22) !important;
+      transform: translateY(calc(100% + 90px)); transition: transform .26s var(--ease) !important; visibility: hidden;
+    }
+    #sidebar.m-open, .m-panel.m-open { transform: none; visibility: visible; }
+    #sidebar::before, .m-panel::before {
+      content: ''; position: absolute; top: 7px; left: 50%; width: 38px; height: 4px; margin-left: -19px;
+      border-radius: 4px; background: rgba(128,120,160,.45); z-index: 2;
+    }
+    #sidebar { padding: 18px 14px 12px !important; overflow-y: auto; overscroll-behavior: contain; }
+    #sidebar.collapsed { padding: 18px 14px 12px !important; height: auto !important; cursor: default; }
+    #sidebar.collapsed > :not(.sb-vlabel):not(.edge-tab) { display: revert !important; }
+    #sidebar .edge-tab, #sidebar .sb-vlabel { display: none !important; }
+    #sidebar .side-scroll { overflow: visible; }
+    .m-panel { background: #fff; border: 1px solid var(--panel-line); padding: 12px 12px 10px; gap: 7px; overflow: hidden; }
+    .m-panel .mp-head {
+      flex: none; display: flex; align-items: center; gap: 6px; margin: -12px -12px 0; padding: 20px 16px 10px;
+      background: var(--panel-head); border-bottom: 1px solid var(--panel-line); border-radius: 21px 21px 0 0;
+    }
+    .m-panel .mp-head b { font-size: 13.5px; font-weight: 800; color: var(--text); }
+    .m-panel .mp-sub { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .m-panel .mp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 2px 6px; }
+    .m-scrim {
+      display: block; position: fixed; inset: 0 0 calc(60px + env(safe-area-inset-bottom)) 0;
+      background: rgba(20,16,50,.28); z-index: 390; opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    body.m-sheet .m-scrim { opacity: 1; pointer-events: auto; }
+
+    /* 도구 시트: 갈래 제목(색 점 + 가는 줄) 아래에 두 칸 단추 (도형 생성기 도구 패널) */
+    .mt-sec { margin-top: 10px; }
+    .mt-sec-h { display: flex; align-items: center; gap: 6px; margin: 0 2px 7px; font-size: 12px; font-weight: 700; color: var(--text); }
+    .mt-sec-h i { width: 8px; height: 8px; border-radius: 50%; background: var(--sec, #8E7CF0); }
+    .mt-sec-h::after { content: ''; flex: 1; height: 1px; background: var(--panel-line); margin-left: 4px; }
+    .c-box { --sec: #8E7CF0; --ico-bg: #F5F2FF; --ico: #8B78E6; }
+    .c-sort { --sec: #E88AA6; --ico-bg: #FDF0F4; --ico: #D8668A; }
+    .c-undo { --sec: #7FA8E6; --ico-bg: #EFF5FE; --ico: #5B8BD9; }
+    .c-file { --sec: #52B788; --ico-bg: #ECF8F1; --ico: #2E9E6A; }
+    .mt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .mt-btn {
+      position: relative; display: flex; align-items: center; gap: 7px; min-width: 0; height: 32px; padding: 0 12px 0 9px;
+      background: #fff; border: 1px solid var(--panel-line); border-radius: 9px; box-shadow: 0 1px 2px rgba(33,29,46,.05);
+      font: inherit; font-size: 12px; font-weight: 600; color: var(--text); text-align: left; cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, color .15s ease, transform .1s var(--ease), box-shadow .15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mt-btn:active { transform: scale(.97); }
+    .mt-btn.span2 { grid-column: span 2; }
+    .mt-ico { flex: none; width: 20px; height: 20px; padding: 3px; border-radius: 6px; background: var(--ico-bg); color: var(--ico); display: inline-flex; align-items: center; justify-content: center; }
+    .mt-lab { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mt-btn[aria-pressed="true"], .mt-btn.primary {
+      background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(123,92,250,.35);
+    }
+    .mt-btn[aria-pressed="true"] .mt-ico, .mt-btn.primary .mt-ico { background: rgba(255,255,255,.22); color: #fff; }
+    .mt-btn:disabled { opacity: .45; }
+    /* 예시 불러오기: 단추 전체가 고르기 상자 (휴대폰 자체 목록이 뜬다) */
+    .mt-select select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+
+    /* 목록 시트: 도형 생성기 '요소 목록' — 체크 · 출처 · 첫 줄 (누르면 그 박스로) */
+    .ml-head { gap: 8px !important; }
+    .ml-all { display: inline-flex; }
+    .ml-all input { width: 17px; height: 17px; margin: 0; }
+    .ml-count { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--pill); background: var(--accent-soft); color: var(--accent-hover); font-size: 11px; font-weight: 800; }
+    .ml-sp { flex: 1; }
+    .ml-ic { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--panel-line); background: #fff; color: var(--text); font-size: 14px; cursor: pointer; }
+    .ml-ic:disabled { opacity: .4; }
+    .ml-bulk { flex: none; display: flex; align-items: center; gap: 3px; flex-wrap: wrap; padding: 4px 5px; background: var(--panel-head); border: 1px solid var(--panel-line); border-radius: 18px; }
+    .ml-bulk[hidden] { display: none; }
+    .ml-bulk button { height: 26px; padding: 0 10px; border: none; border-radius: var(--pill); background: transparent; font: inherit; font-size: 12px; font-weight: 700; color: var(--text); cursor: pointer; }
+    .ml-bulk button.danger { color: var(--error); }
+    .ml-bulk button:disabled { opacity: .4; }
+    .ml-row {
+      display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 6px 8px; border-radius: 10px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ml-row + .ml-row { border-top: 1px solid #F0EEF6; }
+    .ml-row:active { background: var(--hover-tint); }
+    .ml-row input { width: 17px; height: 17px; margin: 0; flex: none; }
+    .ml-src { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #F1EFF7; color: var(--text-muted); }
+    .ml-src svg { width: 12px; height: 12px; }
+    .ml-src.src-ocr { background: #EAF2FE; color: var(--info); }
+    .ml-src.src-ai { background: #F1EDFF; color: var(--accent); }
+    /* 글자 수로 자르면 수식이 반쯤 잘려 날 LaTeX 가 보인다. 자르지 않고 오른쪽 끝을 흐리게 지운다 */
+    .ml-txt {
+      flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; white-space: nowrap;
+      -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); mask-image: linear-gradient(90deg, #000 86%, transparent);
+    }
+    /* 첫 줄의 수식도 그려서 보인다 (날 LaTeX 는 읽기 어렵다). 한 줄 높이를 넘지 않게 조금 작게 */
+    .ml-txt .katex { font-size: 1.02em; }
+    .ml-txt .katex-display { display: inline; margin: 0; }
+    .ml-txt .katex-display > .katex { display: inline; }
+    .ml-row.off .ml-txt { color: var(--text-muted); font-weight: 500; }
+    .ml-warn { flex: none; height: 20px; padding: 0 7px; border-radius: var(--pill); background: #FFE9C2; color: #9A5B00; font-size: 10.5px; font-weight: 800; display: inline-flex; align-items: center; }
+    .ml-empty { padding: 26px 10px; text-align: center; font-size: 12.5px; color: var(--text-muted); }
+    /* 목록에서 눌러 찾아간 박스는 잠깐 빛나 어디인지 보인다 */
+    .box.m-flash { outline: 3px solid var(--accent); outline-offset: 2px; transition: outline-color .6s ease; }
+
+    /* 아래 탭 막대 */
+    .m-tabbar {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 450;
+      height: calc(60px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+      background: #fff; border-top: 1px solid var(--panel-line); box-shadow: 0 -4px 16px rgba(20,16,50,.05);
+    }
+    .m-tabbar button {
+      flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      border: none; background: none; font-family: inherit; font-size: 11px; font-weight: 600; color: #9A96AD;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .m-tabbar button.on { color: var(--accent-hover); font-weight: 800; }
+    .m-tabbar button.on svg { stroke-width: 2.3; }
+
+    /* 떠 있는 작은 창은 탭 막대보다 위에, 알림은 탭 막대 위에 */
+    .model-menu, .file-menu { z-index: 500 !important; }
+    .toast-container { bottom: calc(72px + env(safe-area-inset-bottom)); width: calc(100% - 24px); }
+    .toast { max-width: 100%; }
+    .modal-card { max-height: calc(100dvh - 24px) !important; }
+    .modal-overlay { padding: 12px !important; align-items: center; }
+  }
+  @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+    .main-bar .tray-hint b { animation: none; }
+    #sidebar, .m-panel { transition: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -2188,7 +2430,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         <div class="main-card-body">
           <div class="empty-state" id="emptyState">
             <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9h10M7 13h6"/></svg></div>
-            아직 추가된 문제가 없습니다.<br>왼쪽 <b>수동 입력</b>에 Gem이 준 텍스트를 붙여 넣거나, <b>AI 입력</b>으로 이미지를 넣어보세요.
+            아직 추가된 문제가 없습니다.<br><span class="es-desk">왼쪽 <b>수동 입력</b>에 Gem이 준 텍스트를 붙여 넣거나, <b>AI 입력</b>으로 이미지를 넣어보세요.</span><span class="es-phone">아래 <b>문제 입력</b> 탭에서 Gem이 준 텍스트를 붙여 넣거나, 이미지를 넣어보세요.</span>
             <div class="empty-actions">
               <button type="button" class="side-link-btn" id="emptyExampleBtn">예시로 먼저 살펴보기</button>
             </div>
@@ -2204,6 +2446,66 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     <span class="credit"><b>한글 수식 변환기</b><span class="sep">·</span>LaTeX → 한/글 수식 개체 (hwpx)<span class="sep">·</span>제작<span class="sep">·</span><b>월촌중학교 김재현</b></span>
     <span>API 키는 이 브라우저에만 저장되고 각 AI 회사로만 전송됩니다</span>
   </footer>
+
+
+  <!-- ===== 휴대폰(760px 이하): 도형 생성기와 같은 아래 탭 막대 + 시트 ===== -->
+  <div class="m-scrim" id="mScrim" aria-hidden="true"></div>
+  <section class="m-panel" id="mTools" aria-label="도구">
+    <div class="mp-head"><b>도구</b><span class="mp-sub">박스 목록을 정리하고 파일로 내보내요</span></div>
+    <div class="mp-body">
+      <div class="mt-sec c-box"><div class="mt-sec-h"><i></i>박스</div>
+        <div class="mt-grid">
+          <button type="button" class="mt-btn" data-do="add"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg></span><span class="mt-lab">박스 추가</span></button>
+          <label class="mt-btn mt-select"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 8h6M7 11h6M7 14h3"/></svg></span><span class="mt-lab">예시 불러오기</span><select id="mExample" aria-label="예시 불러오기"></select></label>
+          <button type="button" class="mt-btn" data-do="selall"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="3.5"/><path d="M6.5 10.2l2.4 2.4 4.6-5"/></svg></span><span class="mt-lab">전체 선택</span></button>
+          <button type="button" class="mt-btn" data-do="find"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.8" cy="8.8" r="5"/><path d="M16.5 16.5l-4-4"/></svg></span><span class="mt-lab">찾아 바꾸기</span></button>
+        </div></div>
+      <div class="mt-sec c-sort"><div class="mt-sec-h"><i></i>정리</div>
+        <div class="mt-grid">
+          <button type="button" class="mt-btn" data-do="sort:source"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M4 10h8M4 14h4"/></svg></span><span class="mt-lab">출처별</span></button>
+          <button type="button" class="mt-btn" data-do="sort:reverse"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v12M7 16l-3-3M7 16l3-3M13 16V4M13 4l-3 3M13 4l3 3"/></svg></span><span class="mt-lab">역순으로</span></button>
+          <button type="button" class="mt-btn" data-do="sort:long"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h12M4 10h9M4 15h5"/></svg></span><span class="mt-lab">긴 것부터</span></button>
+          <button type="button" class="mt-btn" data-do="sort:short"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h5M4 10h9M4 15h12"/></svg></span><span class="mt-lab">짧은 것부터</span></button>
+          <button type="button" class="mt-btn span2" data-do="renumber"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h2v5M4 10h4M11 5h5M11 10h5M11 15h5M4 13.5c0-1 2.5-1 2.5.5S4 16 4 16h3"/></svg></span><span class="mt-lab">문항 번호 다시 매기기</span></button>
+        </div></div>
+      <div class="mt-sec c-undo"><div class="mt-sec-h"><i></i>되돌리기</div>
+        <div class="mt-grid">
+          <button type="button" class="mt-btn" data-do="undo"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5L3.5 8.5 7 12"/><path d="M4 8.5h7a4.5 4.5 0 010 9H8"/></svg></span><span class="mt-lab">되돌리기</span></button>
+          <button type="button" class="mt-btn" data-do="redo"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5l3.5 3.5L13 12"/><path d="M16 8.5H9a4.5 4.5 0 000 9h3"/></svg></span><span class="mt-lab">다시 실행</span></button>
+        </div></div>
+      <div class="mt-sec c-file"><div class="mt-sec-h"><i></i>한/글 파일로</div>
+        <div class="mt-grid">
+          <button type="button" class="mt-btn" data-do="font:hancom" aria-pressed="true"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l4-10 4 10M6.5 11.5h5"/></svg></span><span class="mt-lab">학교시험 글꼴</span></button>
+          <button type="button" class="mt-btn" data-do="font:pyeongga" aria-pressed="false"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l4-10 4 10M6.5 11.5h5M14.5 6v9"/></svg></span><span class="mt-lab">평가원 글꼴</span></button>
+          <button type="button" class="mt-btn" data-do="save"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h8l3 3V16a.5.5 0 01-.5.5h-11A.5.5 0 014 16V4a.5.5 0 01.5-.5z"/><path d="M7 3.5v4h6v-4M7 16.5v-5h6v5"/></svg></span><span class="mt-lab">전체 저장 (JSON)</span></button>
+          <button type="button" class="mt-btn" data-do="load"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6V4.5h5l1.5 2h6.5V15a1 1 0 01-1 1h-11a1 1 0 01-1-1z"/></svg></span><span class="mt-lab">JSON 열기</span></button>
+          <button type="button" class="mt-btn span2 primary" data-do="convert"><span class="mt-ico"><svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12"/></svg></span><span class="mt-lab">hwpx로 변환</span></button>
+        </div></div>
+    </div>
+  </section>
+  <section class="m-panel" id="mList" aria-label="박스 목록">
+    <div class="mp-head ml-head">
+      <label class="ml-all" title="전체 선택"><input type="checkbox" id="mListAll" aria-label="전체 선택"></label>
+      <b>박스 목록</b><span class="ml-count" id="mListCount"></span>
+      <span class="ml-sp"></span>
+      <button type="button" class="ml-ic" id="mListUndo" title="되돌리기" aria-label="되돌리기">↶</button>
+      <button type="button" class="ml-ic" id="mListRedo" title="다시 실행" aria-label="다시 실행">↷</button>
+    </div>
+    <div class="ml-bulk" id="mListBulk" hidden>
+      <span class="sel-count-chip"><b id="mListSel">0</b> 선택</span>
+      <button type="button" data-bulk="bulkMerge">합치기</button>
+      <button type="button" data-bulk="bulkDup">복제</button>
+      <button type="button" data-bulk="bulkDelete" class="danger">삭제</button>
+      <button type="button" data-bulk="bulkClear">해제</button>
+    </div>
+    <div class="mp-body ml-rows" id="mListRows"></div>
+  </section>
+  <nav class="m-tabbar" id="mTabbar" role="tablist" aria-label="화면 전환">
+    <button type="button" data-m="boxes" role="tab" aria-selected="true" class="on"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h5"/></svg><span>박스</span></button>
+    <button type="button" data-m="input" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg><span>문제 입력</span></button>
+    <button type="button" data-m="tools" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l5.5-5.5M14 4l6 6-8.5 8.5-6-6z"/><path d="M11 7l6 6"/></svg><span>도구</span></button>
+    <button type="button" data-m="list" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg><span>목록</span></button>
+  </nav>
 
   <div class="toast-container" id="toastContainer"></div>
 
@@ -2641,7 +2943,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         chip.classList.toggle('set', set);
         chip.classList.toggle('has-key', set);
         chip.title = set ? 'API 키 연결됨 — 눌러서 바꾸거나 다른 회사 키를 넣어요' : 'API 키 입력 — Gemini · ChatGPT · Claude 키를 넣으면 이미지 인식·문제 생성이 열려요 (키 없이도 수동 입력의 Gem 으로 무료)';
-        if (chipLabel) chipLabel.textContent = 'API 키 입력';
+        if (chipLabel) chipLabel.innerHTML = '<span class="k-api">API </span>키 입력';
         if (chipIcon) chipIcon.innerHTML = ICONS.key;
       }
       document.querySelectorAll('[data-needs-key]').forEach((el) => {
@@ -2953,6 +3255,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     // 이 줄보다 먼저 오면 선언 전 변수(TDZ)라서 멈춘다
     let autosaveReady = false;
     let autosaveTimer = null;
+    // 휴대폰 화면에서 지금 보이는 탭 ('boxes' | 'input' | 'tools' | 'list'). 박스를 그릴 때 읽으므로 여기 둔다
+    let mCur = 'boxes';
 
     // ---- 되돌리기 / 다시 실행 ----
     // 박스 전체를 통째로 찍어 두는 가장 단순한 방법을 쓴다. 박스는 많아야 수십 개라
@@ -3101,6 +3405,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       commitHistory();
       renderDocTabs();
       scheduleAutosave();
+      if (mCur === 'list') renderMList();
       // 찾아 바꾸기가 열려 있으면 맞는 박스 테두리를 다시 칠한다 (선언보다 먼저 불릴 수 있어 확인)
       if (typeof paintFind === 'function' && !document.getElementById('findBar').hidden) paintFind();
     }
@@ -5148,6 +5453,166 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       reader.onerror = () => setStatus('error', '파일을 읽는 중 오류가 발생했습니다.');
       reader.readAsText(file);
     });
+
+
+    // ---- 휴대폰(760px 이하): 아래 탭 막대 + 밑에서 올라오는 시트 (도형 생성기와 같은 짜임) ----
+    // 페이지가 스크롤되면 주소창이 숨었다 나타나며 화면 높이가 흔들린다 → 화면을 고정하고 패널은 시트로.
+    // 탭은 도형 생성기의 그림 · 문제 입력 · 도구 · 요소 자리에 박스 · 문제 입력 · 도구 · 목록.
+    const mPhone = window.matchMedia('(max-width: 760px)');
+    const M_SHEETS = { input: 'sidebar', tools: 'mTools', list: 'mList' };
+    function mShow(id) {
+      mCur = id;
+      for (const [k, elId] of Object.entries(M_SHEETS)) document.getElementById(elId).classList.toggle('m-open', k === id);
+      document.body.classList.toggle('m-sheet', id !== 'boxes');
+      document.querySelectorAll('#mTabbar [data-m]').forEach((b) => {
+        const on = b.dataset.m === id;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      if (id === 'list') renderMList();
+      if (id === 'tools') paintMTools();
+    }
+    document.getElementById('mTabbar').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-m]');
+      if (b) mShow(b.dataset.m === mCur ? 'boxes' : b.dataset.m);   // 지금 탭을 다시 누르면 박스로
+    });
+    document.getElementById('mScrim').addEventListener('click', () => mShow('boxes'));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mPhone.matches && mCur !== 'boxes' && !document.querySelector('.modal-overlay.show')) mShow('boxes');
+    });
+    // 박스를 만들거나 AI 가 문제를 짓기 시작하면 박스 화면으로 (결과가 바로 보이게)
+    for (const id of ['manualSubmitBtn', 'aiSubmitBtn']) {
+      document.getElementById(id).addEventListener('click', () => { if (mPhone.matches) setTimeout(() => mShow('boxes'), 80); });
+    }
+    function mSync() {
+      document.body.classList.toggle('m-phone', mPhone.matches);
+      if (mPhone.matches) mShow(mCur);
+      else {
+        for (const elId of Object.values(M_SHEETS)) document.getElementById(elId).classList.remove('m-open');
+        document.body.classList.remove('m-sheet');
+      }
+    }
+    (mPhone.addEventListener ? mPhone.addEventListener('change', mSync) : mPhone.addListener(mSync));
+
+    // 도구 시트: 기존 단추·고르기를 그대로 부른다 (기능은 한 벌만 둔다)
+    const mExample = document.getElementById('mExample');
+    function fillMExample() {
+      mExample.innerHTML = exampleSelect.innerHTML;
+      mExample.value = '';
+    }
+    mExample.addEventListener('focus', fillMExample);
+    mExample.addEventListener('pointerdown', fillMExample);
+    mExample.addEventListener('change', () => {
+      const v = mExample.value;
+      if (!v) return;
+      exampleSelect.value = v;
+      exampleSelect.dispatchEvent(new Event('change'));
+      mShow('boxes');
+    });
+    function paintMTools() {
+      const f = document.getElementById('eqFont').value;
+      document.querySelectorAll('#mTools [data-do^="font:"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.do === 'font:' + f)));
+      document.querySelector('#mTools [data-do="undo"]').disabled = document.getElementById('undoBtn').disabled;
+      document.querySelector('#mTools [data-do="redo"]').disabled = document.getElementById('redoBtn').disabled;
+      fillMExample();
+    }
+    document.getElementById('mTools').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-do]');
+      if (!b || b.disabled) return;
+      const [what, arg] = b.dataset.do.split(':');
+      if (what === 'add') { mShow('boxes'); document.getElementById('addBoxBtn').click(); }
+      else if (what === 'selall') { selectAllBoxes(true); mShow('boxes'); }
+      else if (what === 'find') { mShow('boxes'); setTimeout(openFind, 280); }
+      else if (what === 'sort') { boxSort.value = arg; boxSort.dispatchEvent(new Event('change')); mShow('boxes'); }
+      else if (what === 'renumber') { renumberBoxes(); mShow('boxes'); }
+      else if (what === 'undo') { undoBoxes(); paintMTools(); }
+      else if (what === 'redo') { redoBoxes(); paintMTools(); }
+      else if (what === 'font') { const s = document.getElementById('eqFont'); s.value = arg; s.dispatchEvent(new Event('change')); paintMTools(); }
+      else if (what === 'save') document.getElementById('saveBtn').click();
+      else if (what === 'load') document.getElementById('loadBtn').click();
+      else if (what === 'convert') { mShow('boxes'); document.getElementById('convertForm').requestSubmit(); }
+    });
+
+    // 목록 시트: 체크 · 출처 · 첫 줄. 줄을 누르면 박스 화면에서 그 박스로 간다
+    const SRC_MARK = { ocr: ICONS.image, ai: ICONS.spark, manual: ICONS.edit };
+    function renderMList() {
+      const rows = document.getElementById('mListRows');
+      if (!rows || !mPhone.matches) return;
+      const n = boxes.length, nOn = boxes.filter((b) => b.checked).length;
+      document.getElementById('mListCount').textContent = `${n}개`;
+      const all = document.getElementById('mListAll');
+      all.checked = n > 0 && nOn === n;
+      all.indeterminate = nOn > 0 && nOn < n;
+      document.getElementById('mListUndo').disabled = document.getElementById('undoBtn').disabled;
+      document.getElementById('mListRedo').disabled = document.getElementById('redoBtn').disabled;
+      const bulk = document.getElementById('mListBulk');
+      bulk.hidden = nOn === 0;
+      document.getElementById('mListSel').textContent = nOn;
+      bulk.querySelector('[data-bulk="bulkMerge"]').disabled = nOn < 2;
+      if (!n) { rows.innerHTML = '<div class="ml-empty">아직 박스가 없어요. <b>문제 입력</b>에서 텍스트를 붙여 넣거나 <b>도구 → 예시 불러오기</b>로 시작하세요.</div>'; return; }
+      rows.innerHTML = boxes.map((b) => {
+        const first = (b.text.split('\n').find((l) => l.trim()) || '(빈 박스)').trim();
+        const warn = lintText(b.text).length;
+        return `<div class="ml-row${b.checked ? '' : ' off'}" data-id="${b.id}">`
+          + `<input type="checkbox" class="ml-chk"${b.checked ? ' checked' : ''} aria-label="변환에 넣기">`
+          + `<span class="ml-src src-${b.source}" title="${SOURCE_LABEL[b.source] || ''}">${SRC_MARK[b.source] || ''}</span>`
+          + `<span class="ml-txt">${escapeHtml(first)}</span>`
+          + (warn ? '<span class="ml-warn">⚠ 점검</span>' : '')
+          + '</div>';
+      }).join('');
+      if (typeof renderMathInElement === 'function') {
+        rows.querySelectorAll('.ml-txt').forEach((el) => {
+          try { renderMathInElement(el, KATEX_OPTS); } catch (e) { /* 원문 그대로 */ }
+        });
+      }
+    }
+    document.getElementById('mListRows').addEventListener('click', (e) => {
+      const row = e.target.closest('.ml-row');
+      if (!row) return;
+      const box = boxes.find((b) => b.id === row.dataset.id);
+      if (!box) return;
+      if (e.target.classList.contains('ml-chk')) { box.checked = e.target.checked; renderBoxList(); return; }
+      mShow('boxes');
+      const el = boxListEl.querySelector(`.box[data-id="${box.id}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+      el.classList.add('m-flash');
+      setTimeout(() => el.classList.remove('m-flash'), 1100);
+    });
+    document.getElementById('mListAll').addEventListener('change', (e) => selectAllBoxes(e.target.checked));
+    document.getElementById('mListUndo').addEventListener('click', undoBoxes);
+    document.getElementById('mListRedo').addEventListener('click', redoBoxes);
+    document.getElementById('mListBulk').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-bulk]');
+      if (b && !b.disabled) document.getElementById(b.dataset.bulk).click();
+    });
+
+    // 카드 머리띠: 옆으로 밀면 더 있다는 화살표 (끝까지 밀면 사라짐)
+    (() => {
+      const bar = document.querySelector('.main-bar');
+      const mk = (left) => {
+        const h = document.createElement('button');
+        h.type = 'button';
+        h.className = 'tray-hint' + (left ? ' left' : '');
+        h.setAttribute('aria-label', left ? '왼쪽 도구 보기' : '옆으로 밀어서 다른 도구 보기');
+        h.innerHTML = `<b><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${left ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'}"/></svg></b>`;
+        h.addEventListener('click', () => bar.scrollBy({ left: (left ? -1 : 1) * Math.max(160, bar.clientWidth * 0.7), behavior: 'smooth' }));
+        return h;
+      };
+      bar.insertBefore(mk(true), bar.firstChild);
+      bar.appendChild(mk(false));
+      const upd = () => {
+        const more = bar.scrollWidth - bar.clientWidth > 6;
+        const atEnd = bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 6;
+        bar.classList.toggle('swipe-more', more && !atEnd);
+        bar.classList.toggle('swiped', bar.scrollLeft > 6);
+      };
+      bar.addEventListener('scroll', upd, { passive: true });
+      window.addEventListener('resize', upd);
+      if (window.ResizeObserver) new ResizeObserver(upd).observe(bar);
+      setTimeout(upd, 300);
+    })();
+    mSync();
 
     initWork();
     updateApiKeyUI();
