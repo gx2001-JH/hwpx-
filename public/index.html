@@ -324,7 +324,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* AI 카드 (테두리만 은은한 그라디언트, 움직임 없이 차분하게) */
-  .ai-card, .gem-card {
+  .ai-card {
     flex: 1;
     min-height: 0;
     border-radius: 15px;
@@ -345,7 +345,7 @@
     83%  { box-shadow: 0 0 0 1.5px #B06BFF, 0 0 20px 3px rgba(176,107,255,.4); }
     100% { box-shadow: 0 0 0 1.5px #FF6B6B, 0 0 20px 3px rgba(255,107,107,.4); }
   }
-  .ai-card-inner, .gem-card-inner { flex: 1; min-height: 0; background: var(--surface); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .ai-card-inner { flex: 1; min-height: 0; background: var(--surface); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
   .ai-card-title { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--accent); }
   .api-key-chip.set { color: var(--ok); border-color: var(--ok); }
   .api-key-chip.set:hover { color: var(--ok); background: rgba(63,143,108,.18); }
