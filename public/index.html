@@ -1000,6 +1000,39 @@
   .toolbar-bulk .side-link-btn:hover:not(:disabled) { background: #fff; color: var(--accent-hover); transform: none; box-shadow: none; }
   .toolbar-bulk .side-link-btn.danger:hover:not(:disabled) { background: #FFF1F1; color: var(--error); }
   .toolbar-bulk .side-link-btn:disabled { opacity: .45; cursor: default; }
+  /* ---------- 찾아 바꾸기 줄 (고른 박스 줄과 같은 연보라 알약) ---------- */
+  .find-bar {
+    flex: none; align-self: flex-start; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    max-width: calc(100% - 28px); margin: 10px 14px 0; padding: 5px 6px 5px 8px;
+    background: var(--panel-head); border: 1px solid var(--panel-line); border-radius: 22px;
+  }
+  .find-bar[hidden] { display: none; }
+  .find-field {
+    display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 4px 0 10px;
+    background: #fff; border: 1px solid var(--panel-line); border-radius: var(--pill);
+    font-size: 11px; font-weight: 800; color: var(--accent-hover);
+  }
+  .find-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .find-field input[type=text] { border: none; box-shadow: none; padding: 0 6px 0 0; height: 26px; width: 150px; font-size: 12.5px; font-weight: 600; background: transparent; border-radius: 0; }
+  .find-field input[type=text]:focus { box-shadow: none; }
+  .find-arrow { color: var(--text-muted); font-weight: 800; font-size: 12px; }
+  .find-count {
+    display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: var(--pill);
+    background: #fff; color: var(--accent-hover); font-size: 11.5px; font-weight: 800; white-space: nowrap;
+  }
+  .find-count:empty { display: none; }
+  .find-count.none { color: var(--text-muted); }
+  .find-opt { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; color: var(--text); cursor: pointer; white-space: nowrap; }
+  .find-bar .side-link-btn { height: 28px; }
+  .find-bar .find-go { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 800; }
+  .find-bar .find-go:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+  .find-bar .find-go:disabled { opacity: .45; cursor: default; }
+  .find-bar .find-x { width: 28px; min-width: 28px; padding: 0; justify-content: center; font-size: 12px; }
+  #findBtn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* 찾는 말이 들어 있는 박스는 테두리로 짚어 준다. 체크를 뺀 박스는 그림자를 따로 지우므로
+     (그 규칙이 뒤에 있어 이긴다) 그림자가 아니라 outline 으로 그린다 */
+  .box.find-hit { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   /* 선택 해제는 가는 칸막이 하나로 떼어 놓는다 */
   .bulk-sep { flex: none; width: 1px; height: 12px; margin: 0 3px; background: var(--panel-line); }
   /* 카드가 좁아 내보내기 묶음(글꼴 · 파일명 · 변환)마저 한 줄에 안 들어가면 그 안에서 줄을 바꾼다.
@@ -1883,16 +1916,22 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <div class="bar-sec bar-list">
             <label class="select-all" title="모든 박스 선택 / 해제 (Ctrl+A · Esc)"><input type="checkbox" id="selectAllChk"><span>전체 선택</span></label>
             <span class="box-count" id="boxCount"></span>
-            <select id="boxSort" class="bar-select" title="박스 순서 바꾸기">
+            <select id="boxSort" class="bar-select" title="박스 순서 바꾸기 · 문항 번호 다시 매기기">
               <option value="">정렬</option>
-              <option value="source">출처별 (이미지·AI·직접)</option>
-              <option value="long">긴 것부터</option>
-              <option value="short">짧은 것부터</option>
-              <option value="reverse">역순으로</option>
+              <optgroup label="순서">
+                <option value="source">출처별 (이미지·AI·직접)</option>
+                <option value="long">긴 것부터</option>
+                <option value="short">짧은 것부터</option>
+                <option value="reverse">역순으로</option>
+              </optgroup>
+              <optgroup label="번호">
+                <option value="renumber">문항 번호 다시 매기기 (1, 2, 3…)</option>
+              </optgroup>
             </select>
             <span class="undo-btns">
               <button type="button" class="side-link-btn" id="undoBtn" title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button>
               <button type="button" class="side-link-btn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
+              <button type="button" class="side-link-btn" id="findBtn" title="찾아 바꾸기 (Ctrl+H)" aria-label="찾아 바꾸기" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg></button>
             </span>
           </div>
           <!-- 가운데: 박스 넣기 (흰 알약 독 하나에 둘). 파일 ▾ 은 머리글 독에 있다 -->
@@ -1917,6 +1956,16 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
             </div>
             <button type="submit" id="submitBtn"><span id="iconSubmit"></span><span id="submitLabel">hwpx로 변환</span></button>
           </form>
+        </div>
+        <!-- 찾아 바꾸기: 머리띠 바로 밑에 펼쳐지는 줄 (고른 박스 줄과 같은 모양) -->
+        <div class="find-bar" id="findBar" hidden>
+          <label class="find-field"><span>찾기</span><input type="text" id="findText" placeholder="예: [4점]" autocomplete="off"></label>
+          <span class="find-arrow" aria-hidden="true">→</span>
+          <label class="find-field"><span>바꾸기</span><input type="text" id="replaceText" placeholder="예: [3점]" autocomplete="off"></label>
+          <span class="find-count" id="findCount"></span>
+          <label class="find-opt" title="체크한 박스 안에서만 바꿉니다"><input type="checkbox" id="findChecked">체크한 박스만</label>
+          <button type="button" class="side-link-btn find-go" id="replaceAllBtn" disabled>모두 바꾸기</button>
+          <button type="button" class="side-link-btn find-x" id="findClose" title="닫기 (Esc)" aria-label="찾아 바꾸기 닫기">✕</button>
         </div>
         <!-- 고른 박스에 한꺼번에: 머리띠 바로 밑의 작은 연보라 알약 (도형 생성기 .sel-all-actions) -->
         <div class="toolbar-bulk" id="bulkBar" hidden>
@@ -1982,7 +2031,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <summary><span class="hs-num">3</span><b>박스 보기 · 정리하기</b></summary>
           <ul class="hs-list">
             <li>박스 머리의 <b>편집 · 미리보기 · 한글 문법</b>으로 보기를 바꿔요. <b>보라 알약</b>이 지금 보고 있는 보기예요. <b>한글 문법</b>은 한/글 수식편집기에 그대로 붙여 넣을 수 있는 글이에요.</li>
-            <li>박스 머리띠(⠿)를 끌거나 ↑↓ 로 순서를 바꾸고, 체크한 박스만 변환돼요. 여러 개를 고르면 <b>하나로 합치기 · 복제 · 삭제</b>를 한꺼번에 할 수 있어요. <b>전체 선택</b>(<code>Ctrl+A</code>)으로 모두 고르고 <code>Esc</code>로 풀어요.</li>
+            <li>박스 머리띠(⠿)를 끌거나 ↑↓ 로 순서를 바꾸고, 체크한 박스만 변환돼요. 여러 개를 고르면 <b>하나로 합치기 · 복제 · 삭제</b>를 한꺼번에 할 수 있어요. <b>전체 선택</b>(<code>Ctrl+A</code>)으로 모두 고르고 <code>Esc</code>로 풀어요. 체크 상자를 누른 뒤 다른 체크 상자를 <b>Shift+클릭</b>하면 그 사이가 한꺼번에 골라져요.</li>
+            <li><b>🔍 찾아 바꾸기</b>(<code>Ctrl+H</code>)로 모든 박스의 글자를 한 번에 바꿔요 (예: [4점] → [3점]). <b>정렬 ▾ → 문항 번호 다시 매기기</b>로 "1. 2. 3."을 차례대로 다시 붙여요.</li>
             <li><b>정렬</b>로 출처별 · 길이순 · 역순 정리, <b>↶ ↷</b>(<code>Ctrl+Z</code>)로 되돌리기.</li>
           </ul>
         </details>
@@ -2574,6 +2624,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       updateBoxCount();
       renderMathPreviews();
       commitHistory();
+      // 찾아 바꾸기가 열려 있으면 맞는 박스 테두리를 다시 칠한다 (선언보다 먼저 불릴 수 있어 확인)
+      if (typeof paintFind === 'function' && !document.getElementById('findBar').hidden) paintFind();
     }
 
     function renderMathPreviews() {
@@ -2778,6 +2830,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     boxSort.addEventListener('change', () => {
       const how = boxSort.value;
       boxSort.value = '';
+      if (how === 'renumber') { renumberBoxes(); return; }
       if (!how || boxes.length < 2) return;
       flipBoxes(() => {
         if (how === 'reverse') { boxes.reverse(); return; }
@@ -2794,6 +2847,30 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       setStatus('ok', `박스를 ${LABEL[how]} 정렬했습니다.`);
     });
 
+    // ---- 문항 번호 다시 매기기 ----
+    // 순서를 바꾸거나 합친 뒤 "1. 2. 3."을 다시 붙인다. 번호로 시작하는 박스만 센다 —
+    // '개념 정리'처럼 번호 없는 박스는 그대로 두고 건너뛴다. 변환되는 것은 체크한
+    // 박스뿐이므로, 체크한 박스가 있으면 그것들만 차례로 매긴다.
+    const NUM_RE = /^(\s*)(\d{1,3})(\s*[.)．]\s?)/;
+    function renumberBoxes() {
+      const pool = boxes.some((b) => b.checked) ? boxes.filter((b) => b.checked) : boxes;
+      const targets = pool.filter((b) => NUM_RE.test(b.text));
+      if (!targets.length) {
+        setStatus('info', '번호("1." 처럼)로 시작하는 박스가 없어요.');
+        return;
+      }
+      let n = 0, changed = 0;
+      targets.forEach((b) => {
+        n += 1;
+        const next = b.text.replace(NUM_RE, (m, sp, num, tail) => sp + n + tail);
+        if (next !== b.text) { b.text = next; changed += 1; }
+      });
+      renderBoxList();
+      setStatus('ok', changed
+        ? `문항 ${targets.length}개의 번호를 1부터 다시 매겼습니다 (${changed}개 바뀜). Ctrl+Z 로 되돌릴 수 있어요.`
+        : `문항 ${targets.length}개의 번호가 이미 1부터 차례대로예요.`);
+    }
+
     // ---- 되돌리기 단추·단축키 ----
     document.getElementById('undoBtn').addEventListener('click', undoBoxes);
     document.getElementById('redoBtn').addEventListener('click', redoBoxes);
@@ -2806,6 +2883,70 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       if (el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT')) return;
       e.preventDefault();
       if (k === 'y' || e.shiftKey) redoBoxes(); else undoBoxes();
+    });
+
+    // ---- 찾아 바꾸기 ----
+    // 모든 박스(또는 체크한 박스)에서 글자를 그대로 찾아 바꾼다. 정규식이 아니라 글자 그대로라
+    // '$'나 '\\' 같은 수식 기호도 입력한 그대로 찾는다. 한 번에 바꾸고 Ctrl+Z 로 되돌린다.
+    const findBar = document.getElementById('findBar');
+    const findText = document.getElementById('findText');
+    const replaceText = document.getElementById('replaceText');
+    const findChecked = document.getElementById('findChecked');
+    const findCountEl = document.getElementById('findCount');
+    const replaceAllBtn = document.getElementById('replaceAllBtn');
+
+    const countIn = (text, q) => (q ? text.split(q).length - 1 : 0);
+    function findTargets() { return findChecked.checked ? boxes.filter((b) => b.checked) : boxes; }
+    function paintFind() {
+      const q = findText.value;
+      let hits = 0, hitBoxes = 0;
+      const hitIds = new Set();
+      if (q) {
+        findTargets().forEach((b) => { const c = countIn(b.text, q); if (c) { hits += c; hitBoxes += 1; hitIds.add(b.id); } });
+      }
+      findCountEl.textContent = q ? (hits ? `${hitBoxes}개 박스 · ${hits}곳` : '없음') : '';
+      findCountEl.classList.toggle('none', !!q && !hits);
+      replaceAllBtn.disabled = !hits;
+      boxListEl.querySelectorAll('.box').forEach((el) => el.classList.toggle('find-hit', !findBar.hidden && hitIds.has(el.dataset.id)));
+    }
+    function openFind() {
+      findBar.hidden = false;
+      document.getElementById('findBtn').setAttribute('aria-expanded', 'true');
+      findText.focus();
+      findText.select();
+      paintFind();
+    }
+    function closeFind() {
+      findBar.hidden = true;
+      document.getElementById('findBtn').setAttribute('aria-expanded', 'false');
+      paintFind();
+    }
+    document.getElementById('findBtn').addEventListener('click', () => (findBar.hidden ? openFind() : closeFind()));
+    document.getElementById('findClose').addEventListener('click', closeFind);
+    [findText, replaceText].forEach((el) => el.addEventListener('input', paintFind));
+    findChecked.addEventListener('change', paintFind);
+    findBar.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); closeFind(); }
+      if (e.key === 'Enter' && !replaceAllBtn.disabled) { e.preventDefault(); replaceAllBtn.click(); }
+    });
+    replaceAllBtn.addEventListener('click', () => {
+      const q = findText.value, r = replaceText.value;
+      if (!q) return;
+      let hits = 0, hitBoxes = 0;
+      findTargets().forEach((b) => {
+        const c = countIn(b.text, q);
+        if (c) { b.text = b.text.split(q).join(r); hits += c; hitBoxes += 1; }
+      });
+      renderBoxList();
+      paintFind();
+      setStatus('ok', `${hitBoxes}개 박스에서 ${hits}곳을 바꿨습니다. Ctrl+Z 로 되돌릴 수 있어요.`);
+    });
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'h') {
+        if (document.querySelector('.modal-overlay.show')) return;
+        e.preventDefault();   // 브라우저의 방문 기록 창 대신
+        openFind();
+      }
     });
 
     // ---- 전체 선택 단축키 ----
@@ -2847,13 +2988,34 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       }
     });
 
+    // ---- Shift+클릭 범위 선택 ----
+    // 마지막으로 누른 박스(기준점)부터 지금 누른 박스까지를 같은 상태로 맞춘다 (탐색기와 같은 방식).
+    // click 이 change 보다 먼저 오므로, click 에서는 Shift 를 눌렀는지만 적어 둔다.
+    let chkAnchorId = null;
+    let chkShift = false;
+    boxListEl.addEventListener('click', (e) => {
+      if (e.target.classList && e.target.classList.contains('box-chk')) chkShift = e.shiftKey;
+    }, true);
+
     boxListEl.addEventListener('change', (e) => {
       if (!e.target.classList.contains('box-chk')) return;
       const boxEl = e.target.closest('.box');
       const id = boxEl.dataset.id;
       const box = boxes.find((b) => b.id === id);
-      if (box) box.checked = e.target.checked;
-      boxEl.classList.toggle('unchecked', !e.target.checked);
+      const on = e.target.checked;
+      const a = chkShift && chkAnchorId ? boxes.findIndex((b) => b.id === chkAnchorId) : -1;
+      const z = boxes.indexOf(box);
+      chkShift = false;
+      chkAnchorId = id;
+      if (a >= 0 && z >= 0 && a !== z) {
+        const [lo, hi] = a < z ? [a, z] : [z, a];
+        for (let i = lo; i <= hi; i++) boxes[i].checked = on;
+        renderBoxList();
+        setStatus('ok', `박스 ${hi - lo + 1}개를 ${on ? '골랐' : '뺐'}습니다.`);
+        return;
+      }
+      if (box) box.checked = on;
+      boxEl.classList.toggle('unchecked', !on);
       updateSelectAllState();
       updateBoxCount();
     });
