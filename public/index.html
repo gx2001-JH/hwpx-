@@ -623,6 +623,29 @@
   .main-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 22px; }
   .toolbar-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .toolbar-convert { margin-left: auto; }
+  /* 되돌리기·다시하기 (도형 생성기 .undo-btns) */
+  .undo-btns { display: inline-flex; gap: 4px; }
+  .undo-btns .side-link-btn { width: 30px; min-width: 30px; padding: 0; justify-content: center; font-size: 14px; }
+  .undo-btns .side-link-btn:disabled { opacity: .35; cursor: default; }
+  .undo-btns .side-link-btn:disabled:hover { border-color: var(--border); color: var(--text); background: var(--surface); transform: none; }
+  /* 고른 박스에 한꺼번에 (도형 생성기 .sel-all-actions) */
+  .toolbar-bulk {
+    flex: 1 1 100%; gap: 4px; padding: 4px 5px;
+    background: var(--panel-head); border: 1px solid var(--panel-line); border-radius: 9px;
+  }
+  .toolbar-bulk[hidden] { display: none; }
+  .sel-count-chip {
+    display: inline-flex; align-items: center; gap: 3px; height: 24px; padding: 0 8px;
+    border-radius: 100px; background: var(--accent-soft); color: var(--accent-hover);
+    font-size: 11.5px; font-weight: 700; white-space: nowrap; flex: none; margin-right: 2px;
+  }
+  .toolbar-bulk .side-link-btn {
+    height: 24px; padding: 0 9px; border-radius: 7px; border-color: transparent;
+    background: transparent; color: var(--text-muted); box-shadow: none; font-size: 11.5px;
+  }
+  .toolbar-bulk .side-link-btn:hover { background: var(--accent-soft); color: var(--accent-hover); border-color: transparent; transform: none; box-shadow: none; }
+  .toolbar-bulk .side-link-btn.danger:hover { background: #FFF1F1; color: var(--error); }
+  .toolbar-bulk .bulk-end { margin-left: auto; }
   .select-all { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
   .box-count { font-size: 11.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; margin-right: 6px; display: inline-block; }
   .box-count.pop { animation: count-pop .3s var(--ease); }
@@ -1305,6 +1328,24 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           </select>
           <button type="button" class="side-link-btn file-menu-btn" id="fileMenuBtn"><span id="iconSave"></span>파일<span class="chev">▾</span></button>
           <input type="file" id="loadFileInput" accept="application/json,.json" style="display:none">
+          <select id="boxSort" class="bar-select" title="박스 순서 바꾸기">
+            <option value="">정렬…</option>
+            <option value="source">출처별 (이미지·AI·직접)</option>
+            <option value="long">긴 것부터</option>
+            <option value="short">짧은 것부터</option>
+            <option value="reverse">역순으로</option>
+          </select>
+          <span class="undo-btns">
+            <button type="button" class="side-link-btn" id="undoBtn" title="되돌리기 (Ctrl+Z)" disabled>↶</button>
+            <button type="button" class="side-link-btn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)" disabled>↷</button>
+          </span>
+        </div>
+        <div class="toolbar-row toolbar-bulk" id="bulkBar" hidden>
+          <span class="sel-count-chip"><b id="bulkCount">0</b> 선택</span>
+          <button type="button" class="side-link-btn" id="bulkMerge" title="고른 박스를 하나로 합칩니다">하나로 합치기</button>
+          <button type="button" class="side-link-btn" id="bulkDup" title="고른 박스를 바로 아래에 복제합니다">복제</button>
+          <button type="button" class="side-link-btn danger" id="bulkDelete" title="고른 박스를 삭제합니다">삭제</button>
+          <button type="button" class="side-link-btn bulk-end" id="bulkClear">선택 해제</button>
         </div>
         <div class="toolbar-row toolbar-convert">
           <label class="select-all"><input type="checkbox" id="selectAllChk">전체 선택</label>
@@ -1796,6 +1837,59 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
     // ---- 문제 박스 상태 ----
     let boxes = []; // { id, text, checked, source: 'ocr'|'ai'|'manual' }
+
+    // ---- 되돌리기 / 다시 실행 ----
+    // 박스 전체를 통째로 찍어 두는 가장 단순한 방법을 쓴다. 박스는 많아야 수십 개라
+    // 값이 싸고, 순서 바꾸기·삭제·합치기처럼 종류가 다른 변경을 한 방법으로 되돌릴 수 있다.
+    // 체크(선택)는 내용이 아니므로 기록의 '달라졌는지' 판단에서 뺀다 — 선택만 바꿨는데
+    // 되돌리기 한 번이 쌓이면 되돌리기가 쓸모없어진다.
+    const HIST_MAX = 60;
+    const histKey = (list) => JSON.stringify(list.map((b) => [b.id, b.text, b.source]));
+    let histPast = [];
+    let histFuture = [];
+    let histNow = { json: '[]', key: histKey([]) };
+    let histTimer = null;
+
+    function commitHistory() {
+      const key = histKey(boxes);
+      if (key === histNow.key) { histNow.json = JSON.stringify(boxes); return; }
+      histPast.push(histNow);
+      if (histPast.length > HIST_MAX) histPast.shift();
+      histFuture = [];
+      histNow = { json: JSON.stringify(boxes), key };
+      paintUndo();
+    }
+    // 글자를 한 자 칠 때마다 기록하면 되돌리기가 한 글자씩 움직인다. 잠깐 멈추면 한 덩어리로 찍는다.
+    function commitHistorySoon() {
+      clearTimeout(histTimer);
+      histTimer = setTimeout(commitHistory, 700);
+    }
+    function applyHistory(state) {
+      boxes = JSON.parse(state.json);
+      histNow = state;
+      renderBoxList();
+      paintUndo();
+    }
+    function undoBoxes() {
+      clearTimeout(histTimer);
+      commitHistory();
+      if (!histPast.length) { setStatus('info', '되돌릴 것이 없어요.'); return; }
+      histFuture.push(histNow);
+      applyHistory(histPast.pop());
+      setStatus('info', '되돌렸습니다.');
+    }
+    function redoBoxes() {
+      if (!histFuture.length) { setStatus('info', '다시 실행할 것이 없어요.'); return; }
+      histPast.push(histNow);
+      applyHistory(histFuture.pop());
+      setStatus('info', '다시 실행했습니다.');
+    }
+    function paintUndo() {
+      const u = document.getElementById('undoBtn');
+      const r = document.getElementById('redoBtn');
+      if (u) u.disabled = !histPast.length;
+      if (r) r.disabled = !histFuture.length;
+    }
     let idCounter = 0;
     function genId() { return 'b' + (++idCounter); }
     const aiOpenBoxIds = new Set();
@@ -1875,6 +1969,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       updateSelectAllState();
       updateBoxCount();
       renderMathPreviews();
+      commitHistory();
     }
 
     function renderMathPreviews() {
@@ -1898,6 +1993,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     }
 
     function updateBoxCount() {
+      paintBulkBar();
       const next = boxes.length ? `${boxes.filter((b) => b.checked).length}/${boxes.length}개 선택됨` : '';
       if (next !== boxCountEl.textContent) {
         boxCountEl.textContent = next;
@@ -1951,6 +2047,91 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       renderBoxList();
     });
 
+    // ---- 고른 박스에 한꺼번에 (도형 생성기 '요소 목록'의 일괄 작업과 같은 자리·같은 모양) ----
+    const checkedBoxes = () => boxes.filter((b) => b.checked);
+
+    // 처음 그릴 때는 이 줄보다 먼저 불릴 수 있어(TDZ) 요소를 그때그때 찾는다
+    function paintBulkBar() {
+      const n = checkedBoxes().length;
+      document.getElementById('bulkBar').hidden = n === 0;
+      document.getElementById('bulkCount').textContent = n;
+      // 합치기는 두 개 이상이어야 뜻이 있다
+      document.getElementById('bulkMerge').disabled = n < 2;
+    }
+
+    document.getElementById('bulkMerge').addEventListener('click', () => {
+      const sel = checkedBoxes();
+      if (sel.length < 2) return;
+      const first = boxes.indexOf(sel[0]);
+      const merged = { id: genId(), text: sel.map((b) => b.text.trim()).filter(Boolean).join('\n\n'), checked: true, source: sel[0].source };
+      flipBoxes(() => {
+        boxes = boxes.filter((b) => !b.checked);
+        boxes.splice(first, 0, merged);
+      });
+      setStatus('ok', `박스 ${sel.length}개를 하나로 합쳤습니다.`);
+    });
+
+    document.getElementById('bulkDup').addEventListener('click', () => {
+      const sel = checkedBoxes();
+      if (!sel.length) return;
+      flipBoxes(() => {
+        // 뒤에서부터 넣어야 앞쪽 자리 번호가 밀리지 않는다
+        for (let i = boxes.length - 1; i >= 0; i--) {
+          if (boxes[i].checked) boxes.splice(i + 1, 0, { ...boxes[i], id: genId(), checked: false });
+        }
+      });
+      setStatus('ok', `박스 ${sel.length}개를 복제했습니다.`);
+    });
+
+    document.getElementById('bulkDelete').addEventListener('click', () => {
+      const sel = checkedBoxes();
+      if (!sel.length) return;
+      sel.forEach((b) => { aiOpenBoxIds.delete(b.id); previewBoxIds.delete(b.id); });
+      flipBoxes(() => { boxes = boxes.filter((b) => !b.checked); });
+      setStatus('ok', `박스 ${sel.length}개를 삭제했습니다. 되돌리기(Ctrl+Z)로 되살릴 수 있어요.`);
+    });
+
+    document.getElementById('bulkClear').addEventListener('click', () => {
+      boxes.forEach((b) => (b.checked = false));
+      renderBoxList();
+    });
+
+    // ---- 정렬: 고른 차례대로 박스 순서를 바꾼다 (되돌리기로 되돌릴 수 있다) ----
+    const boxSort = document.getElementById('boxSort');
+    const SOURCE_ORDER = { ocr: 0, ai: 1, manual: 2 };
+    boxSort.addEventListener('change', () => {
+      const how = boxSort.value;
+      boxSort.value = '';
+      if (!how || boxes.length < 2) return;
+      flipBoxes(() => {
+        if (how === 'reverse') { boxes.reverse(); return; }
+        const keyed = boxes.map((b, i) => ({ b, i }));
+        const by = {
+          source: (x, y) => (SOURCE_ORDER[x.b.source] ?? 9) - (SOURCE_ORDER[y.b.source] ?? 9) || x.i - y.i,
+          long: (x, y) => y.b.text.length - x.b.text.length || x.i - y.i,
+          short: (x, y) => x.b.text.length - y.b.text.length || x.i - y.i,
+        }[how];
+        keyed.sort(by);
+        boxes = keyed.map((k) => k.b);
+      });
+      const LABEL = { source: '출처별로', long: '긴 것부터', short: '짧은 것부터' };
+      setStatus('ok', `박스를 ${LABEL[how]} 정렬했습니다.`);
+    });
+
+    // ---- 되돌리기 단추·단축키 ----
+    document.getElementById('undoBtn').addEventListener('click', undoBoxes);
+    document.getElementById('redoBtn').addEventListener('click', redoBoxes);
+    document.addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k !== 'z' && k !== 'y') return;
+      // 글자를 고치는 중이면 브라우저의 되돌리기가 먼저다 (칸 안에서의 Ctrl+Z)
+      const el = document.activeElement;
+      if (el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT')) return;
+      e.preventDefault();
+      if (k === 'y' || e.shiftKey) redoBoxes(); else undoBoxes();
+    });
+
     document.getElementById('addBoxBtn').addEventListener('click', () => {
       flipBoxes(() => { boxes.push({ id: genId(), text: '', checked: true, source: 'manual' }); });
       const last = boxListEl.querySelector('.box:last-child .box-text');
@@ -1963,6 +2144,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         const id = e.target.closest('.box').dataset.id;
         const box = boxes.find((b) => b.id === id);
         if (box) box.text = e.target.value;
+        commitHistorySoon();
       }
     });
 
