@@ -261,9 +261,15 @@
     transition: background .15s ease, color .15s ease;
   }
   .input-tab .tab-sub {
-    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     font-size: 11px; font-weight: 600; opacity: .92; white-space: nowrap; margin-top: 2px;
   }
+  /* 설명 앞의 작은 점: 초록 = 무료로 바로, 보라 = API 키가 있어야 (도형 생성기 .tab-dot) */
+  .tab-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; }
+  .tab-dot.free { background: #3BC98A; box-shadow: 0 0 0 2px rgba(59,201,138,.22); }
+  .tab-dot.key { background: #A48CFF; box-shadow: 0 0 0 2px rgba(164,140,255,.25); }
+  .input-tab.active .tab-dot.free { background: #B6F5D6; box-shadow: none; }
+  .input-tab.active .tab-dot.key { background: #fff; box-shadow: none; }
   .input-tab:hover:not(.active) { color: var(--text); }
   .input-tab.active { background: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(123,92,250,.35); }
   /* 무료/키 필요를 한눈에 구분하는 알약 */
@@ -1213,10 +1219,10 @@
       </button>
       <div class="input-tabs" role="tablist">
         <button type="button" class="input-tab active" id="tabManual" role="tab" aria-selected="true" aria-controls="panelManual">
-          <span>수동 입력</span><span class="tab-sub"><i class="tab-chip free">무료</i>Gem 을 사용할 때</span>
+          <span>수동 입력</span><span class="tab-sub"><i class="tab-dot free"></i>무료 앱(Gem)을 사용할 때</span>
         </button>
         <button type="button" class="input-tab" id="tabAi" role="tab" aria-selected="false" aria-controls="panelAi">
-          <span>AI 입력</span><span class="tab-sub"><i class="tab-chip key" id="tabAiChip">키</i><span id="tabAiSub">API 키를 연동할 때</span></span>
+          <span>AI 입력</span><span class="tab-sub"><i class="tab-dot key" id="tabAiChip"></i><span id="tabAiSub">API 키를 연동할 때</span></span>
         </button>
       </div>
 
@@ -1944,12 +1950,11 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         el.classList.toggle('locked', !set);
       });
       const tabAiSub = document.getElementById('tabAiSub');
-      if (tabAiSub) tabAiSub.textContent = set ? '연동됨' : 'API 키를 연동할 때';
+      if (tabAiSub) tabAiSub.textContent = set ? 'API 키 연동됨' : 'API 키를 연동할 때';
       const tabAiChip = document.getElementById('tabAiChip');
       if (tabAiChip) {
         tabAiChip.classList.toggle('free', set);
         tabAiChip.classList.toggle('key', !set);
-        tabAiChip.textContent = set ? '준비' : '키';
       }
       updateModelChip();
       const dzLockBadge = document.getElementById('dzLockBadge');
