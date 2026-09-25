@@ -219,6 +219,28 @@
   .input-panel[hidden] { display: none; }
 
   /* ---------- AI 연동 설정: 회사 고르기 + 모델 고르기 ---------- */
+  /* ---------- 머리글: 쓸 모델 고르기 ---------- */
+  .model-chip .chev { font-size: 9px; color: var(--text-muted); margin-left: 1px; }
+  .model-chip.on { border-color: var(--accent); color: var(--accent-hover); background: var(--accent-soft); }
+  .model-menu {
+    position: fixed; z-index: 400; display: none; flex-direction: column; gap: 3px;
+    padding: 6px; width: 288px; max-height: 70vh; overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow-lift);
+  }
+  .model-menu.show { display: flex; }
+  .model-menu .mm-group { font-size: 10.5px; font-weight: 700; color: var(--text-muted); padding: 7px 8px 3px; }
+  .model-menu button {
+    display: flex; align-items: center; gap: 7px; width: 100%; text-align: left;
+    background: transparent; border: 1px solid transparent; border-radius: 8px;
+    padding: 7px 9px; font-family: inherit; font-size: 12px; color: var(--text); cursor: pointer;
+  }
+  .model-menu button:hover { background: var(--accent-soft); }
+  .model-menu button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
+  .model-menu .mm-name { flex: 1; min-width: 0; font-weight: 600; }
+  .model-menu .mm-sub { display: block; font-size: 10px; font-weight: 500; color: var(--text-muted); white-space: normal; line-height: 1.4; }
+  .model-menu .mm-nokey { font-size: 9.5px; color: var(--text-muted); }
+
   .prov-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
   .prov-tab {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -583,19 +605,20 @@
     align-content: start;
   }
   .box {
+    /* 도형 생성기의 도구 패널·요소 목록과 같은 모양 (surface-2 통 + 흰 내부) */
     position: relative;
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 12px;
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    border-radius: 9px;
+    padding: 10px;
+    background: var(--surface-2);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 8px;
     transition: opacity .18s var(--ease), box-shadow .22s var(--ease), transform .18s var(--ease), border-color .18s ease;
     animation: box-in .22s var(--ease);
   }
-  .box:not(.ai-processing):hover { box-shadow: var(--shadow-lift); transform: translateY(-3px); border-color: #D2CDE3; }
+  .box:not(.ai-processing):hover { border-color: #D2CDE3; box-shadow: 0 2px 8px rgba(33,29,46,.07); }
   @keyframes box-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
   .box.removing { opacity: 0; transform: scale(.9); transition: opacity .18s ease, transform .18s ease; }
   .box.unchecked { opacity: 0.42; }
@@ -690,8 +713,8 @@
     line-height: 1.55;
     padding: 9px 10px;
     border: 1px solid var(--border);
-    border-radius: 9px;
-    background: var(--surface-2);
+    border-radius: 8px;
+    background: var(--surface);
     color: var(--text);
     resize: vertical;
     transition: border-color .15s ease, box-shadow .15s ease;
@@ -809,6 +832,9 @@
       <div class="brand-text">
         <h1>한글 수식 변환기</h1>
         <span class="eyebrow"><span class="dot"></span>LaTeX → HWP 수식</span>
+        <button type="button" class="help-chip model-chip" id="modelPickBtn" title="쓸 AI 모델 고르기 (또는 AI 없이 Gem 으로)">
+          <span id="iconModelChip"></span><span id="modelChipLabel">AI 연동 없이 이용</span><i class="tab-chip free" id="modelChipBadge">무료</i><span class="chev">▾</span>
+        </button>
         <button type="button" class="help-chip" id="helpBtn"><span id="iconHelp"></span>사용법</button>
         <button type="button" class="help-chip api-key-chip icon-chip" id="apiKeyBtn" title="API 키 설정"><span id="iconKey"></span><span id="apiKeyChipLabel">API 키 설정</span></button>
       </div>
@@ -1143,6 +1169,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     </div>
   </div>
 
+  <div class="model-menu" id="modelMenu" role="menu"></div>
+
   <div class="modal-overlay" id="apiKeyOverlay">
     <div class="modal-card">
       <div class="modal-head">
@@ -1226,6 +1254,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       paste: '<svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 13h8M8 17h5"/></svg>',
       eye2: '<svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>',
     };
+    document.getElementById('iconModelChip').innerHTML = ICONS.spark;
     document.getElementById('iconGemTitle').innerHTML = ICONS.paste;
     document.getElementById('iconGemCopy').innerHTML = ICONS.copy;
     document.getElementById('iconGemOpen').innerHTML = ICONS.external;
@@ -1336,6 +1365,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         tabAiChip.classList.toggle('key', !set);
         tabAiChip.textContent = set ? '준비' : '키';
       }
+      updateModelChip();
       const dzLockBadge = document.getElementById('dzLockBadge');
       if (dzLockBadge) dzLockBadge.style.display = set ? 'none' : 'flex';
       const sparkBtnIcon = document.getElementById('iconSparkBtn');
@@ -1847,8 +1877,94 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       }
     });
 
-    function openApiKeyModal() {
-      dialogProvider = aiProvider();
+    // ---- 머리글 모델 고르기: AI 없이 쓸지, 어느 회사 어떤 모델로 쓸지 ----
+    // 'aiMode' 가 'off' 면 AI 기능을 쓰지 않겠다는 뜻(수동 입력 + Gem 으로 무료 사용).
+    const modelPickBtn = document.getElementById('modelPickBtn');
+    const modelMenu = document.getElementById('modelMenu');
+    function aiOff() { return store.get('aiMode') === 'off'; }
+
+    function updateModelChip() {
+      const label = document.getElementById('modelChipLabel');
+      const badge = document.getElementById('modelChipBadge');
+      if (aiOff() || !hasApiKey()) {
+        label.textContent = 'AI 연동 없이 이용';
+        badge.textContent = '무료';
+        badge.className = 'tab-chip free';
+        return;
+      }
+      const p = aiProvider();
+      label.textContent = modelFor(p);
+      badge.textContent = p === 'gemini' ? '무료 한도' : '유료';
+      badge.className = 'tab-chip ' + (p === 'gemini' ? 'free' : 'key');
+    }
+
+    async function renderModelMenu() {
+      const { CURATED, PROVIDER_META } = await ai();
+      const off = aiOff() || !hasApiKey();
+      const cur = aiProvider(), curModel = modelFor(cur);
+      let html = `<button type="button" data-off="1" class="${off ? 'on' : ''}">
+          <span class="mm-name">AI 연동 없이 이용<span class="mm-sub">Gem 으로 텍스트를 만들어 붙여 넣습니다 · 키가 필요 없어요</span></span>
+          <i class="tab-chip free">무료</i></button>`;
+      for (const p of ['gemini', 'openai', 'anthropic']) {
+        const meta = PROVIDER_META[p] || {};
+        const keyed = !!apiKeyFor(p);
+        html += `<div class="mm-group">${meta.title || p} · ${meta.by || ''}${keyed ? '' : ' <span class="mm-nokey">(키 없음 — 고르면 입력 창이 열려요)</span>'}</div>`;
+        for (const m of (CURATED[p] || [])) {
+          const on = !off && p === cur && m.id === curModel;
+          html += `<button type="button" data-prov="${p}" data-model="${m.id}" class="${on ? 'on' : ''}">
+            <span class="mm-name">${m.name}<span class="mm-sub">${m.desc}</span></span>
+            <i class="tab-chip ${m.badge === 'free' ? 'free' : 'key'}">${m.badge === 'free' ? '무료 한도' : '유료'}</i></button>`;
+        }
+      }
+      modelMenu.innerHTML = html;
+    }
+
+    function closeModelMenu() { modelMenu.classList.remove('show'); modelPickBtn.classList.remove('on'); }
+
+    modelPickBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (modelMenu.classList.contains('show')) { closeModelMenu(); return; }
+      await renderModelMenu();
+      const r = modelPickBtn.getBoundingClientRect();
+      modelMenu.style.top = (r.bottom + 6) + 'px';
+      // 화면 밖으로 나가지 않도록 오른쪽 끝을 맞춘다
+      modelMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 296)) + 'px';
+      modelMenu.classList.add('show');
+      modelPickBtn.classList.add('on');
+    });
+    document.addEventListener('click', (e) => {
+      if (modelMenu.classList.contains('show') && !modelMenu.contains(e.target)) closeModelMenu();
+    });
+    modelMenu.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      closeModelMenu();
+      if (btn.dataset.off) {
+        store.set('aiMode', 'off');
+        switchInputTab('manual');
+        updateApiKeyUI();
+        setStatus('ok', 'AI 없이 씁니다. 수동 입력 탭에서 Gem 이 준 텍스트를 붙여 넣으세요.');
+        return;
+      }
+      const p = btn.dataset.prov, m = btn.dataset.model;
+      store.set('aiMode', '');
+      store.set(p + 'Model', m);
+      if (!apiKeyFor(p)) {
+        // 키가 없는 회사를 골랐으면 그 회사 입력 창을 바로 열어 준다
+        store.set('aiProvider', p);
+        updateApiKeyUI();
+        openApiKeyModal(p);
+        setStatus('pending', `${PROVIDER_NAMES[p]} 키를 넣으면 ${m} 로 쓸 수 있어요.`);
+        return;
+      }
+      store.set('aiProvider', p);
+      updateApiKeyUI();
+      switchInputTab('ai');
+      setStatus('ok', `${PROVIDER_NAMES[p]} · ${m} 로 씁니다.`);
+    });
+
+    function openApiKeyModal(forProvider) {
+      dialogProvider = forProvider || aiProvider();
       renderProviderPane();
       apiKeyOverlay.classList.add('show');
       requestAnimationFrame(() => requestAnimationFrame(() => apiKeyOverlay.classList.add('in')));
@@ -1876,6 +1992,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       }
       const p = dialogProvider;
       store.set(p + 'Model', modelSel.value);
+      store.set('aiMode', '');   // 키를 넣었으면 'AI 없이 쓰기' 상태를 푼다
       setApiKeyValue(key, p);
       setStatus('ok', `${PROVIDER_NAMES[p]} 키를 저장했습니다. 이제 AI 기능을 사용할 수 있어요.`);
       closeApiKeyModal();
