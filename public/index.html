@@ -2591,6 +2591,53 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       { left: '\\(', right: '\\)', display: false },
     ];
 
+    // ---- 미리보기의 정체(rm)·이탤릭(it)을 한/글 결과와 같게 ----
+    // 변환기(converter.mjs styleWrap)는 수식 안의 라틴 문자 가운데 대문자 묶음은 {rm ...},
+    // 소문자 묶음은 {it ...} 으로 적는다 (점·선분 이름 ABC 는 곧은 글씨, 변수 x 는 기운 글씨).
+    // 그런데 KaTeX 는 라틴 문자를 모두 기울여 그려서, 미리보기의 ABC 가 한/글과 달라 보였다.
+    // 그래서 그리기 직전에 같은 규칙으로 대문자 묶음만 \mathrm 으로 감싼다.
+    // \text{} 처럼 변환기도 글자 그대로 두는 명령과 \begin{} 의 환경 이름은 건드리지 않는다.
+    // \sin·\log 같은 함수 이름과 그리스 문자는 명령어라서 원래 곧게 그려진다.
+    const RMIT_KEEP = new Set(['text', 'mbox', 'textrm', 'textit', 'textbf', 'operatorname', 'mathrm', 'mathit',
+      'begin', 'end', 'color', 'textcolor', 'hspace', 'vspace', 'label', 'tag']);
+    function closeBrace(tex, open) {
+      let depth = 0;
+      for (let i = open; i < tex.length; i++) {
+        if (tex[i] === '\\') { i++; continue; }
+        if (tex[i] === '{') depth++;
+        else if (tex[i] === '}' && --depth === 0) return i;
+      }
+      return tex.length - 1;
+    }
+    function rmItTex(tex) {
+      let out = '';
+      let i = 0;
+      while (i < tex.length) {
+        const c = tex[i];
+        if (c === '\\') {
+          const m = /^\\([A-Za-z]+)/.exec(tex.slice(i));
+          if (!m) { out += tex.slice(i, i + 2); i += 2; continue; }   // \{ \, \\ 같은 기호
+          out += m[0]; i += m[0].length;
+          if (RMIT_KEEP.has(m[1])) {
+            const sp = /^\s*/.exec(tex.slice(i))[0];
+            out += sp; i += sp.length;
+            if (tex[i] === '{') { const z = closeBrace(tex, i); out += tex.slice(i, z + 1); i = z + 1; }
+          }
+          continue;
+        }
+        if (c >= 'A' && c <= 'Z') {
+          const run = /^[A-Z]+/.exec(tex.slice(i))[0];
+          // 중괄호로 한 번 더 묶어야 \bar A 나 A^2 에서 한 덩어리로 다뤄진다
+          out += '{\\mathrm{' + run + '}}';
+          i += run.length;
+          continue;
+        }
+        out += c; i++;
+      }
+      return out;
+    }
+    const KATEX_OPTS = { delimiters: KATEX_DELIMS, throwOnError: false, preProcess: rmItTex };
+
     // ---- 수식 점검 ----
     // 변환하기 전에, 한/글 파일이 깨지게 만드는 흔한 실수를 박스마다 찾아 알려 준다.
     // 수식을 가르는 규칙은 서버(hwpxBuilder.mjs MATH_SPLIT_RE)와 똑같이 써야 '짝이 없는 $'를
@@ -2938,7 +2985,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       if (typeof renderMathInElement !== 'function') return;
       boxListEl.querySelectorAll('[data-preview]').forEach((el) => {
         try {
-          renderMathInElement(el, { delimiters: KATEX_DELIMS, throwOnError: false });
+          renderMathInElement(el, KATEX_OPTS);
         } catch (e) { /* 렌더링 실패 시 원문 텍스트를 그대로 둔다 */ }
       });
     }
@@ -3345,7 +3392,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       const pv = body.querySelector('[data-preview]');
       pv.style.animation = 'none';
       if (typeof renderMathInElement === 'function') {
-        try { renderMathInElement(pv, { delimiters: KATEX_DELIMS, throwOnError: false }); } catch (e) { /* 원문 그대로 */ }
+        try { renderMathInElement(pv, KATEX_OPTS); } catch (e) { /* 원문 그대로 */ }
       }
     }
     function setMarks(box, set) {
