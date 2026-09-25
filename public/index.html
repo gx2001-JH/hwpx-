@@ -268,6 +268,75 @@
   .gen-stop:hover { background: #B3261E; color: #fff; }
   .gen-stop[hidden] { display: none; }
 
+  /* 이 한 장만 넘기고 다음 장으로 (도형 생성기 .gen-skip) */
+  .gen-skip {
+    margin-left: 6px; height: 24px; padding: 0 10px; border-radius: 100px;
+    border: 1px solid #FCD9A8; background: #FFF7E6; color: #B45309;
+    font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer;
+    flex: none; white-space: nowrap;
+  }
+  .gen-skip:hover { background: #B45309; color: #fff; }
+  .gen-skip[hidden] { display: none; }
+  /* 이미지 영역 왼쪽 위에 겹쳐 놓는다 (자물쇠 배지는 오른쪽 위) */
+  .dz-running { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 2; }
+  .dz-running[hidden] { display: none; }
+  .queue-item.skip { opacity: .55; }
+  .queue-item.skip .badge { background: #B45309; }
+
+  /* ---------- 생성 리포트 (도형 생성기와 같은 모양) ---------- */
+  .gen-report-btn {
+    display: flex; align-items: center; gap: 6px; width: 100%; box-sizing: border-box;
+    margin-top: 8px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 10px;
+    background: transparent; color: var(--text-muted); font: inherit; font-size: 12px;
+    font-weight: 700; cursor: pointer; text-align: left;
+  }
+  .gen-report-btn[hidden] { display: none; }
+  .gen-report-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .gen-report-btn > span:first-of-type { flex: none; white-space: nowrap; }
+  .gr-badge {
+    margin-left: auto; min-width: 0; font-size: 11px; font-weight: 700; padding: 1px 8px;
+    border-radius: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    background: #F1EDFF; color: var(--accent-hover);
+  }
+  .gr-badge.ok { background: #D1FAE5; color: #047857; }
+  .gr-badge.info { background: #F3F2F7; color: var(--text-muted); }
+  .gr-badge.fail { background: #FFE4E4; color: #B91C1C; }
+  .gr-pick { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+  .gr-pick select { flex: 1; min-width: 0; height: 32px; border: 1px solid var(--border); border-radius: 9px; padding: 0 8px; font: inherit; font-size: 12px; color: var(--text); background: var(--surface); }
+  .af-card { max-width: 460px; }
+  .af-hero { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 14px; background: #F4F1FF; }
+  .af-hero .af-ico { flex: none; width: 38px; height: 38px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: #fff; color: var(--accent); }
+  .af-hero.ok { background: #ECFDF5; } .af-hero.ok .af-ico { color: #059669; }
+  .af-hero.fail { background: #FFF1F1; } .af-hero.fail .af-ico { color: #DC2626; }
+  .af-txt { min-width: 0; }
+  .af-title { display: block; font-size: 15.5px; font-weight: 800; line-height: 1.35; color: var(--text); word-break: keep-all; }
+  .af-lead { margin: 5px 0 0; font-size: 13px; line-height: 1.6; color: var(--text-muted); word-break: keep-all; overflow-wrap: anywhere; }
+  .gr-meta { margin: 6px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--text-muted); }
+  .af-h { margin: 14px 0 6px; font-size: 12px; font-weight: 800; color: var(--text-muted); }
+  .gr-instr { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: var(--bg); font-size: 12.5px; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+  .gr-instr b { margin-right: 6px; font-size: 11.5px; color: var(--accent-hover); }
+  .gr-rows { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .gr-rows li { border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px; }
+  .gr-rows li.ok { border-color: #A7F3D0; }
+  .gr-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .gr-top b { font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gr-top em { flex: none; font-style: normal; font-weight: 700; font-size: 11.5px; padding: 1px 8px; border-radius: 100px; background: #F1EDFF; color: var(--accent-hover); }
+  .gr-top em.ok { background: #D1FAE5; color: #047857; }
+  .gr-top em.info { background: #F3F2F7; color: var(--text-muted); }
+  .gr-top em.fail { background: #FFE4E4; color: #B91C1C; }
+  .gr-rows li p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--text-muted); word-break: keep-all; overflow-wrap: anywhere; }
+  .gr-cost { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); word-break: keep-all; overflow-wrap: anywhere; }
+  .af-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .af-btn {
+    flex: 1 1 auto; min-height: 38px; padding: 0 14px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;
+  }
+  .af-btn:hover { background: var(--bg); }
+  .af-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .af-btn.primary:hover { background: var(--accent-hover); }
+
   /* ---------- 머리글: 쓸 모델 고르기 (도형 생성기와 같은 두 칸 메뉴) ---------- */
   /* 도형 생성기 최종 시안과 같은 값 (패널 머리띠·칸막이·바탕) */
   :root { --panel-head: #DFD9F1; --panel-line: #D2CBE6; --bg: #F3F2F8; }
@@ -277,6 +346,10 @@
   .model-chip .chev { font-size: 11px; transform: rotate(180deg); display: inline-block; opacity: .7; }
   .model-chip.on { border-color: var(--accent); color: var(--accent-hover); background: var(--accent-soft); }
   .model-chip.on .chev { transform: none; }
+  /* 처음 접속: 아직 아무것도 고르지 않았으면 눈에 띄게 (도형 생성기 .model-pick.first) */
+  .model-chip.first { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .model-chip.first .chev { opacity: .9; }
+  .model-chip.first .tab-chip { background: rgba(255,255,255,.22); color: #fff; }
 
   .mm-badge { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 100px; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
   .mm-badge.free { background: #E6F5EE; color: #1F7A4F; }
@@ -1003,7 +1076,10 @@
 
       <div class="input-panel" id="panelAi" role="tabpanel" aria-labelledby="tabAi" hidden>
       <div class="dropzone" id="dropzone" tabindex="0">
-        <button type="button" class="gen-stop" id="dzStopBtn" hidden>■ 중지</button>
+        <div class="dz-running" id="dzRunning" hidden>
+          <button type="button" class="gen-skip" id="dzSkipBtn">이 장 넘기기</button>
+          <button type="button" class="gen-stop" id="dzStopBtn">■ 중지</button>
+        </div>
         <div class="dz-lock-badge" id="dzLockBadge"><span id="iconDzLock"></span>API 키 필요</div>
         <div class="dz-icon" id="iconImage"></div>
         <div class="dz-title">이미지로 문제 가져오기</div>
@@ -1032,6 +1108,9 @@
             <button type="button" class="gen-stop" id="genStopBtn" hidden>■ 중지</button>
             <button type="button" class="btn-gradient" id="aiSubmitBtn" data-needs-key><span id="iconSparkBtn"></span><span id="aiSubmitLabel">생성하기</span></button>
           </div>
+          <button type="button" class="gen-report-btn" id="genReportBtn" hidden>
+            <span>생성 리포트 보기</span><span class="gr-badge" id="genReportBadge"></span>
+          </button>
         </div>
       </div>
       </div>
@@ -1298,6 +1377,16 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     <button type="button" class="side-link-btn" id="loadBtn"><span id="iconLoad"></span>JSON 열기</button>
   </div>
 
+  <div class="modal-overlay" id="reportOverlay">
+    <div class="modal-card af-card">
+      <div class="modal-head">
+        <span class="modal-title">생성 리포트</span>
+        <button type="button" class="modal-close" id="reportCloseBtn"><span id="iconClose3"></span></button>
+      </div>
+      <div class="modal-body" id="reportBody"></div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="apiKeyOverlay">
     <div class="modal-card">
       <div class="modal-head">
@@ -1439,6 +1528,132 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     function stopRun(kind) {
       if (runCtl[kind]) runCtl[kind].abort();
     }
+
+    // ---- 생성 리포트: 마지막 AI 작업이 어느 모델로, 얼마나 걸려, 얼마에 됐는지 ----
+    // 도형 생성기의 "생성 리포트 보기"와 같은 자리·같은 모양. 그쪽은 모델을 자동으로
+    // 갈아타는 앱이라 실패 경로까지 보여 주는데, 이 앱은 사용자가 모델 하나를 고르므로
+    // 한 번의 작업을 줄 단위(이미지 한 장 · 문제 하나)로 적는다.
+    const REPORT_KEY = 'hwpeq_reports.v1';
+    const REPORT_KIND = { ocr: '이미지에서 텍스트 가져오기', gen: 'AI로 새 문제 생성', refine: '박스 문제 변형' };
+    const FAIL_LABEL = {
+      key: '키 문제', credit: '결제·크레딧', minute: '요청 한도', location: '지역 제한',
+      perm: '권한', model: '모델 문제', busy: '서버 혼잡', server: '서버 오류',
+      toolong: '입력이 너무 김', blocked: '안전 필터', cutoff: '출력이 잘림', other: '오류',
+    };
+
+    function loadReports() {
+      try { const a = JSON.parse(localStorage.getItem(REPORT_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+      catch { return []; }
+    }
+    function beginReport(kind, instr) {
+      const prov = aiProvider();
+      return {
+        at: Date.now(), kind, instr: String(instr || '').slice(0, 500),
+        prov, model: modelFor(prov), rows: [],
+        usage: { input: 0, cached: 0, cacheWrite: 0, output: 0 }, calls: 0,
+      };
+    }
+    function addUsage(rep, u) {
+      if (!rep || !u) return;
+      rep.calls += 1;
+      for (const k of ['input', 'cached', 'cacheWrite', 'output']) rep.usage[k] += +u[k] || 0;
+    }
+    async function finishReport(rep, outcome, err) {
+      if (!rep) return;
+      rep.ms = Date.now() - rep.at;
+      rep.outcome = outcome;
+      rep.err = err ? { message: String(err.message || '').slice(0, 600), kind: err.kind || 'other', status: err.status || null } : null;
+      try {
+        const { costOf, geminiBilling } = await ai();
+        rep.usd = rep.calls ? costOf(rep.model, rep.usage) : 0;
+        rep.free = rep.prov === 'gemini' && !geminiBilling();
+      } catch { rep.usd = null; rep.free = false; }
+      rep.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const a = loadReports(); a.unshift(rep); while (a.length > 20) a.pop();
+      try { localStorage.setItem(REPORT_KEY, JSON.stringify(a)); }
+      catch { try { localStorage.setItem(REPORT_KEY, JSON.stringify(a.slice(0, 5))); } catch {} }
+      paintReportBtn();
+    }
+
+    function reportBadge(r) {
+      if (r.outcome === 'ok') return { cls: 'ok', txt: '성공 · ' + shortModel(r.prov, r.model) };
+      if (r.outcome === 'cancel') return { cls: 'info', txt: '중지' };
+      return { cls: 'fail', txt: '실패 · ' + (FAIL_LABEL[(r.err && r.err.kind) || 'other'] || '오류') };
+    }
+    // 모델 이름은 ai.js 를 불러와야 예쁘게 나오는데 단추를 그릴 때는 아직 없을 수 있다.
+    // 그때는 모델 id 를 그대로 쓰고, 모듈이 올라온 뒤에는 보기 좋은 이름으로 바꾼다.
+    let _pretty = null;
+    function shortModel(prov, model) {
+      return _pretty ? _pretty(prov, model) : String(model || '');
+    }
+    ai().then((m) => { _pretty = m.prettyModelName; paintReportBtn(); }).catch(() => {});
+
+    function paintReportBtn() {
+      const b = document.getElementById('genReportBtn');
+      if (!b) return;
+      const r = loadReports()[0];
+      b.hidden = !r;
+      if (!r) return;
+      const bd = reportBadge(r);
+      const e = document.getElementById('genReportBadge');
+      e.className = 'gr-badge ' + bd.cls;
+      e.textContent = bd.txt;
+    }
+
+    function showReport(id) {
+      const all = loadReports();
+      if (!all.length) { setStatus('info', '아직 AI 작업 기록이 없어요.'); return; }
+      const r = all.find((x) => x.id === id) || all[0];
+      const when = (x) => {
+        const t = new Date(x.at);
+        return `${t.getMonth() + 1}월 ${t.getDate()}일 ${t.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}`;
+      };
+      const tone = r.outcome === 'ok' ? 'ok' : r.outcome === 'cancel' ? '' : 'fail';
+      const ico = r.outcome === 'ok' ? ICONS.check : r.outcome === 'cancel' ? ICONS.close : ICONS.alert;
+      const kindTxt = REPORT_KIND[r.kind] || 'AI 작업';
+      const title = r.outcome === 'ok' ? `성공 — ${shortModel(r.prov, r.model)} 모델로 했어요`
+        : r.outcome === 'cancel' ? '중지했어요'
+        : `실패 — ${FAIL_LABEL[(r.err && r.err.kind) || 'other'] || '오류'}`;
+      const lead = r.outcome === 'cancel'
+        ? '멈추기 전까지 주고받은 토큰은 청구돼요 (아래 토큰 · 비용).'
+        : r.err ? escapeHtml(r.err.message) : '';
+      const provName = (PROVIDER_NAMES[r.prov] || r.prov);
+      const modeTxt = `${provName} · ${r.model}${r.prov === 'gemini' ? (r.free ? ' · 무료 키' : ' · 유료 키') : ' · 유료'}`;
+      const rows = (r.rows || []).map((x) => `
+        <li class="${x.state}">
+          <div class="gr-top"><b>${escapeHtml(x.label)}</b><em class="${x.state}">${escapeHtml(x.stateLabel || '')}</em></div>
+          ${x.why ? `<p>${escapeHtml(x.why)}</p>` : ''}
+        </li>`).join('');
+      const tok = r.usage || {};
+      const cost = !r.calls ? '주고받은 토큰이 없어요. 키나 모델 때문에 거절된 요청은 토큰이 들지 않아요.'
+        : `요청 ${r.calls}회 · 입력 ${(tok.input || 0).toLocaleString('ko-KR')} · 출력 ${(tok.output || 0).toLocaleString('ko-KR')} 토큰`
+          + (r.usd == null ? '\n요금표를 모르는 모델이라 비용은 계산하지 못했어요.'
+            : `\n예상 비용 ${_fmtCost ? _fmtCost(r.usd) : '$' + r.usd.toFixed(4)}`
+              + (r.free ? ' — 무료 키라 한도 안에서는 실제 청구가 0원이에요.' : ''));
+      const pick = all.length > 1
+        ? `<label class="gr-pick"><span>기록</span><select id="grPick">${all.map((x) =>
+            `<option value="${x.id}"${x.id === r.id ? ' selected' : ''}>${escapeHtml(when(x))} · ${escapeHtml(reportBadge(x).txt)}</option>`).join('')}</select></label>`
+        : '';
+      document.getElementById('reportBody').innerHTML = pick
+        + `<div class="af-hero ${tone}"><span class="af-ico">${ico}</span><div class="af-txt">`
+        + `<b class="af-title">${escapeHtml(title)}</b>`
+        + (lead ? `<p class="af-lead">${lead}</p>` : '')
+        + `<p class="gr-meta">${escapeHtml(when(r))} · ${escapeHtml(kindTxt)} · ${Math.max(1, Math.round((r.ms || 0) / 1000))}초<br>${escapeHtml(modeTxt)}</p>`
+        + '</div></div>'
+        + (r.instr ? `<div class="gr-instr"><b>요청</b>${escapeHtml(r.instr)}</div>` : '')
+        + (rows ? `<div class="af-h">${r.kind === 'ocr' ? '이미지' : '결과'}</div><ul class="gr-rows">${rows}</ul>` : '')
+        + `<div class="af-h">토큰 · 비용</div><p class="gr-cost">${escapeHtml(cost).replace(/\n/g, '<br>')}</p>`
+        + '<div class="af-actions"><button type="button" class="af-btn primary" data-a="close">닫기</button></div>';
+      const body = document.getElementById('reportBody');
+      body.scrollTop = 0;
+      if (document.getElementById('grPick')) {
+        document.getElementById('grPick').addEventListener('change', (e) => showReport(e.target.value));
+      }
+      body.querySelector('[data-a="close"]').addEventListener('click', closeReport);
+      openReport();
+    }
+    let _fmtCost = null;
+    ai().then((m) => { _fmtCost = m.fmtCost; if (m.refreshUsdKrw) m.refreshUsdKrw(); }).catch(() => {});
 
     // 저장소 이름은 도형 생성기와 똑같이 맞춰 둔다. 나중에 두 앱을 같은 주소에 올리면
     // 키가 그대로 공유된다. (providers.js 의 PROVIDERS[p].keyStore 와 같은 값)
@@ -1776,6 +1991,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       boxCtl.set(boxId, ctl);
       renderBoxList();
 
+      const rep = beginReport('refine', instruction);
       try {
         const [{ generateText }, { buildGeneratePrompt, parseProblems }] = await Promise.all([ai(), prompts()]);
         const p = aiProvider();
@@ -1784,14 +2000,17 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           user: buildGeneratePrompt(instruction, box.text, ''),
           json: true, temperature: 0.4, signal: ctl.signal,
         });
+        addUsage(rep, r.usage);
         const problems = parseProblems(r.text || '');
         if (!problems.length) throw new Error('문제를 만들지 못했습니다.');
         aiOpenBoxIds.delete(boxId);
         addBoxes(problems, 'ai', boxId);
+        problems.forEach((t, i) => rep.rows.push({ label: `변형 ${i + 1}`, state: 'ok', stateLabel: '만듦', why: t.slice(0, 120) }));
+        finishReport(rep, 'ok');
         setStatus('ok', `AI가 변형한 문제 ${problems.length}개를 바로 아래에 추가했습니다. 확인 후 변환해주세요.`);
       } catch (err) {
-        if (isAbort(err)) setStatus('info', '변형을 중지했습니다.');
-        else setStatus('error', err.message);
+        if (isAbort(err)) { finishReport(rep, 'cancel'); setStatus('info', '변형을 중지했습니다.'); }
+        else { finishReport(rep, 'fail', err); setStatus('error', err.message); }
       } finally {
         aiProcessingBoxIds.delete(boxId);
         boxCtl.delete(boxId);
@@ -1969,6 +2188,23 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       if (fileMenu.classList.contains('show') && !fileMenu.contains(e.target)) closeFileMenu();
     });
 
+    // ---- 생성 리포트 창 ----
+    const reportOverlay = document.getElementById('reportOverlay');
+    document.getElementById('iconClose3').innerHTML = ICONS.close;
+    function openReport() {
+      reportOverlay.classList.add('show');
+      requestAnimationFrame(() => requestAnimationFrame(() => reportOverlay.classList.add('in')));
+    }
+    function closeReport() {
+      reportOverlay.classList.remove('in');
+      setTimeout(() => reportOverlay.classList.remove('show'), 180);
+    }
+    document.getElementById('reportCloseBtn').addEventListener('click', closeReport);
+    reportOverlay.addEventListener('click', (e) => { if (e.target === reportOverlay) closeReport(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && reportOverlay.classList.contains('show')) closeReport(); });
+    document.getElementById('genReportBtn').addEventListener('click', () => showReport());
+    paintReportBtn();
+
     // ---- 사용법 모달 ----
     document.getElementById('iconClose').innerHTML = ICONS.close;
     const helpOverlay = document.getElementById('helpOverlay');
@@ -2092,10 +2328,21 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     const modelPickBtn = document.getElementById('modelPickBtn');
     const modelMenu = document.getElementById('modelMenu');
     function aiOff() { return store.get('aiMode') === 'off'; }
+    // 아직 아무것도 고르지 않은 첫 방문 (키도 없고 '없이 쓰기'도 안 눌렀다)
+    function aiUndecided() { return !store.get('aiMode') && !hasApiKey(); }
 
     function updateModelChip() {
       const label = document.getElementById('modelChipLabel');
       const badge = document.getElementById('modelChipBadge');
+      // 처음 온 사람에게는 여기서부터 시작하라고 알려 준다 (도형 생성기와 같은 강조)
+      // const modelPickBtn 보다 먼저 불릴 수 있어(TDZ) 여기서는 직접 찾는다
+      document.getElementById('modelPickBtn').classList.toggle('first', aiUndecided());
+      if (aiUndecided()) {
+        label.textContent = 'AI 모델을 선택해 주세요';
+        badge.textContent = '시작';
+        badge.className = 'tab-chip free';
+        return;
+      }
       if (aiOff() || !hasApiKey()) {
         label.textContent = 'AI 연동 없이 이용';
         badge.textContent = '무료';
@@ -2261,7 +2508,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
     function pickModel(p, m) {
       closeModelMenu();
-      store.set('aiMode', '');
+      store.set('aiMode', 'on');
       store.set(p + 'Model', m);
       store.set('aiProvider', p);
       updateApiKeyUI();
@@ -2304,7 +2551,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       }
       const p = dialogProvider;
       store.set(p + 'Model', modelSel.value);
-      store.set('aiMode', '');   // 키를 넣었으면 'AI 없이 쓰기' 상태를 푼다
+      store.set('aiMode', 'on');   // 키를 넣었으면 'AI 없이 쓰기'도 '아직 안 고름'도 아니다
       setApiKeyValue(key, p);
       setStatus('ok', `${PROVIDER_NAMES[p]} 키를 저장했습니다. 이제 AI 기능을 사용할 수 있어요.`);
       closeApiKeyModal();
@@ -2380,6 +2627,9 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       }).join('');
     }
 
+    // 지금 처리 중인 한 장만 넘길 때 true. 중지와 구분하는 표시다.
+    let skipCurrent = false;
+
     function enqueueImage(file, targetBoxId) {
       if (!file || !file.type || !file.type.startsWith('image/')) return;
       if (!requireApiKey()) return;
@@ -2402,24 +2652,32 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         user: OCR_PROMPT, image: dataUrl,
         maxTokens: 4096, temperature: 0.1, signal,
       });
-      return (r.text || '').trim();
+      return { text: (r.text || '').trim(), usage: r.usage };
     }
 
     async function processQueue() {
       if (queueProcessing) return;
       queueProcessing = true;
-      const signal = beginRun('ocr', dzStopBtn);
+      dzRunning.hidden = false;
       let stopped = false;
       let dropped = 0;
+      let skipped = 0;
+      const rep = beginReport('ocr', '');
 
       let item;
       while ((item = queue.find((q) => q.status === 'pending'))) {
         item.status = 'processing';
         renderQueue();
         const idx = queue.indexOf(item) + 1;
+        const label = `이미지 ${idx}장째`;
         setStatus('pending', `이미지 ${idx}/${queue.length} 처리 중...`);
+        // 장마다 따로 끊을 수 있어야 "이 장만 넘기기"가 된다
+        const ctl = new AbortController();
+        runCtl.ocr = ctl;
+        skipCurrent = false;
         try {
-          const text = await ocrImage(item.file, signal);
+          const { text, usage } = await ocrImage(item.file, ctl.signal);
+          addUsage(rep, usage);
           if (text) {
             const targetBox = item.targetBoxId && boxes.find((b) => b.id === item.targetBoxId);
             if (targetBox) {
@@ -2430,23 +2688,38 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
             }
           }
           item.status = 'done';
+          rep.rows.push({ label, state: 'ok', stateLabel: text ? '읽음' : '글자 없음', why: (text || '').slice(0, 120) });
         } catch (err) {
+          if (isAbort(err) && skipCurrent) {
+            // 이 장만 넘긴다. 다음 장은 그대로 이어서 처리한다.
+            item.status = 'skip';
+            skipped += 1;
+            rep.rows.push({ label, state: 'info', stateLabel: '건너뜀', why: '사용자가 이 장을 넘겼습니다.' });
+            renderQueue();
+            continue;
+          }
           if (isAbort(err)) {
-            // 사용자가 멈췄다. 처리 중이던 것과 아직 차례가 오지 않은 것을 함께 접는다.
+            // 아예 멈췄다. 처리 중이던 것과 아직 차례가 오지 않은 것을 함께 접는다.
             stopped = true;
             dropped = queue.filter((q) => q.status === 'pending').length + 1;
             queue = queue.filter((q) => q.status !== 'pending' && q !== item);
+            rep.rows.push({ label, state: 'info', stateLabel: '중지', why: '여기서 멈췄습니다.' });
             renderQueue();
             break;
           }
           item.status = 'error';
           item.errorMsg = err.message;
+          rep.rows.push({ label, state: 'fail', stateLabel: '실패', why: err.message });
         }
         renderQueue();
       }
 
       queueProcessing = false;
-      endRun('ocr', dzStopBtn);
+      runCtl.ocr = null;
+      dzRunning.hidden = true;
+      const lastErr = queue.find((q) => q.status === 'error');
+      finishReport(rep, stopped ? 'cancel' : lastErr && !queue.some((q) => q.status === 'done') ? 'fail' : 'ok',
+        lastErr ? Object.assign(new Error(lastErr.errorMsg || '오류'), { kind: 'other' }) : null);
 
       const done = queue.filter((q) => q.status === 'done').length;
       const failed = queue.filter((q) => q.status === 'error');
@@ -2454,6 +2727,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         setStatus('info', done
           ? `중지했습니다. 이미지 ${done}장까지 반영하고 ${dropped}장은 넘어갔습니다.`
           : '이미지 인식을 중지했습니다.');
+      } else if (skipped && !failed.length) {
+        setStatus('ok', `이미지 ${done}장에서 텍스트를 가져오고 ${skipped}장은 건너뛰었습니다.`);
       } else if (failed.length) {
         setStatus('error', `이미지 ${done}장을 반영, ${failed.length}장 인식 실패(${failed[0].errorMsg}).`);
       } else if (done) {
@@ -2609,6 +2884,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       aiSubmitBtn.disabled = true;
       aiCardEl.classList.add('generating');
       const signal = beginRun('gen', genStopBtn);
+      const rep = beginReport('gen', instruction);
       setStatus('pending', 'AI가 문제를 만드는 중입니다...');
 
       try {
@@ -2620,9 +2896,12 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           user: buildGeneratePrompt(instruction, context, aiType.value),
           json: true, temperature: 0.4, signal,
         });
+        addUsage(rep, r.usage);
         const problems = parseProblems(r.text || '');
         if (!problems.length) throw new Error('문제를 생성하지 못했습니다.');
         addBoxes(problems, 'ai');
+        problems.forEach((t, i) => rep.rows.push({ label: `문제 ${i + 1}`, state: 'ok', stateLabel: '만듦', why: t.slice(0, 120) }));
+        finishReport(rep, 'ok');
         aiInstruction.value = '';
         setStatus('ok', `AI가 문제 ${problems.length}개를 생성해 박스로 추가했습니다. 정답·해설을 확인한 뒤 변환해주세요.`);
         const iconEl = document.getElementById('iconSparkBtn');
@@ -2634,8 +2913,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           labelEl.textContent = '생성하기';
         }, 1400);
       } catch (err) {
-        if (isAbort(err)) setStatus('info', '생성을 중지했습니다.');
-        else setStatus('error', err.message);
+        if (isAbort(err)) { finishReport(rep, 'cancel'); setStatus('info', '생성을 중지했습니다.'); }
+        else { finishReport(rep, 'fail', err); setStatus('error', err.message); }
       } finally {
         aiSubmitBtn.disabled = false;
         aiCardEl.classList.remove('generating');
@@ -2643,10 +2922,13 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       }
     }
 
-    // 중지 단추 (숨어 있다가 호출이 도는 동안만 보인다)
+    // 중지·건너뛰기 단추 (숨어 있다가 호출이 도는 동안만 보인다)
+    const dzRunning = document.getElementById('dzRunning');
     const dzStopBtn = document.getElementById('dzStopBtn');
+    const dzSkipBtn = document.getElementById('dzSkipBtn');
     const genStopBtn = document.getElementById('genStopBtn');
     dzStopBtn.addEventListener('click', (e) => { e.stopPropagation(); stopRun('ocr'); });
+    dzSkipBtn.addEventListener('click', (e) => { e.stopPropagation(); skipCurrent = true; stopRun('ocr'); });
     genStopBtn.addEventListener('click', () => stopRun('gen'));
 
     aiSubmitBtn.addEventListener('click', submitAiRequest);
