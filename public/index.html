@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <!-- viewport-fit=cover: 아이폰 아래쪽 홈 막대 자리(safe-area)를 알아야 탭 막대를 그 위에 올린다 -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+  // 아이폰·아이패드 사파리는 16px 보다 작은 글 칸을 누르면 화면을 확대해, 고정된 휴대폰 틀이 깨져 보인다.
+  // maximum-scale=1 은 그 자동 확대만 막고, 사파리는 손가락으로 벌리는 확대를 계속 허용한다(iOS 10+).
+  // 안드로이드에서는 손가락 확대까지 막히므로 아이폰·아이패드에서만 붙인다.
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1');
+  }
+</script>
 <title>한글 수식 변환기</title>
 <!-- 휴대폰 홈 화면에 앱으로 추가 (주소창 없는 전체 화면으로 열린다) -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -1828,7 +1836,7 @@
   @media (max-width: 760px) { .es-desk { display: none; } .es-phone { display: inline; } }
   @media (max-width: 760px) {
     html, body { height: 100%; overflow: hidden !important; overscroll-behavior: none; }
-    body { display: flex; flex-direction: column; height: 100dvh; }
+    body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
     .app-footer, .resizer { display: none !important; }
     .shell {
       flex: 1 1 auto; min-height: 0; overflow: hidden !important; flex-direction: column;
@@ -1926,7 +1934,8 @@
       display: flex; flex-direction: column;
       position: fixed !important; left: 0 !important; right: 0 !important; top: auto !important;
       bottom: calc(60px + env(safe-area-inset-bottom)) !important;
-      width: auto !important; min-width: 0 !important; max-width: none !important; height: auto !important; max-height: 74dvh !important;
+      width: auto !important; min-width: 0 !important; max-width: none !important; height: auto !important;
+      max-height: 74vh !important; max-height: 74dvh !important;
       margin: 0 !important; border-radius: 22px 22px 0 0 !important; z-index: 400;
       box-shadow: 0 -12px 40px rgba(20,16,50,.22) !important;
       transform: translateY(calc(100% + 90px)); transition: transform .26s var(--ease) !important; visibility: hidden;
@@ -1940,7 +1949,16 @@
     #sidebar.collapsed { padding: 18px 14px 12px !important; height: auto !important; cursor: default; }
     #sidebar.collapsed > :not(.sb-vlabel):not(.edge-tab) { display: revert !important; }
     #sidebar .edge-tab, #sidebar .sb-vlabel { display: none !important; }
-    #sidebar .side-scroll { overflow: visible; }
+    #sidebar .side-scroll { overflow: visible; margin: 0; padding: 0; }
+    /* ② 주 단추 줄은 시트 아래에 붙어 늘 보인다 (글 칸이 길어 접힌 아래로 밀려 있었다) */
+    #sidebar .gem-actions, #sidebar .ai-card-actions {
+      position: sticky; bottom: -12px; z-index: 2; margin: 0 -14px -14px; padding: 10px 14px 14px;
+      border-radius: 0 0 14px 14px;
+      background: linear-gradient(to bottom, rgba(40,38,46,0), rgb(40,38,46) 26%);
+    }
+    #sidebar .ai-card-actions { margin: 0 -16px -16px; padding: 10px 16px 16px; background: linear-gradient(to bottom, rgba(22,22,26,0), rgb(22,22,26) 26%); }
+    /* ④ 아이폰은 16px 보다 작은 글 칸을 누르면 화면을 확대해 틀이 깨져 보인다 — 휴대폰에서 글 칸은 16px */
+    #sidebar textarea, #sidebar input[type=text], .m-panel input[type=text], .find-field input[type=text], .box-ai-input, .box-text { font-size: 16px !important; }
     .m-panel { background: #fff; border: 1px solid var(--panel-line); padding: 12px 12px 10px; gap: 7px; overflow: hidden; }
     .m-panel .mp-head {
       flex: none; display: flex; align-items: center; gap: 6px; margin: -12px -12px 0; padding: 20px 16px 10px;
@@ -2043,6 +2061,18 @@
     .toast { max-width: 100%; }
     .modal-card { max-height: calc(100dvh - 24px) !important; }
     .modal-overlay { padding: 12px !important; align-items: center; }
+  }
+  @media (max-width: 760px) {
+    /* ③ 키보드가 떠 있는 동안: 탭 막대를 숨기고, 시트는 키보드 바로 위에서 머리글 첫 줄 아래까지 쓴다.
+       --kb(키보드 높이)·--vvh(보이는 높이)는 visualViewport 로 잰다 (아이폰은 키보드가 떠도 화면 높이가 그대로라서) */
+    body.m-typing .m-tabbar { display: none; }
+    body.m-typing .m-scrim { bottom: 0; }
+    body.m-typing #sidebar, body.m-typing .m-panel {
+      bottom: var(--kb, 0px) !important;
+      max-height: calc(var(--vvh, 100vh) - 52px) !important;
+      transition: none !important;
+    }
+    body.m-typing .shell { padding-bottom: 0 !important; }
   }
   @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
     .main-bar .tray-hint b { animation: none; }
@@ -5480,6 +5510,24 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && mPhone.matches && mCur !== 'boxes' && !document.querySelector('.modal-overlay.show')) mShow('boxes');
     });
+    // 키보드: 시트 안의 글 칸에 들어가면 m-typing. 보이는 화면 높이와 키보드 높이를 CSS 로 넘긴다
+    const typingField = (el) => !!el && el.matches && el.matches('textarea, input[type=text], input:not([type])') && !!el.closest('#sidebar, .m-panel');
+    document.addEventListener('focusin', (e) => { if (mPhone.matches && typingField(e.target)) document.body.classList.add('m-typing'); });
+    document.addEventListener('focusout', () => {
+      setTimeout(() => { if (!typingField(document.activeElement)) document.body.classList.remove('m-typing'); }, 60);
+    });
+    if (window.visualViewport) {
+      const vv = window.visualViewport;
+      const updVV = () => {
+        const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        document.documentElement.style.setProperty('--kb', kb + 'px');
+        document.documentElement.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+      };
+      vv.addEventListener('resize', updVV);
+      vv.addEventListener('scroll', updVV);
+      updVV();
+    }
+
     // 박스를 만들거나 AI 가 문제를 짓기 시작하면 박스 화면으로 (결과가 바로 보이게)
     for (const id of ['manualSubmitBtn', 'aiSubmitBtn']) {
       document.getElementById(id).addEventListener('click', () => { if (mPhone.matches) setTimeout(() => mShow('boxes'), 80); });
