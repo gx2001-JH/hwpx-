@@ -358,7 +358,8 @@ export function estimateBaseline(script) {
 }
 
 class Counters {
-  constructor() {
+  constructor(font = EQ_FONTS.hancom) {
+    this.font = font;
     this.eqId = 2000000001;
     this.zOrder = 0;
   }
@@ -373,6 +374,12 @@ class Counters {
   }
 }
 
+// 한/글이 수식 개체에 쓰는 글꼴 이름. 학교 시험지는 HancomEQN, 평가원(수능·모의고사)
+// 조판물은 HyhwpEQ 를 쓴다. 크기·기준선 어림값은 HancomEQN 으로 맞춰 둔 것이라
+// 다른 글꼴에서는 여백이 아주 조금 다를 수 있지만, 글자 모양이 맞는 쪽이 낫다.
+export const EQ_FONTS = { hancom: 'HancomEQN', pyeongga: 'HyhwpEQ' };
+export const eqFontName = (key) => EQ_FONTS[key] || EQ_FONTS.hancom;
+
 function equationXml(latex, counters) {
   const script = latexToHwp(latex);
   if (!script) return "";
@@ -384,7 +391,7 @@ function equationXml(latex, counters) {
     `<hp:equation id="${eqId}" zOrder="${zOrder}" numberingType="EQUATION" ` +
     'textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" ' +
     `version="Equation Version 60" baseLine="${baseline}" textColor="#000000" baseUnit="1000" ` +
-    'lineMode="CHAR" font="HancomEQN">' +
+    `lineMode="CHAR" font="${counters.font}">` +
     `<hp:sz width="${width}" widthRelTo="ABSOLUTE" height="${height}" ` +
     'heightRelTo="ABSOLUTE" protect="0"/>' +
     '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" ' +
@@ -421,9 +428,9 @@ function paragraphXml(paragraph, counters, secPr = "") {
   );
 }
 
-export function buildSectionXml(inputText) {
+export function buildSectionXml(inputText, font) {
   const paragraphs = splitIntoParagraphs(inputText);
-  const counters = new Counters();
+  const counters = new Counters(eqFontName(font));
 
   const parts = [`<?xml version="1.0" encoding="UTF-8" standalone="yes" ?><hs:sec ${tpl.SECTION_XML_NS}>`];
   paragraphs.forEach((para, i) => {
@@ -434,8 +441,8 @@ export function buildSectionXml(inputText) {
   return parts.join("");
 }
 
-export function buildHwpxBytes(inputText, title = "문서") {
-  const sectionXml = buildSectionXml(inputText);
+export function buildHwpxBytes(inputText, title = "문서", font = "hancom") {
+  const sectionXml = buildSectionXml(inputText, font);
   const created = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   const contentHpf = tpl.contentHpf(xmlEscape(title), created);
   const preview = inputText.replace(/\$+|\\\[|\\\]|\\\(|\\\)/g, "").slice(0, 500);

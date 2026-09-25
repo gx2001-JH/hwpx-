@@ -191,7 +191,7 @@ def convert():
         return jsonify({"error": "변환할 텍스트를 입력해주세요."}), 400
 
     try:
-        data = build_hwpx_bytes(text, title=filename)
+        data = build_hwpx_bytes(text, title=filename, font=request.form.get("font", "hancom"))
     except Exception as e:
         return jsonify({"error": f"변환 중 오류가 발생했습니다: {e}"}), 500
 

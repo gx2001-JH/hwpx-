@@ -8,6 +8,7 @@ export default async (req) => {
   const bodyText = await req.text();
   const params = new URLSearchParams(bodyText);
   const text = params.get("text") || "";
+  const font = params.get("font") || "hancom";
   let filename = (params.get("filename") || "output").trim();
   filename = filename.replace(/[\\/:*?"<>|]/g, "").trim() || "output";
 
@@ -19,7 +20,7 @@ export default async (req) => {
   }
 
   try {
-    const data = buildHwpxBytes(text, filename);
+    const data = buildHwpxBytes(text, filename, font);
     return new Response(data, {
       status: 200,
       headers: {

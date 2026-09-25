@@ -1408,6 +1408,10 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <label class="select-all"><input type="checkbox" id="selectAllChk">전체 선택</label>
           <span class="box-count" id="boxCount"></span>
           <form id="convertForm">
+            <select id="eqFont" class="bar-select" title="한/글 수식 개체에 쓸 글꼴">
+              <option value="hancom">학교시험 (HancomEQN)</option>
+              <option value="pyeongga">평가원 (HyhwpEQ)</option>
+            </select>
             <div class="filename-field">
               <span class="filename-icon" id="iconFilename"></span>
               <input type="text" id="filename" name="filename" value="output" placeholder="파일 이름" aria-label="저장할 파일 이름">
@@ -3318,11 +3322,22 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     const submitLabel = document.getElementById('submitLabel');
     const submitIcon = document.getElementById('iconSubmit');
 
+    // 어떤 글꼴을 쓰는지는 학교/기관마다 정해져 있어 한 번 고르면 잘 바뀌지 않는다
+    const eqFontSel = document.getElementById('eqFont');
+    eqFontSel.value = store.get('eqFont', 'hancom');
+    eqFontSel.addEventListener('change', () => {
+      store.set('eqFont', eqFontSel.value);
+      setStatus('ok', eqFontSel.value === 'pyeongga'
+        ? '평가원 글꼴(HyhwpEQ)로 수식을 만듭니다.'
+        : '학교시험 글꼴(HancomEQN)로 수식을 만듭니다.');
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const selected = boxes.filter((b) => b.checked);
       const text = selected.map((b) => b.text.trim()).filter(Boolean).join('\n\n');
       const filename = document.getElementById('filename').value || 'output';
+      const font = document.getElementById('eqFont').value;
 
       if (!text) {
         setStatus('error', '변환할 문제를 1개 이상 선택해주세요.');
@@ -3337,7 +3352,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       try {
         const res = await fetch('/convert', {
           method: 'POST',
-          body: new URLSearchParams({ text, filename }),
+          body: new URLSearchParams({ text, filename, font }),
         });
 
         if (!res.ok) {

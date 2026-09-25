@@ -352,8 +352,19 @@ def estimate_baseline(script: str) -> int:
     return 88
 
 
+# 한/글이 수식 개체에 쓰는 글꼴 이름. 학교 시험지는 HancomEQN, 평가원(수능·모의고사)
+# 조판물은 HyhwpEQ 를 쓴다. 크기·기준선 어림값은 HancomEQN 으로 맞춰 둔 것이라
+# 다른 글꼴에서는 여백이 아주 조금 다를 수 있지만, 글자 모양이 맞는 쪽이 낫다.
+EQ_FONTS = {"hancom": "HancomEQN", "pyeongga": "HyhwpEQ"}
+
+
+def eq_font_name(key: str) -> str:
+    return EQ_FONTS.get(key or "", EQ_FONTS["hancom"])
+
+
 class _Counters:
-    def __init__(self):
+    def __init__(self, font: str = "HancomEQN"):
+        self.font = font
         self.eq_id = 2000000001
         self.z_order = 0
 
@@ -379,7 +390,7 @@ def _equation_xml(latex: str, counters: "_Counters") -> str:
         f'<hp:equation id="{eq_id}" zOrder="{z_order}" numberingType="EQUATION" '
         'textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" '
         f'version="Equation Version 60" baseLine="{baseline}" textColor="#000000" baseUnit="1000" '
-        'lineMode="CHAR" font="HancomEQN">'
+        f'lineMode="CHAR" font="{counters.font}">'
         f'<hp:sz width="{width}" widthRelTo="ABSOLUTE" height="{height}" '
         'heightRelTo="ABSOLUTE" protect="0"/>'
         '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" '
@@ -413,9 +424,9 @@ def _paragraph_xml(paragraph, counters: "_Counters", sec_pr: str = "") -> str:
     )
 
 
-def build_section_xml(input_text: str) -> str:
+def build_section_xml(input_text: str, font: str = "hancom") -> str:
     paragraphs = split_into_paragraphs(input_text)
-    counters = _Counters()
+    counters = _Counters(eq_font_name(font))
 
     parts = [f'<?xml version="1.0" encoding="UTF-8" standalone="yes" ?><hs:sec {tpl.SECTION_XML_NS}>']
     for i, para in enumerate(paragraphs):
@@ -425,8 +436,8 @@ def build_section_xml(input_text: str) -> str:
     return "".join(parts)
 
 
-def build_hwpx_bytes(input_text: str, title: str = "문서") -> bytes:
-    section_xml = build_section_xml(input_text)
+def build_hwpx_bytes(input_text: str, title: str = "문서", font: str = "hancom") -> bytes:
+    section_xml = build_section_xml(input_text, font)
     created = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     content_hpf = tpl.content_hpf(xml_escape(title), created)
 
