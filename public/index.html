@@ -219,27 +219,67 @@
   .input-panel[hidden] { display: none; }
 
   /* ---------- AI 연동 설정: 회사 고르기 + 모델 고르기 ---------- */
-  /* ---------- 머리글: 쓸 모델 고르기 ---------- */
-  .model-chip .chev { font-size: 9px; color: var(--text-muted); margin-left: 1px; }
+  /* ---------- 머리글: 쓸 모델 고르기 (도형 생성기와 같은 두 칸 메뉴) ---------- */
+  :root { --panel-line: #DDD8EC; --panel-head: #F3F0FC; }
+  .model-chip .chev { font-size: 11px; transform: rotate(180deg); display: inline-block; opacity: .7; }
   .model-chip.on { border-color: var(--accent); color: var(--accent-hover); background: var(--accent-soft); }
-  .model-menu {
-    position: fixed; z-index: 400; display: none; flex-direction: column; gap: 3px;
-    padding: 6px; width: 288px; max-height: 70vh; overflow-y: auto;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    box-shadow: var(--shadow-lift);
-  }
+  .model-chip.on .chev { transform: none; }
+
+  .mm-badge { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 100px; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
+  .mm-badge.free { background: #E6F5EE; color: #1F7A4F; }
+  .mm-badge.paid { background: #FFE9E9; color: #B3261E; }
+  .mm-badge.low { background: #FFF3DF; color: #9A5B00; }
+
+  .model-menu { display: none; position: fixed; z-index: 960; align-items: flex-start; gap: 10px; font-size: 12px; color: var(--text); }
   .model-menu.show { display: flex; }
-  .model-menu .mm-group { font-size: 10.5px; font-weight: 700; color: var(--text-muted); padding: 7px 8px 3px; }
-  .model-menu button {
-    display: flex; align-items: center; gap: 7px; width: 100%; text-align: left;
-    background: transparent; border: 1px solid transparent; border-radius: 8px;
-    padding: 7px 9px; font-family: inherit; font-size: 12px; color: var(--text); cursor: pointer;
-  }
-  .model-menu button:hover { background: var(--accent-soft); }
-  .model-menu button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
-  .model-menu .mm-name { flex: 1; min-width: 0; font-weight: 600; }
-  .model-menu .mm-sub { display: block; font-size: 10px; font-weight: 500; color: var(--text-muted); white-space: normal; line-height: 1.4; }
-  .model-menu .mm-nokey { font-size: 9.5px; color: var(--text-muted); }
+  .model-menu .mm-left { flex: 0 0 300px; background: #fff; border: 1px solid var(--panel-line); border-radius: 18px; padding: 8px; box-shadow: var(--shadow-lift); display: flex; flex-direction: column; gap: 4px; }
+  .model-menu .mm-prov { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 8px 10px 12px; border: none; border-radius: 14px; background: transparent; font-family: inherit; color: var(--text); cursor: pointer; text-align: left; }
+  .model-menu .mm-prov:hover, .model-menu .mm-prov.open { background: #F1EFF7; }
+  .model-menu .mm-prov.cur b::after { content: ' · 사용 중'; font-size: 10.5px; color: var(--accent-hover); font-weight: 700; }
+  .model-menu .mm-prov .mm-ico { display: inline-flex; width: 32px; height: 32px; border-radius: 10px; align-items: center; justify-content: center; background: #F5F3FB; color: #2B2740; flex: none; }
+  .model-menu .mm-prov .mm-ico svg { width: 20px; height: 20px; }
+  .model-menu .mm-prov .mm-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .model-menu .mm-prov .mm-txt b { font-size: 13px; font-weight: 700; }
+  .model-menu .mm-prov .mm-txt small { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .model-menu .mm-prov .mm-txt em { font-style: normal; font-size: 10.5px; color: #B3261E; font-weight: 600; }
+  .model-menu .mm-prov .mm-txt em.ok { color: #1F7A4F; }
+  .model-menu .mm-prov .mm-caret { color: var(--text-muted); font-size: 11px; }
+  /* 'AI 연동 없이 이용' 은 맨 위에 초록 결로 따로 */
+  .model-menu .mm-prov.mm-nokey { border-bottom: 1px dashed var(--panel-line); border-radius: 14px 14px 0 0; margin-bottom: 4px; }
+  .model-menu .mm-prov.mm-nokey .mm-ico { background: #E3F6EC; color: #1F7A4F; box-shadow: inset 0 0 0 1px #BFE8D2; }
+  .model-menu .mm-prov.mm-nokey:hover, .model-menu .mm-prov.mm-nokey.open { background: #F2FBF6; }
+  .model-menu .mm-prov.mm-nokey.cur .mm-txt em::after { content: ' · 사용 중'; }
+
+  .model-menu .mm-right { flex: 0 0 370px; min-width: 0; background: #fff; border: 1px solid var(--panel-line); border-radius: 16px; padding: 8px; box-shadow: var(--shadow-lift); display: flex; flex-direction: column; gap: 2px; max-height: 72vh; overflow-y: auto; }
+  .model-menu .mm-rhead { font-weight: 700; font-size: 12px; padding: 6px 10px 8px; }
+  .model-menu .mm-rhead .muted { font-weight: 500; font-size: 10.5px; margin-left: 4px; color: var(--text-muted); }
+  .model-menu .mm-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; border-radius: 10px; background: #fff; font-family: inherit; font-size: 12px; color: var(--text); cursor: pointer; text-align: left; }
+  .model-menu .mm-row:hover { background: #F5F3FB; }
+  .model-menu .mm-row.on { background: var(--accent-soft); }
+  .model-menu .mm-row .mm-name { font-weight: 700; }
+  .model-menu .mm-row .mm-desc { display: block; font-size: 10.5px; font-weight: 500; color: var(--text-muted); line-height: 1.45; margin-top: 1px; }
+  .model-menu .mm-row .mm-price { display: block; font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+  .model-menu .mm-check { color: var(--accent); font-weight: 900; visibility: hidden; }
+  .model-menu .mm-row.on .mm-check { visibility: visible; }
+  .model-menu .mm-foot { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin: 6px 6px 2px; padding-top: 7px; border-top: 1px solid var(--panel-line); }
+  .model-menu .mm-more { display: block; width: 100%; text-align: left; background: none; border: none; font-family: inherit; font-size: 11.5px; color: var(--accent-hover); font-weight: 600; cursor: pointer; padding: 7px 10px; border-radius: 8px; }
+  .model-menu .mm-more:hover { background: var(--accent-soft); }
+
+  /* 무료 키는 시간대에 따라 덜 막히는 모델이 다르다 — 도형 생성기와 같은 안내 */
+  .mm-free-tip { display: flex; flex-direction: column; gap: 6px; margin: 4px 6px 6px; padding: 8px 10px; border-radius: 10px; background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 11.5px; line-height: 1.5; }
+  .mm-free-tip .tg-head { font-size: 11.5px; line-height: 1.45; font-weight: 700; }
+  .mm-free-tip .tg-row { display: flex; align-items: flex-start; gap: 8px; width: 100%; box-sizing: border-box; text-align: left; border: 1px solid transparent; border-radius: 9px; padding: 6px 8px; background: rgba(255,255,255,.55); font: inherit; color: inherit; cursor: pointer; }
+  .mm-free-tip .tg-row:hover { background: #fff; }
+  .mm-free-tip .tg-row.now { background: #fff; border-color: #34D399; box-shadow: 0 0 0 2px rgba(52,211,153,.16); }
+  .mm-free-tip .tg-ico { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .mm-free-tip .tg-ico.sun { background: #FEF3C7; color: #B45309; }
+  .mm-free-tip .tg-ico.moon { background: #E0E7FF; color: #4338CA; }
+  .mm-free-tip .tg-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .mm-free-tip .tg-when { font-size: 12px; color: #064E3B; }
+  .mm-free-tip .tg-when small { font-size: 10.5px; color: #047857; opacity: .85; }
+  .mm-free-tip .tg-now { font-style: normal; margin-left: 6px; font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 100px; background: #10B981; color: #fff; vertical-align: 1px; }
+  .mm-free-tip .tg-pick { font-size: 12px; color: #065F46; font-weight: 700; }
+  .mm-free-tip .tg-why { font-size: 10.5px; line-height: 1.45; color: #047857; }
 
   .prov-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
   .prov-tab {
@@ -1898,70 +1938,172 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       badge.className = 'tab-chip ' + (p === 'gemini' ? 'free' : 'key');
     }
 
+    // 무료 Gemini 키는 시간대에 따라 덜 붐비는 모델이 다르다 (도형 생성기와 같은 안내).
+    // 미국이 밤인 한국 낮에는 최신 Flash 가 한산하고, 한국 밤~새벽엔 전 세계가 몰려 한 세대 전이 낫다.
+    function isKrDay() {
+      const kr = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000);
+      const h = kr.getHours();
+      return h >= 9 && h < 22;
+    }
+    function timeGuideHtml() {
+      const day = isKrDay();
+      const row = (now, cls, ico, when, sub, pick, why, model) => `
+        <button type="button" class="tg-row${now ? ' now' : ''}" data-model="${model}">
+          <span class="tg-ico ${cls}">${ico}</span>
+          <span class="tg-txt">
+            <span class="tg-when"><b>${when}</b> <small>${sub}</small>${now ? '<i class="tg-now">지금</i>' : ''}</span>
+            <span class="tg-pick">→ ${pick}</span>
+            <span class="tg-why">${why}</span>
+          </span>
+        </button>`;
+      return `<div class="mm-free-tip">
+        <span class="tg-head">무료 키는 시간대에 맞춰 고르면 덜 막혀요</span>
+        ${row(day, 'sun', '☀', '한국 낮', '오전 9시~밤 10시쯤', '3.8 Flash 권장', '미국이 밤이라 한산해요. 가장 똑똑한 Flash 를 쓰기 좋아요.', 'gemini-3.8-flash')}
+        ${row(!day, 'moon', '☾', '한국 밤~새벽', '밤 10시~오전 9시쯤', '3.6 Flash 권장', '미국 낮이라 최신 3.8·3.7 에 전 세계 요청이 몰려요. 한 세대 전 3.6 이 덜 붐벼요.', 'gemini-3.6-flash')}
+      </div>`;
+    }
+
+    // 왼쪽 = 회사 고르기, 오른쪽 = 그 회사 모델 고르기
+    let menuOpenProvider = null;
+
     async function renderModelMenu() {
-      const { CURATED, PROVIDER_META } = await ai();
+      const [{ CURATED, PROVIDER_META, priceOf, tierOf }, { BRAND_ICON }] =
+        await Promise.all([ai(), import('./js/brand-icons.js')]);
       const off = aiOff() || !hasApiKey();
       const cur = aiProvider(), curModel = modelFor(cur);
-      let html = `<button type="button" data-off="1" class="${off ? 'on' : ''}">
-          <span class="mm-name">AI 연동 없이 이용<span class="mm-sub">Gem 으로 텍스트를 만들어 붙여 넣습니다 · 키가 필요 없어요</span></span>
-          <i class="tab-chip free">무료</i></button>`;
+
+      let left = `<button type="button" class="mm-prov mm-nokey${off ? ' cur open' : ''}" data-off="1">
+          <span class="mm-ico">${ICONS.spark}</span>
+          <span class="mm-txt">
+            <b>AI 연동 없이 이용</b>
+            <small>API 키 없이도 수동 입력의 Gem 으로 무료로 충분히 쓸 수 있어요</small>
+            <em class="ok">누르면 수동 입력 탭이 열려요 · 무료</em>
+          </span>
+          <span class="mm-caret">›</span>
+        </button>`;
       for (const p of ['gemini', 'openai', 'anthropic']) {
         const meta = PROVIDER_META[p] || {};
         const keyed = !!apiKeyFor(p);
-        html += `<div class="mm-group">${meta.title || p} · ${meta.by || ''}${keyed ? '' : ' <span class="mm-nokey">(키 없음 — 고르면 입력 창이 열려요)</span>'}</div>`;
+        left += `<button type="button" class="mm-prov${!off && p === cur ? ' cur' : ''}${p === menuOpenProvider ? ' open' : ''}" data-prov="${p}">
+          <span class="mm-ico">${BRAND_ICON[meta.icon] || ''}</span>
+          <span class="mm-txt">
+            <b>${meta.title || p}</b>
+            <small>${meta.desc || ''}</small>
+            <em class="${keyed ? 'ok' : ''}">${keyed ? 'API 키 연결됨' : 'API 키 없음 — 고르면 입력 창이 열려요'}</em>
+          </span>
+          <span class="mm-caret">›</span>
+        </button>`;
+      }
+
+      let right = '';
+      if (menuOpenProvider) {
+        const p = menuOpenProvider;
+        const meta = PROVIDER_META[p] || {};
+        right += `<div class="mm-rhead">${meta.title || p}<span class="muted">${meta.by || ''}</span></div>`;
+        if (p === 'gemini' && !apiKeyFor('gemini')) right += timeGuideHtml();
+        else if (p === 'gemini') right += timeGuideHtml();
         for (const m of (CURATED[p] || [])) {
           const on = !off && p === cur && m.id === curModel;
-          html += `<button type="button" data-prov="${p}" data-model="${m.id}" class="${on ? 'on' : ''}">
-            <span class="mm-name">${m.name}<span class="mm-sub">${m.desc}</span></span>
-            <i class="tab-chip ${m.badge === 'free' ? 'free' : 'key'}">${m.badge === 'free' ? '무료 한도' : '유료'}</i></button>`;
+          const pr = priceOf(m.id);
+          const price = pr.known ? `입력 $${pr.input} · 출력 $${pr.output} <span style="opacity:.75">/ 100만 토큰</span>` : '요금표에 없는 모델';
+          const badge = m.badge === 'paidOnly' ? '<span class="mm-badge paid">유료 키 전용</span>'
+            : m.badge === 'free' ? '<span class="mm-badge free">무료 한도 내 0원</span>'
+            : '<span class="mm-badge paid">유료</span>';
+          right += `<button type="button" class="mm-row${on ? ' on' : ''}" data-prov="${p}" data-model="${m.id}">
+            <span>
+              <span class="mm-name">${m.name}</span>
+              <span class="mm-desc">${m.desc}</span>
+              <span class="mm-price">${price}</span>
+            </span>
+            ${badge}
+            <span class="mm-check">✓</span>
+          </button>`;
         }
+        right += `<button type="button" class="mm-more" data-settings="1">다른 모델·키 설정…</button>`;
+        right += `<div class="mm-foot"><span class="mm-badge free">무료 한도</span> 안에서는 0원 · <span class="mm-badge paid">유료</span> 는 사용량(토큰)만큼 요금. 표시된 요금은 <b>예상값</b>이라 실제와 다를 수 있으니 정확한 금액은 각 회사 홈페이지에서 확인하세요.</div>`;
       }
-      modelMenu.innerHTML = html;
+
+      modelMenu.innerHTML = `<div class="mm-left">${left}</div>` + (right ? `<div class="mm-right">${right}</div>` : '');
     }
 
-    function closeModelMenu() { modelMenu.classList.remove('show'); modelPickBtn.classList.remove('on'); }
+    function closeModelMenu() {
+      modelMenu.classList.remove('show');
+      modelPickBtn.classList.remove('on');
+      menuOpenProvider = null;
+    }
+
+    // 두 칸이라 펼칠 때마다 폭이 달라진다. 화면 밖으로 나가지 않게 그때그때 다시 잡는다.
+    function placeModelMenu() {
+      const r = modelPickBtn.getBoundingClientRect();
+      modelMenu.style.top = (r.bottom + 6) + 'px';
+      modelMenu.style.left = '0px';
+      const w = modelMenu.offsetWidth || 310;
+      modelMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 12)) + 'px';
+    }
 
     modelPickBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (modelMenu.classList.contains('show')) { closeModelMenu(); return; }
+      // 이미 연동한 회사가 있으면 그 회사 모델을 바로 펼쳐 보여 준다
+      menuOpenProvider = (!aiOff() && hasApiKey()) ? aiProvider() : null;
       await renderModelMenu();
-      const r = modelPickBtn.getBoundingClientRect();
-      modelMenu.style.top = (r.bottom + 6) + 'px';
-      // 화면 밖으로 나가지 않도록 오른쪽 끝을 맞춘다
-      modelMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 296)) + 'px';
       modelMenu.classList.add('show');
+      placeModelMenu();
       modelPickBtn.classList.add('on');
     });
     document.addEventListener('click', (e) => {
       if (modelMenu.classList.contains('show') && !modelMenu.contains(e.target)) closeModelMenu();
     });
-    modelMenu.addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      closeModelMenu();
-      if (btn.dataset.off) {
+    modelMenu.addEventListener('click', async (e) => {
+      // 여기서 메뉴를 다시 그리면 눌린 요소가 DOM 에서 떨어져 나간다. 그대로 두면
+      // 바깥 클릭 판정(modelMenu.contains)이 거짓이 되어 메뉴가 닫혀 버리므로,
+      // 메뉴 안에서 시작한 클릭은 문서까지 올려 보내지 않는다.
+      e.stopPropagation();
+      // 왼쪽 회사 줄: 오른쪽 칸에 그 회사 모델을 펼친다 (아직 고른 건 아니다)
+      const prov = e.target.closest('.mm-prov[data-prov]');
+      if (prov) {
+        menuOpenProvider = prov.dataset.prov;
+        await renderModelMenu();
+        placeModelMenu();
+        return;
+      }
+      // 'AI 연동 없이 이용'
+      if (e.target.closest('.mm-prov[data-off]')) {
+        closeModelMenu();
         store.set('aiMode', 'off');
         switchInputTab('manual');
         updateApiKeyUI();
         setStatus('ok', 'AI 없이 씁니다. 수동 입력 탭에서 Gem 이 준 텍스트를 붙여 넣으세요.');
         return;
       }
-      const p = btn.dataset.prov, m = btn.dataset.model;
+      // 시간대 안내에서 바로 고르기
+      const tg = e.target.closest('.tg-row[data-model]');
+      if (tg) { pickModel('gemini', tg.dataset.model); return; }
+      // 오른쪽 모델 줄
+      const row = e.target.closest('.mm-row[data-model]');
+      if (row) { pickModel(row.dataset.prov, row.dataset.model); return; }
+      // 다른 모델·키 설정
+      if (e.target.closest('[data-settings]')) {
+        closeModelMenu();
+        openApiKeyModal(menuOpenProvider || aiProvider());
+      }
+    });
+
+    function pickModel(p, m) {
+      closeModelMenu();
       store.set('aiMode', '');
       store.set(p + 'Model', m);
+      store.set('aiProvider', p);
+      updateApiKeyUI();
       if (!apiKeyFor(p)) {
         // 키가 없는 회사를 골랐으면 그 회사 입력 창을 바로 열어 준다
-        store.set('aiProvider', p);
-        updateApiKeyUI();
         openApiKeyModal(p);
         setStatus('pending', `${PROVIDER_NAMES[p]} 키를 넣으면 ${m} 로 쓸 수 있어요.`);
         return;
       }
-      store.set('aiProvider', p);
-      updateApiKeyUI();
       switchInputTab('ai');
       setStatus('ok', `${PROVIDER_NAMES[p]} · ${m} 로 씁니다.`);
-    });
+    }
 
     function openApiKeyModal(forProvider) {
       dialogProvider = forProvider || aiProvider();
