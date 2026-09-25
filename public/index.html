@@ -351,6 +351,63 @@
   .model-chip.first .chev { opacity: .9; }
   .model-chip.first .tab-chip { background: rgba(255,255,255,.22); color: #fff; }
 
+  /* ---------- 키 종류 고르기 (도형 생성기 .kt-card) ---------- */
+  .kt-wrap { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .kt-wrap[hidden] { display: none; }
+  .kt-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+  .kt-req { font-style: normal; font-size: 10.5px; font-weight: 800; color: #fff; background: #D64545; border-radius: 100px; padding: 2px 8px; }
+  .kt-wrap.done .kt-req { background: #2E9E6A; }
+  .kt-sub { font-size: 12px; color: var(--text-muted); margin-top: -4px; }
+  .kt-sub b { color: #D64545; }
+  .kt-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kt-card {
+    display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 11px 12px;
+    border: 1.5px solid var(--panel-line); border-radius: 12px; background: #fff; font: inherit;
+    cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s;
+  }
+  .kt-card .kt-radio { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #C9C3DD; margin-top: 1px; position: relative; background: #fff; }
+  .kt-card.on .kt-radio::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; }
+  .kt-card .kt-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .kt-card .kt-badge { align-self: flex-start; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 100px; }
+  .kt-card b { font-size: 12.5px; color: var(--text); }
+  .kt-card .kt-body > span:last-child { font-size: 11.5px; line-height: 1.5; color: var(--text-muted); }
+  .kt-card em { font-style: normal; font-weight: 800; }
+  .kt-card.free .kt-badge { background: #E3F6EC; color: #1F7A4F; } .kt-card.free em { color: #1F7A4F; }
+  .kt-card.paid .kt-badge { background: #EDE8FF; color: var(--accent-hover); } .kt-card.paid em { color: var(--accent-hover); }
+  .kt-card.free:hover { border-color: #8FD3B1; } .kt-card.paid:hover { border-color: #B9A8FF; }
+  .kt-card.free.on { border-color: #2E9E6A; background: #F2FBF6; box-shadow: 0 0 0 3px rgba(46,158,106,.15); }
+  .kt-card.free.on .kt-radio { border-color: #2E9E6A; } .kt-card.free.on .kt-radio::after { background: #2E9E6A; }
+  .kt-card.paid.on { border-color: var(--accent); background: #F7F4FF; box-shadow: 0 0 0 3px rgba(123,92,250,.15); }
+  .kt-card.paid.on .kt-radio { border-color: var(--accent); } .kt-card.paid.on .kt-radio::after { background: var(--accent); }
+  .kt-err { font-size: 12px; font-weight: 700; color: #C0392B; background: #FFF1F0; border: 1px solid #F5C2BD; border-radius: 10px; padding: 7px 10px; }
+  .kt-err[hidden] { display: none; }
+  .kt-help { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+  .kt-help a { color: var(--accent-hover); font-weight: 700; }
+  .kt-wrap.need { animation: kt-shake .35s ease; }
+  @keyframes kt-shake { 0%,100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  @media (max-width: 560px) { .kt-cards { grid-template-columns: 1fr; } }
+
+  /* ---------- 모델 메뉴의 사용량 · 예상 비용 (도형 생성기 .mm-usage) ---------- */
+  .mm-usage { display: flex; flex-direction: column; gap: 5px; margin-top: 3px; font-size: 10.5px; color: var(--text-muted); }
+  .mm-usage .u-head {
+    display: flex; align-items: center; gap: 5px; cursor: pointer; border-radius: 6px;
+    padding: 2px 4px; margin-left: -4px; font-size: 10.5px; font-weight: 800; color: var(--text); white-space: nowrap;
+  }
+  .mm-usage .u-head:hover { background: rgba(123,92,250,.08); color: var(--accent-hover); }
+  .mm-usage .u-car { display: inline-block; font-size: 9px; color: var(--text-muted); transition: transform .15s; }
+  .model-menu.u-open .mm-usage .u-car { transform: rotate(90deg); }
+  .mm-usage .u-sum { margin-left: auto; font-weight: 700; color: var(--text-muted); font-size: 10px; white-space: nowrap; }
+  .model-menu.u-open .mm-usage .u-sum { display: none; }
+  .model-menu:not(.u-open) .mm-usage .u-grid, .model-menu:not(.u-open) .mm-usage .u-note { display: none; }
+  .mm-usage .u-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .mm-usage .u-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 5px 8px; border-radius: 9px; background: #F4F2FA; border: 1px solid #E6E1F3; min-width: 0; }
+  .mm-usage .u-cell b { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+  .mm-usage .u-usd { font-size: 12px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .mm-usage .u-krw { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+  .mm-usage .u-req { font-size: 10px; color: var(--text-muted); }
+  .mm-usage .u-note { font-size: 10.5px; line-height: 1.45; color: #7A5A12; background: #FFF8E6; border: 1px solid #F1D99A; border-radius: 8px; padding: 5px 8px; }
+  .mm-usage .u-note a { color: var(--accent-hover); font-weight: 700; }
+
   .mm-badge { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 100px; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
   .mm-badge.free { background: #E6F5EE; color: #1F7A4F; }
   .mm-badge.paid { background: #FFE9E9; color: #B3261E; }
@@ -1459,6 +1516,25 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <button type="button" class="api-key-toggle" id="apiKeyToggleBtn" title="키 표시/숨기기"><span id="iconEye2"></span></button>
         </div>
 
+        <div class="kt-wrap" id="ktWrap" hidden>
+          <div class="kt-title">키 종류 고르기<em class="kt-req">필수</em></div>
+          <div class="kt-sub">키 종류에 따라 요금이 달라요. 둘 중 하나를 <b>꼭</b> 골라야 저장됩니다.</div>
+          <div class="kt-cards" role="radiogroup" aria-label="Gemini 키 종류">
+            <button type="button" class="kt-card free" data-kt="free" role="radio" aria-checked="false">
+              <span class="kt-radio"></span>
+              <span class="kt-body"><span class="kt-badge">무료 키</span><b>결제를 연결하지 않은 키</b>
+                <span>무료 한도 안에서 <em>0원</em>으로 사용해요. 한도를 다 쓰면 다시 채워질 때까지(보통 다음 날) 잠시 막혀요.</span></span>
+            </button>
+            <button type="button" class="kt-card paid" data-kt="paid" role="radio" aria-checked="false">
+              <span class="kt-radio"></span>
+              <span class="kt-body"><span class="kt-badge">유료 키</span><b>결제(청구 계정)를 연결한 키</b>
+                <span>쓴 토큰만큼 <em>요금이 결제</em>돼요. 무료 한도를 기다릴 필요가 없어요.</span></span>
+            </button>
+          </div>
+          <div class="kt-err" id="ktErr" hidden>키 종류(무료 키 / 유료 키)를 먼저 골라 주세요. 고르지 않으면 저장되지 않아요.</div>
+          <div class="kt-help">어떤 키인지 모르겠다면 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio 의 API 키 화면</a>에서 결제(Billing) 연결 여부를 확인하세요.</div>
+        </div>
+
         <div class="model-pick">
           <label for="modelSel">모델</label>
           <select id="modelSel"></select>
@@ -2432,6 +2508,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       });
       apiKeyInput.placeholder = PLACEHOLDER[p];
       apiKeyInput.value = apiKeyFor(p);
+      ktPending = null;
+      paintKeyType();
       document.getElementById('keyGuide').innerHTML = KEY_GUIDE[p];
       document.getElementById('priceGuide').textContent = PRICE_GUIDE[p];
 
@@ -2565,9 +2643,31 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     // 왼쪽 = 회사 고르기, 오른쪽 = 그 회사 모델 고르기
     let menuOpenProvider = null;
 
+    /** 회사 한 곳의 오늘·이번 주·이번 달 사용량 (도형 생성기의 모델 메뉴와 같은 줄) */
+    function usageLineHtml(mod, p) {
+      const { usageSummary, geminiBilling, usdKrw, fmtUSD, fmtKRW, fmtCost } = mod;
+      const u = usageSummary(p);
+      const freeKey = p === 'gemini' && !geminiBilling();
+      const fx = usdKrw();
+      const cell = (label, r) => `<span class="u-cell"><b>${label}</b>`
+        + `<span class="u-usd">${freeKey ? '0원' : fmtUSD(r.billed)}</span>`
+        + (!freeKey && fx ? `<span class="u-krw">${fmtKRW(r.billed * fx.rate)}</span>` : '')
+        + `<span class="u-req">${r.req}회</span></span>`;
+      const skip = u.month.unpriced ? ` 요금표가 없는 모델 ${u.month.unpriced}회는 금액에서 빠졌어요.` : '';
+      const note = freeKey
+        ? `무료 키라 실제 비용은 0원이에요${u.month.usd ? ` (유료 키였다면 이번 달 ${fmtCost(u.month.usd)})` : ''}. <a href="https://aistudio.google.com/rate-limit" target="_blank" rel="noopener">내 무료 한도 보기</a>`
+        : '<b>예상값</b>이라 실제 청구액과 다를 수 있어요. 정확한 금액은 각 회사 홈페이지의 사용량·결제 화면에서 확인하세요.';
+      return '<span class="mm-usage">'
+        + '<span class="u-head" role="button" tabindex="0" title="눌러서 오늘·이번 주·이번 달 보기">'
+        + `<span class="u-car">▸</span>${p === 'gemini' ? (freeKey ? '무료 키 · ' : '유료 키 · ') : ''}${freeKey ? '사용량' : '예상 비용'}`
+        + `<span class="u-sum">이번 달 ${freeKey ? '0원' : fmtUSD(u.month.billed)} · ${u.month.req}회</span></span>`
+        + `<span class="u-grid">${cell('오늘', u.today)}${cell('이번 주', u.week)}${cell('이번 달', u.month)}</span>`
+        + `<span class="u-note">${note}${skip}</span></span>`;
+    }
+
     async function renderModelMenu() {
-      const [{ CURATED, PROVIDER_META, priceOf, tierOf }, { BRAND_ICON }] =
-        await Promise.all([ai(), import('./js/brand-icons.js')]);
+      const [mod, { BRAND_ICON }] = await Promise.all([ai(), import('./js/brand-icons.js')]);
+      const { CURATED, PROVIDER_META, priceOf, tierOf } = mod;
       const off = aiOff() || !hasApiKey();
       const cur = aiProvider(), curModel = modelFor(cur);
 
@@ -2589,6 +2689,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
             <b>${meta.title || p}</b>
             <small>${meta.desc || ''}</small>
             <em class="${keyed ? 'ok' : ''}">${keyed ? 'API 키 연결됨' : 'API 키 없음 — 고르면 입력 창이 열려요'}</em>
+            ${keyed ? usageLineHtml(mod, p) : ''}
           </span>
           <span class="mm-caret">›</span>
         </button>`;
@@ -2625,6 +2726,18 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       modelMenu.innerHTML = `<div class="mm-left">${left}</div>` + (right ? `<div class="mm-right">${right}</div>` : '');
     }
 
+    // 사용량 제목을 누르면 펼침/접힘. 회사 고르기로 번지지 않게 여기서 멈춘다.
+    modelMenu.addEventListener('click', (e) => {
+      const h = e.target.closest('.u-head');
+      if (!h) return;
+      e.stopPropagation();
+      e.preventDefault();
+      const on = !modelMenu.classList.contains('u-open');
+      modelMenu.classList.toggle('u-open', on);
+      store.set('mmUsageOpen', on ? '1' : '0');
+      placeModelMenu();
+    }, true);
+
     function closeModelMenu() {
       modelMenu.classList.remove('show');
       modelPickBtn.classList.remove('on');
@@ -2646,6 +2759,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       // 이미 연동한 회사가 있으면 그 회사 모델을 바로 펼쳐 보여 준다
       menuOpenProvider = (!aiOff() && hasApiKey()) ? aiProvider() : null;
       await renderModelMenu();
+      modelMenu.classList.toggle('u-open', store.get('mmUsageOpen') === '1');   // 지난번에 펼쳐 뒀으면 그대로
       modelMenu.classList.add('show');
       placeModelMenu();
       modelPickBtn.classList.add('on');
@@ -2715,7 +2829,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       apiKeyOverlay.classList.remove('in');
       setTimeout(() => apiKeyOverlay.classList.remove('show'), 180);
     }
-    document.getElementById('apiKeyBtn').addEventListener('click', openApiKeyModal);
+    // 그냥 넘기면 클릭 이벤트가 forProvider 로 들어가 회사가 이벤트 객체가 된다
+    document.getElementById('apiKeyBtn').addEventListener('click', () => openApiKeyModal());
     document.getElementById('apiKeyCloseBtn').addEventListener('click', closeApiKeyModal);
     apiKeyOverlay.addEventListener('click', (e) => { if (e.target === apiKeyOverlay) closeApiKeyModal(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && apiKeyOverlay.classList.contains('show')) closeApiKeyModal(); });
@@ -2725,12 +2840,64 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       apiKeyInput.type = showing ? 'password' : 'text';
       document.getElementById('iconEye2').innerHTML = showing ? ICONS.eye2 : ICONS.close;
     });
+    // ---- Gemini 키 종류 (무료 키 / 유료 키) ----
+    // 같은 키라도 결제를 연결했는지에 따라 실제 청구가 달라진다. providers.js 의
+    // geminiBilling() 이 이 값을 읽어 비용 표시와 무료 한도 안내를 바꾼다.
+    // 고르지 않은 채로 넘어가면 비용을 0원으로 잘못 알려 주게 되므로 저장 전에 꼭 묻는다.
+    const ktWrap = document.getElementById('ktWrap');
+    let ktPending = null;
+
+    function paintKeyType() {
+      const isGemini = dialogProvider === 'gemini';
+      ktWrap.hidden = !isGemini;
+      if (!isGemini) return;
+      // 이미 고른 적이 있으면 그 값을 보여 준다
+      if (ktPending === null) {
+        ktPending = store.get('geminiKeyTypeChosen') === '1'
+          ? (store.get('geminiBilling') === '1' ? 'paid' : 'free')
+          : null;
+      }
+      ktWrap.querySelectorAll('[data-kt]').forEach((b) => {
+        const on = b.dataset.kt === ktPending;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', String(on));
+      });
+      ktWrap.classList.toggle('done', !!ktPending);
+    }
+
+    ktWrap.querySelectorAll('[data-kt]').forEach((b) => {
+      b.addEventListener('click', () => {
+        ktPending = b.dataset.kt;
+        ktWrap.classList.remove('need');
+        document.getElementById('ktErr').hidden = true;
+        paintKeyType();
+      });
+    });
+
+    /** 저장해도 되는지. 고르지 않았으면 흔들어 알리고 false */
+    function commitKeyType() {
+      if (dialogProvider !== 'gemini') return true;
+      if (!ktPending) {
+        ktWrap.classList.remove('need');
+        void ktWrap.offsetWidth;   // 애니메이션을 다시 태우려면 한 번 비워야 한다
+        ktWrap.classList.add('need');
+        document.getElementById('ktErr').hidden = false;
+        ktWrap.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        setStatus('error', 'Gemini 키 종류(무료 키 / 유료 키)를 먼저 골라 주세요.');
+        return false;
+      }
+      store.set('geminiBilling', ktPending === 'paid' ? '1' : '0');
+      store.set('geminiKeyTypeChosen', '1');
+      return true;
+    }
+
     document.getElementById('apiKeySaveBtn').addEventListener('click', async () => {
       const key = apiKeyInput.value.trim();
       if (!key) {
         setStatus('error', '키를 입력해주세요.');
         return;
       }
+      if (!commitKeyType()) return;
       const p = dialogProvider;
       store.set(p + 'Model', modelSel.value);
       store.set('aiMode', 'on');   // 키를 넣었으면 'AI 없이 쓰기'도 '아직 안 고름'도 아니다
@@ -2745,6 +2912,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     });
     document.getElementById('apiKeyClearBtn').addEventListener('click', () => {
       apiKeyInput.value = '';
+      if (dialogProvider === 'gemini') { store.del('geminiKeyTypeChosen'); store.del('geminiBilling'); ktPending = null; }
       setApiKeyValue('', dialogProvider);
       renderProviderPane();
       setStatus('ok', `${PROVIDER_NAMES[dialogProvider]} 키를 삭제했습니다.`);
