@@ -213,9 +213,58 @@
   #apiKeyBtn.has-key { background: #fff; color: var(--text); border: 1px solid var(--panel-line); }
   #apiKeyBtn.has-key:hover { background: var(--hover-tint); color: var(--accent-hover); }
   #apiKeyBtn.has-key #apiKeyChipLabel::after {
-    content: ""; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%;
+    content: ""; display: inline-block; vertical-align: 1px; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%;
     background: #2E9E6A; box-shadow: 0 0 0 2px #D8F3E5;
   }
+  /* 글자를 'API ' · '키' · ' 입력' 조각으로 나눠 좁은 화면에서 줄이는데, 단추의 span 은 inline-flex 라
+     조각 가장자리의 빈칸이 지워져 'API키입력' 으로 붙어 보였다. 이 칸만 보통 글줄로 둔다 */
+  .hdr-btn > span#apiKeyChipLabel { display: inline; white-space: nowrap; }
+  /* ---------- 자동 저장 켬/끔: 'API 키 입력'과 한 알약 (도형 생성기 값 그대로) ---------- */
+  .key-pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 2px 9px 2px 2px; flex: none;
+    border: 1px solid var(--panel-line); border-radius: 100px; background: #fff; box-sizing: border-box;
+  }
+  .key-pill #apiKeyBtn { height: 22px; box-shadow: none; }
+  .key-pill #apiKeyBtn.has-key { border-color: transparent; background: #F4F1FF; }
+  .kp-toggle { position: relative; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; user-select: none; }
+  .kp-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .kp-track { position: relative; width: 26px; height: 15px; border-radius: 100px; background: #D9D5E6; transition: background .18s ease; flex: none; }
+  .kp-track i { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(20,16,50,.25); transition: transform .18s var(--ease); }
+  .kp-toggle input:checked + .kp-track { background: #2E9E6A; }
+  .kp-toggle input:checked + .kp-track i { transform: translateX(11px); }
+  .kp-toggle input:focus-visible + .kp-track { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent); }
+  .key-pill.persist .kp-toggle { color: #1F6B4A; }
+  .kp-toggle:hover { color: var(--text); }
+  /* 켤 때 뜨는 주의 풍선 (알약 바로 아래, 꼬리가 토글을 가리킴) */
+  .key-warn {
+    position: fixed; z-index: 700; box-sizing: border-box; padding: 14px 15px 12px; border-radius: 14px;
+    background: #FFFBEB; border: 1.5px solid #F4C95D; box-shadow: 0 12px 32px rgba(20,16,50,.18); color: #5B3B00;
+    animation: box-in .2s ease;
+  }
+  .key-warn::before {
+    content: ''; position: absolute; top: -8px; left: calc(var(--kw-arrow, 50%) - 7px); width: 13px; height: 13px;
+    background: #FFFBEB; border-left: 1.5px solid #F4C95D; border-top: 1.5px solid #F4C95D; transform: rotate(45deg);
+  }
+  .kw-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .kw-head b { font-size: 13.5px; font-weight: 800; color: #6B4200; }
+  .kw-ico { flex: none; width: 20px; height: 20px; border-radius: 50%; background: #E0A100; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; }
+  .kw-lead { margin: 0 0 6px; font-size: 12.5px; line-height: 1.55; word-break: keep-all; }
+  .kw-lead b, .kw-list b { color: #6B4200; font-weight: 800; }
+  .kw-list { margin: 0 0 10px; padding-left: 18px; font-size: 12px; line-height: 1.6; word-break: keep-all; }
+  .kw-acts { display: flex; justify-content: flex-end; gap: 6px; }
+  .kw-acts button { height: 30px; padding: 0 14px; border-radius: 100px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; border: 1px solid #E8D39A; background: #fff; color: #6B4200; }
+  .kw-acts .kw-ok { background: #E0A100; border-color: #E0A100; color: #fff; }
+  .kw-acts .kw-ok:hover { background: #C68D00; }
+  /* 모델 단추 · 키 단추 글자: 좁은 휴대폰에서는 짧은 쪽 */
+  .mm-short { display: none; }
+  /* 머리글 칸이 좁으면(사이드바를 편 1280 등) 제목 글자를 접어 모델 이름이 말줄임되지 않게 한다.
+     화면 폭이 아니라 머리글이 든 칸의 폭으로 판단한다 — 사이드바를 접으면 같은 화면에서도 넉넉해진다 */
+  .workspace { container: ws / inline-size; }
+  @container ws (width < 1000px) {
+    header .brand-text { display: none; }
+    .hdr-actions { margin-left: 16px; }
+  }
+
   /* ---------- 문서 탭 (도형 생성기 머리글 오른쪽의 문항 탭: 흰 알약 안에 알약 탭, 지금 탭은 보라) ---------- */
   .doc-bar { flex: 0 1 auto; min-width: 0; margin-left: auto; padding-left: 16px; display: flex; align-items: center; gap: 8px; }
   .doc-tabs {
@@ -1872,6 +1921,11 @@
     #apiKeyBtn { flex: none; height: 32px; padding: 0 9px 0 7px; font-size: 11px; box-shadow: 0 2px 8px rgba(123,92,250,.3); }
     #apiKeyBtn .k-api { display: none; }
     #apiKeyBtn.has-key { box-shadow: none; }
+    /* 키 알약: 휴대폰 머리글 높이(34)에 맞추고 '자동 ' 글자는 뺀다 */
+    .key-pill { height: 34px; padding: 2px 8px 2px 2px; gap: 5px; }
+    .key-pill #apiKeyBtn { height: 28px; box-shadow: none; }
+    .kp-long { display: none; }
+    .kp-toggle { font-size: 10.5px; gap: 4px; }
     .doc-bar { grid-column: 2; grid-row: 2; order: 0; margin: 0 !important; padding: 0 !important; gap: 6px; min-width: 0; }
     /* 문서 탭: 흰 독 없이 알약만 (지금 탭은 연보라 + 보라 테두리) */
     .doc-tabs { flex: 1 1 0; height: 34px; padding: 2px 0; gap: 6px; background: transparent; border: none; box-shadow: none; }
@@ -2074,6 +2128,23 @@
     }
     body.m-typing .shell { padding-bottom: 0 !important; }
   }
+  /* 좁은 휴대폰(420px 이하): 키 알약에 자동 저장이 들어간 만큼 글자를 줄여 모델 이름이 잘리지 않게 */
+  @media (max-width: 760px) { #modelPickBtn .mm-co { display: none; } }
+  @media (max-width: 400px) { #modelPickBtn #modelChipBadge { display: none !important; } }   /* 배지는 메뉴 안에서 보인다 */
+  /* 아주 좁은 휴대폰(340px 이하, 옛 아이폰 SE 등): 네모 단추를 좁히고 모델 단추의 아이콘·꺾쇠를 빼 이름 자리를 만든다 */
+  @media (max-width: 340px) {
+    #fileMenuBtn, #helpBtn { width: 28px !important; }
+    #modelPickBtn .mm-ico, #modelPickBtn .mm-caret { display: none; }
+  }
+  @media (max-width: 420px) {
+    #apiKeyBtn .k-in { display: none; }
+    .key-pill { gap: 4px; padding-right: 7px; }
+    #modelPickBtn .mm-long { display: none; }
+    #modelPickBtn .mm-short { display: inline; }
+  }
+  /* 알림: 넓게, 줄이 바뀌어도 단어 중간에서 끊기지 않게 */
+  .toast { max-width: min(92vw, 760px); }
+  .toast-msg { word-break: keep-all; overflow-wrap: anywhere; }
   @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
     .main-bar .tray-hint b { animation: none; }
     #sidebar, .m-panel { transition: none !important; }
@@ -2366,7 +2437,11 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         <button type="button" class="hdr-btn hdr-model first" id="modelPickBtn" title="쓸 AI 모델 고르기 (또는 AI 없이 Gem 으로)"><span class="mm-ico" id="iconModelChip"></span><b class="mm-name" id="modelChipLabel">AI 모델을 선택해 주세요</b><i class="mm-badge free" id="modelChipBadge" hidden>무료</i><span class="mm-caret">⌃</span></button>
         <button type="button" class="hdr-btn file-btn" id="fileMenuBtn" title="박스 모음 파일 열기·저장"><span id="iconSave"></span>파일<span class="chev">▾</span></button>
         <button type="button" class="hdr-btn icon-btn" id="helpBtn" title="사용법" aria-label="사용법"><span id="iconHelp"></span></button>
-        <button type="button" class="hdr-btn key-chip" id="apiKeyBtn" title="API 키 입력"><span id="iconKey"></span><span id="apiKeyChipLabel">API 키 입력</span></button>
+        <!-- 'API 키 입력' 옆, 같은 알약 안에 '자동 저장' 켬/끔 (도형 생성기와 같게) -->
+        <span class="key-pill" id="keyPill">
+          <button type="button" class="hdr-btn key-chip" id="apiKeyBtn" title="API 키 입력"><span id="iconKey"></span><span id="apiKeyChipLabel">API 키 입력</span></button>
+          <label class="kp-toggle" id="keyPersistLabel"><input type="checkbox" id="keyPersist" role="switch" aria-label="자동 저장 (API 키와 작업)"><span class="kp-track" aria-hidden="true"><i></i></span><span class="kp-txt"><span class="kp-long">자동 </span>저장</span></label>
+        </span>
       </div>
       <!-- 여러 문서: 탭 하나가 hwpx 파일 하나 (도형 생성기 머리글 오른쪽의 문항 탭과 같은 자리·모양) -->
       <div class="doc-bar" id="docBar">
@@ -2474,7 +2549,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
   <footer class="app-footer">
     <span class="credit"><b>한글 수식 변환기</b><span class="sep">·</span>LaTeX → 한/글 수식 개체 (hwpx)<span class="sep">·</span>제작<span class="sep">·</span><b>월촌중학교 김재현</b></span>
-    <span>API 키는 이 브라우저에만 저장되고 각 AI 회사로만 전송됩니다</span>
+    <span>API 키는 서버에 저장되지 않아요 · 머리글의 자동 저장을 켜면 키와 작업이 이 브라우저에 남아요</span>
   </footer>
 
 
@@ -2560,7 +2635,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         <details class="help-sec" open>
           <summary><span class="hs-num key">2</span><b>AI 로 바로 만들기 — API 키 연동</b><em class="hs-tag key">API 키</em></summary>
           <ol class="hs-steps">
-            <li>머리글 <b>모델 단추</b>에서 Gemini · ChatGPT · Claude 중 하나를 고르고, 뜨는 창에 키를 붙여 넣어 저장합니다. 키는 <b>이 브라우저에만</b> 저장돼요.</li>
+            <li>머리글 <b>모델 단추</b>에서 Gemini · ChatGPT · Claude 중 하나를 고르고, 뜨는 창에 키를 붙여 넣어 저장합니다. 키는 서버에 저장되지 않아요. 머리글의 <b>자동 저장</b>을 켜면 키와 작업이 이 브라우저에 남고, 끄면 새로 고침할 때 연동이 끊기고 처음부터 시작해요.</li>
             <li>Gemini 는 <b>무료 키 / 유료 키</b> 중 하나를 꼭 골라야 저장돼요. 무료 키는 한도 안에서 0원, 유료 키는 쓴 토큰만큼 결제돼요.</li>
             <li><b>AI 입력</b> 탭에 문제 사진을 끌어 놓거나 <code>Ctrl+V</code> 로 붙이면 글자와 수식을 읽어 박스로 만들어요. 여러 장이면 차례로 읽고, <b>이 장 넘기기 · ■ 중지</b>로 멈출 수 있어요.</li>
             <li><b>AI로 새 문제 생성</b> 칸에 원하는 내용을 적고 <b>생성하기</b>를 누르면 체크한 박스를 참고해 새 문제를 만들어요.</li>
@@ -2583,7 +2658,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <ul class="hs-list">
             <li>수식 글꼴(<b>학교시험</b> HancomEQN · <b>평가원</b> HyhwpEQ)과 파일 이름을 정하고 <b>hwpx로 변환</b>을 누르면 체크한 박스가 한 파일로 내려받아져요.</li>
             <li>머리글 오른쪽 <b>＋ 새 문서</b>로 탭을 늘리면 탭마다 따로 hwpx 파일을 만들어요. 탭 이름은 파일명 칸과 같고, 탭을 두 번 누르면 이름을 바꿀 수 있어요.</li>
-            <li>작업은 이 브라우저에 <b>자동 저장</b>돼요. 다음에 열면 <b>이어서 하기</b>로 그대로 돌아와요.</li>
+            <li>머리글의 <b>자동 저장</b>을 켜 두면 작업이 이 브라우저에 남아, 다음에 열면 <b>이어서 하기</b>로 그대로 돌아와요. 끄면 아무것도 남기지 않아요 (학교·공용 컴퓨터에서는 꺼 두세요).</li>
             <li>머리글 <b>파일 ▾</b> → <b>전체 저장 (JSON)</b>으로 모든 문서를 파일로 남기고, <b>JSON 열기</b>로 다시 불러와요 (다른 컴퓨터로 옮길 때).</li>
           </ul>
         </details>
@@ -2591,7 +2666,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <summary><span class="hs-num">∑</span><b>수식 문법</b></summary>
           <div class="hs-keys">본문 중간 수식 <code>$...$</code> · 줄 강조 수식 <code>$$...$$</code> 또는 <code>\[...\]</code> · 괄호식 수식 <code>\(...\)</code></div>
         </details>
-        <p class="hs-foot">API 키는 이 브라우저에만 저장되고 고른 회사(Google · OpenAI · Anthropic)에만 전송돼요.</p>
+        <p class="hs-foot">API 키는 고른 회사(Google · OpenAI · Anthropic)에만 전송되고 서버에는 저장되지 않아요. 머리글의 자동 저장을 켜면 키와 작업이 이 브라우저에 남고, 끄면 새로 고침할 때 연동이 끊기고 처음부터 시작해요.</p>
       </div>
     </div>
   </div>
@@ -2637,7 +2712,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <button type="button" class="prov-tab" data-prov="openai" role="tab"><b>OpenAI GPT</b><small>유료</small></button>
           <button type="button" class="prov-tab" data-prov="anthropic" role="tab"><b>Anthropic Claude</b><small>유료</small></button>
         </div>
-        <p class="hint-intro plain"><span id="provDesc"></span> 키는 <b>이 브라우저에만 저장</b>되고 <span id="provTo">각 회사</span> 에만 전송돼요 — 이 앱 서버는 키를 보지 않아요.</p>
+        <p class="hint-intro plain"><span id="provDesc"></span> 키는 <span id="provTo">각 회사</span> 에만 전송되고 서버에는 저장되지 않아요. <span id="keyPersistNote"></span></p>
 
         <section class="kd-step">
           <div class="kd-h"><span class="kd-num"></span><b>API 키 붙여 넣기</b></div>
@@ -2748,7 +2823,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // ---- Gemini API 키 관리 (이 브라우저에만 저장, 서버로는 요청할 때만 실려서 전달됨) ----
+    // ---- API 키 관리 (서버에는 저장하지 않는다. 자동 저장을 켜면 이 브라우저에, 끄면 메모리에만) ----
     // AI 호출은 브라우저에서 각 회사 API 로 바로 나간다. 이 앱 서버는 키를 보지 않는다.
     // 무거운 모듈이라 처음 쓸 때 한 번만 불러온다.
     let _aiModule = null;
@@ -2922,21 +2997,44 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       del(k) { try { localStorage.removeItem(k); } catch (err) { /* 무시 */ } },
     };
 
+    // ---- 자동 저장 켬/끔 (API 키 + 작업) ----
+    // 켬: 키와 작업을 이 브라우저(localStorage)에 저장 — 새로 고침해도 키 연동이 남고, 다시 열면 '지난 작업' 띠.
+    // 끔: 아무것도 남기지 않는다 — 키는 메모리에만(새로 고침하면 연동이 끊김), 작업은 저장하지 않고 처음부터.
+    // 공용 컴퓨터에서 다음 사람이 내 키로 AI 를 부르거나 작업을 보지 못하게 하려는 것이다.
+    // 키는 모두 keyGet/keySet/keyDel 로만 읽고 쓴다 (이 아래의 apiKeyFor · setApiKeyValue · migrateOldKey).
+    const KEY_PERSIST = 'apiKeyPersist';
+    const WORK_STORE_KEYS = ['hwpeq_work_v2', 'hwpeq_work_prev', 'hwpeq_autosave_v1'];
+    function keyNames() { return Object.values(KEY_STORE).concat(['hwpeq_gemini_key']); }
+    // 처음 정할 때: 이미 키나 작업을 저장해 쓰던 사람은 켬(갑자기 끊기지 않게), 처음 쓰는 사람은 끔
+    if (store.get(KEY_PERSIST, null) == null) {
+      store.set(KEY_PERSIST, keyNames().concat(WORK_STORE_KEYS).some((n) => store.get(n)) ? '1' : '0');
+    }
+    const keyMem = {};
+    function keyPersistOn() { return store.get(KEY_PERSIST, '0') === '1'; }
+    function keyGet(n) { return keyPersistOn() ? store.get(n) : (keyMem[n] || ''); }
+    function keySet(n, v) {
+      if (keyPersistOn()) { store.set(n, v); delete keyMem[n]; }
+      else { keyMem[n] = v; store.del(n); }
+    }
+    function keyDel(n) { delete keyMem[n]; store.del(n); }
+
     // 예전 단일 Gemini 키를 새 이름으로 한 번 옮긴다
     (function migrateOldKey() {
       const old = store.get('hwpeq_gemini_key');
-      if (old && !store.get(KEY_STORE.gemini)) {
-        store.set(KEY_STORE.gemini, old);
+      if (old && !keyGet(KEY_STORE.gemini)) {
+        keySet(KEY_STORE.gemini, old);
         store.set('aiProvider', 'gemini');
       }
       if (old) store.del('hwpeq_gemini_key');
     })();
+    // 끔이면 브라우저에 남은 키가 없게
+    if (!keyPersistOn()) keyNames().forEach((n) => store.del(n));
 
     function aiProvider() {
       const p = store.get('aiProvider', 'gemini');
       return KEY_STORE[p] ? p : 'gemini';
     }
-    function apiKeyFor(p) { return store.get(KEY_STORE[p]); }
+    function apiKeyFor(p) { return keyGet(KEY_STORE[p]); }
     function getApiKey() { return apiKeyFor(aiProvider()); }
     function hasApiKey() { return !!getApiKey(); }
     function anyApiKey() { return Object.keys(KEY_STORE).some((p) => apiKeyFor(p)); }
@@ -2944,9 +3042,9 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
     function setApiKeyValue(key, provider) {
       const p = provider || aiProvider();
-      if (key) { store.set(KEY_STORE[p], key); store.set('aiProvider', p); }
+      if (key) { keySet(KEY_STORE[p], key); store.set('aiProvider', p); }
       else {
-        store.del(KEY_STORE[p]);
+        keyDel(KEY_STORE[p]);
         // 지운 회사가 쓰던 회사였다면, 키가 남아 있는 다른 회사로 옮겨 준다
         if (p === aiProvider()) {
           const next = Object.keys(KEY_STORE).find((q) => apiKeyFor(q));
@@ -2962,6 +3060,96 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       openApiKeyModal();
       return false;
     }
+    // ---- 자동 저장 토글 · 켤 때 주의 풍선 ----
+    function setKeyPersist(on) {
+      if (on) {
+        keyNames().forEach((n) => { const v = keyMem[n] || store.get(n); if (v) store.set(n, v); delete keyMem[n]; });
+        store.set(KEY_PERSIST, '1');
+      } else {
+        // 끄면 키는 이번 창의 메모리로 옮기고, 브라우저에 남은 키 · 작업 · 지난 작업을 모두 지운다
+        keyNames().forEach((n) => { const v = store.get(n); if (v) keyMem[n] = v; store.del(n); });
+        store.set(KEY_PERSIST, '0');
+        WORK_STORE_KEYS.forEach((k) => store.del(k));
+        const rb = document.getElementById('restoreBar');
+        if (rb) rb.hidden = true;
+      }
+      if (on) saveWorkNow();   // 켜면 지금 작업부터 바로 저장
+      paintKeyPersist();
+      updateApiKeyUI();
+    }
+    function paintKeyPersist() {
+      const on = keyPersistOn();
+      const cb = document.getElementById('keyPersist');
+      if (cb) cb.checked = on;
+      document.getElementById('keyPill').classList.toggle('persist', on);
+      document.getElementById('keyPersistLabel').title = on
+        ? '자동 저장 켬 — API 키와 작업이 이 브라우저에 남아요. 다시 열면 지난 작업을 이어서 할 수 있어요'
+        : '자동 저장 끔 — 아무것도 남기지 않아요. 새로 고침하면 키 연동이 끊기고 처음부터 시작해요';
+      const note = document.getElementById('keyPersistNote');
+      if (note) {
+        note.innerHTML = on
+          ? '<b>자동 저장 켬</b> — 키와 작업이 이 브라우저에 남아요 (공용 컴퓨터라면 머리글에서 꺼 주세요).'
+          : '<b>자동 저장 끔</b> — 새로 고침하면 연동이 끊기고 처음부터 시작해요 (머리글에서 켤 수 있어요).';
+      }
+    }
+    const offMsg = () => (matchMedia('(max-width: 560px)').matches
+      ? '자동 저장 끔 — 저장된 키·작업을 지웠어요'
+      : '자동 저장을 껐어요 — 저장된 키와 작업을 지웠고, 새로 고침하면 처음부터 시작해요');
+    function hideKeyWarn() {
+      const w = document.getElementById('keyWarn');
+      if (w) w.remove();
+      document.removeEventListener('pointerdown', keyWarnOutside, true);
+    }
+    function keyWarnOutside(e) {
+      const w = document.getElementById('keyWarn');
+      if (w && !w.contains(e.target) && !e.target.closest('#keyPill')) hideKeyWarn();   // 바깥을 누르면 닫힘 (켬은 그대로)
+    }
+    function placeKeyWarn() {
+      const w = document.getElementById('keyWarn');
+      if (!w) return;
+      const pill = document.getElementById('keyPill');
+      const r = pill.getBoundingClientRect();
+      const ww = Math.min(340, innerWidth - 24);
+      w.style.width = ww + 'px';
+      w.style.top = Math.round(r.bottom + 8) + 'px';
+      const left = Math.round(Math.max(12, Math.min(innerWidth - ww - 12, r.right - ww)));
+      w.style.left = left + 'px';
+      const tg = document.querySelector('#keyPill .kp-track').getBoundingClientRect();
+      w.style.setProperty('--kw-arrow', Math.round(Math.min(ww - 18, Math.max(18, tg.left + tg.width / 2 - left))) + 'px');
+    }
+    function showKeyWarn() {
+      hideKeyWarn();
+      const w = document.createElement('div');
+      w.className = 'key-warn';
+      w.id = 'keyWarn';
+      w.setAttribute('role', 'alertdialog');
+      w.setAttribute('aria-label', '자동 저장 주의');
+      w.innerHTML = '<div class="kw-head"><span class="kw-ico" aria-hidden="true">!</span><b>API 키와 작업을 이 브라우저에 저장해요</b></div>'
+        + '<p class="kw-lead">새로 고침해도 키 연동이 유지되고, 다시 열면 지난 작업을 이어서 할 수 있어요. 대신 이 브라우저를 쓰는 <b>다른 사람도 내 키로 AI 를 부르고 작업을 볼 수 있어요</b> — 요금과 한도가 내 계정에서 나가요.</p>'
+        + '<ul class="kw-list"><li><b>학교·공용 컴퓨터</b>에서는 켜지 마세요.</li><li>다 쓰면 <b>자동 저장을 끄세요</b> — 저장된 키와 작업이 지워져요.</li><li>키가 새어 나간 것 같으면 키를 만든 곳에서 <b>바로 삭제</b>하세요.</li></ul>'
+        + '<div class="kw-acts"><button type="button" class="kw-off">다시 끄기</button><button type="button" class="kw-ok">알겠어요</button></div>';
+      document.body.appendChild(w);
+      placeKeyWarn();
+      w.querySelector('.kw-ok').addEventListener('click', hideKeyWarn);
+      w.querySelector('.kw-off').addEventListener('click', () => {   // 끄기와 똑같이
+        setKeyPersist(false);
+        hideKeyWarn();
+        setStatus('ok', offMsg());
+      });
+      w.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideKeyWarn(); });
+      setTimeout(() => {
+        document.addEventListener('pointerdown', keyWarnOutside, true);
+        w.querySelector('.kw-ok').focus({ preventScroll: true });   // Enter 로 '알겠어요'
+      }, 0);
+    }
+    window.addEventListener('resize', placeKeyWarn);
+    document.getElementById('keyPersist').addEventListener('change', (e) => {
+      setKeyPersist(e.target.checked);
+      if (e.target.checked) showKeyWarn();
+      else { hideKeyWarn(); setStatus('ok', offMsg()); }
+    });
+    paintKeyPersist();
+
     // 잠긴(자물쇠) 기능 버튼들의 표시를 키 등록 상태에 맞춰 갱신한다.
     function updateApiKeyUI() {
       const set = hasApiKey();
@@ -2973,7 +3161,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         chip.classList.toggle('set', set);
         chip.classList.toggle('has-key', set);
         chip.title = set ? 'API 키 연결됨 — 눌러서 바꾸거나 다른 회사 키를 넣어요' : 'API 키 입력 — Gemini · ChatGPT · Claude 키를 넣으면 이미지 인식·문제 생성이 열려요 (키 없이도 수동 입력의 Gem 으로 무료)';
-        if (chipLabel) chipLabel.innerHTML = '<span class="k-api">API </span>키 입력';
+        if (chipLabel) chipLabel.innerHTML = '<span class="k-api">API </span>키<span class="k-in"> 입력</span>';
         if (chipIcon) chipIcon.innerHTML = ICONS.key;
       }
       document.querySelectorAll('[data-needs-key]').forEach((el) => {
@@ -3831,12 +4019,12 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       };
     }
     function saveWorkNow() {
-      if (!autosaveReady) return;
+      if (!autosaveReady || !keyPersistOn()) return;   // 자동 저장을 끈 동안은 작업을 남기지 않는다
       clearTimeout(autosaveTimer);
       try { localStorage.setItem(WORK_KEY, JSON.stringify(workSnapshot())); } catch (err) { /* 저장 공간이 없으면 조용히 넘긴다 */ }
     }
     function scheduleAutosave() {
-      if (!autosaveReady) return;
+      if (!autosaveReady || !keyPersistOn()) return;
       clearTimeout(autosaveTimer);
       autosaveTimer = setTimeout(saveWorkNow, 600);
     }
@@ -3905,6 +4093,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
     /** 켤 때: 지난 작업을 따로 옮겨 두고 물어본다 */
     function initWork() {
+      // 자동 저장 끔: 지난 작업 없이 처음부터 (혹시 남은 저장도 지운다)
+      if (!keyPersistOn()) { WORK_STORE_KEYS.forEach((k) => store.del(k)); return; }
       const last = readWork(WORK_KEY) || readWork(OLD_KEY);
       if (last) {
         try {
@@ -4588,21 +4778,24 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       if (first) {
         // 처음 온 사람에게는 여기서부터 시작하라고 알려 준다 (배지 없이 보라로 꽉 채운 알약)
         ico.innerHTML = PICK;
-        label.textContent = 'AI 모델을 선택해 주세요';
+        label.innerHTML = '<span class="mm-long">AI 모델을 선택해 주세요</span><span class="mm-short">모델 선택</span>';
         badge.hidden = true;
         return;
       }
       badge.hidden = false;
       if (nokey) {
         ico.innerHTML = GEM;
-        label.textContent = 'AI 연동 없이 이용';
+        label.innerHTML = '<span class="mm-long">AI 연동 없이 이용</span><span class="mm-short">AI 없이</span>';
         badge.textContent = '무료';
         badge.className = 'mm-badge free';
         return;
       }
       const p = aiProvider();
       ico.innerHTML = (_brandIcon && _brandIcon[{ gemini: 'gemini', openai: 'gpt', anthropic: 'claude' }[p]]) || PICK;
-      label.textContent = shortModel(p, modelFor(p));
+      // 'Gemini 3.8 Flash' 의 회사 이름은 휴대폰에서 접는다 (아이콘이 이미 회사를 보여 준다)
+      const name = shortModel(p, modelFor(p));
+      const m = /^(Gemini|Claude) (.+)$/.exec(name);
+      label.innerHTML = m ? `<span class="mm-co">${escapeHtml(m[1])} </span>${escapeHtml(m[2])}` : escapeHtml(name);
       badge.textContent = p === 'gemini' ? '무료 한도' : '유료';
       badge.className = 'mm-badge ' + (p === 'gemini' ? 'free' : 'paid');
     }
