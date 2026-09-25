@@ -7,7 +7,8 @@ import urllib.request
 
 from flask import Flask, render_template, request, send_file, jsonify
 
-from hwpx_builder_web import build_hwpx_bytes
+from hwpx_builder_web import build_hwpx_bytes, split_segments
+from converter import latex_to_hwp
 
 app = Flask(__name__)
 
@@ -201,6 +202,30 @@ def convert():
         download_name=f"{filename}.hwpx",
         mimetype="application/haansofthwpx",
     )
+
+
+@app.route("/script", methods=["POST"])
+def script():
+    """텍스트 안의 수식을 한/글 수식편집기 문법으로만 바꿔 돌려준다.
+
+    hwpx 파일을 만들지 않고 문법만 보고 싶을 때가 있다 — 이미 만든 문서에 수식
+    하나만 끼워 넣을 때. 한/글에서 Ctrl+N,M 으로 수식 편집기를 열고 붙여 넣으면 된다.
+    변환 로직은 /convert 와 한 줄도 나누지 않는다.
+    """
+    text = request.form.get("text", "")
+    if not text.strip():
+        return jsonify({"error": "변환할 텍스트를 입력해주세요."}), 400
+    try:
+        items = []
+        for is_math, body in split_segments(text):
+            if not is_math:
+                continue
+            script_text = latex_to_hwp(body)
+            if script_text:
+                items.append({"latex": body.strip(), "script": script_text})
+    except Exception as e:
+        return jsonify({"error": f"변환 중 오류가 발생했습니다: {e}"}), 500
+    return jsonify({"items": items})
 
 
 @app.route("/ocr", methods=["POST"])
