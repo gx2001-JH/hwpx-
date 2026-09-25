@@ -908,9 +908,19 @@
   .main-bar .bar-select:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
   /* 왼쪽: 전체 선택 + 제목 + 개수 알약 + 정렬 + 되돌리기 (도형 생성기 '요소 목록' 머리) */
-  .select-all { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-left: 2px; cursor: pointer; }
+  /* 전체 선택: 체크 상자만 있으면 무엇인지 몰라 그냥 지나쳤다. 글자를 단 흰 알약으로 */
+  .select-all {
+    display: inline-flex; align-items: center; gap: 7px; flex: none;
+    height: var(--band-ctl-h); padding: 0 12px 0 9px;
+    border: 1px solid var(--panel-line); border-radius: var(--pill); background: #fff; box-shadow: var(--shadow-sm);
+    font-size: 12.5px; font-weight: 800; color: var(--text); white-space: nowrap; cursor: pointer; user-select: none;
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+  }
   .select-all input { margin: 0; }
-  .bar-title { font-size: 13px; font-weight: 800; color: var(--text); white-space: nowrap; }
+  .select-all:hover { border-color: var(--accent); color: var(--accent-hover); }
+  /* 모두 골랐을 때는 알약도 켜진 모양으로 */
+  .select-all:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
+  .select-all:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
   .box-count {
     display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
     border-radius: var(--pill); background: var(--accent-soft); color: var(--accent-hover);
@@ -1871,8 +1881,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         <div class="main-bar">
           <!-- 왼쪽: 목록 (도형 생성기 '요소 목록' 머리) -->
           <div class="bar-sec bar-list">
-            <label class="select-all" title="전체 선택/해제"><input type="checkbox" id="selectAllChk" aria-label="전체 선택"></label>
-            <span class="bar-title">문제 목록</span>
+            <label class="select-all" title="모든 박스 선택 / 해제 (Ctrl+A · Esc)"><input type="checkbox" id="selectAllChk"><span>전체 선택</span></label>
             <span class="box-count" id="boxCount"></span>
             <select id="boxSort" class="bar-select" title="박스 순서 바꾸기">
               <option value="">정렬</option>
@@ -1916,7 +1925,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <button type="button" class="side-link-btn" id="bulkDup" title="고른 박스를 바로 아래에 복제합니다">복제</button>
           <button type="button" class="side-link-btn danger" id="bulkDelete" title="고른 박스를 삭제합니다">삭제</button>
           <span class="bulk-sep" aria-hidden="true"></span>
-          <button type="button" class="side-link-btn bulk-end" id="bulkClear">선택 해제</button>
+          <button type="button" class="side-link-btn" id="bulkAll" title="모든 박스 선택 (Ctrl+A)">전체 선택</button>
+          <button type="button" class="side-link-btn bulk-end" id="bulkClear" title="선택 해제 (Esc)">선택 해제</button>
         </div>
         <div class="main-card-body">
           <div class="empty-state" id="emptyState">
@@ -1972,7 +1982,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
           <summary><span class="hs-num">3</span><b>박스 보기 · 정리하기</b></summary>
           <ul class="hs-list">
             <li>박스 머리의 <b>편집 · 미리보기 · 한글 문법</b>으로 보기를 바꿔요. <b>보라 알약</b>이 지금 보고 있는 보기예요. <b>한글 문법</b>은 한/글 수식편집기에 그대로 붙여 넣을 수 있는 글이에요.</li>
-            <li>박스 머리띠(⠿)를 끌거나 ↑↓ 로 순서를 바꾸고, 체크한 박스만 변환돼요. 여러 개를 고르면 <b>하나로 합치기 · 복제 · 삭제</b>를 한꺼번에 할 수 있어요.</li>
+            <li>박스 머리띠(⠿)를 끌거나 ↑↓ 로 순서를 바꾸고, 체크한 박스만 변환돼요. 여러 개를 고르면 <b>하나로 합치기 · 복제 · 삭제</b>를 한꺼번에 할 수 있어요. <b>전체 선택</b>(<code>Ctrl+A</code>)으로 모두 고르고 <code>Esc</code>로 풀어요.</li>
             <li><b>정렬</b>로 출처별 · 길이순 · 역순 정리, <b>↶ ↷</b>(<code>Ctrl+Z</code>)로 되돌리기.</li>
           </ul>
         </details>
@@ -2705,10 +2715,7 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       });
     }
 
-    selectAllChk.addEventListener('change', () => {
-      boxes.forEach((b) => (b.checked = selectAllChk.checked));
-      renderBoxList();
-    });
+    selectAllChk.addEventListener('change', () => selectAllBoxes(selectAllChk.checked));
 
     // ---- 고른 박스에 한꺼번에 (도형 생성기 '요소 목록'의 일괄 작업과 같은 자리·같은 모양) ----
     const checkedBoxes = () => boxes.filter((b) => b.checked);
@@ -2720,6 +2727,14 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       document.getElementById('bulkCount').textContent = n;
       // 합치기는 두 개 이상이어야 뜻이 있다
       document.getElementById('bulkMerge').disabled = n < 2;
+      // 이미 다 골랐으면 '전체 선택'은 할 일이 없다
+      document.getElementById('bulkAll').hidden = n === boxes.length;
+    }
+
+    function selectAllBoxes(on) {
+      if (!boxes.length) return;
+      boxes.forEach((b) => (b.checked = on));
+      renderBoxList();
     }
 
     document.getElementById('bulkMerge').addEventListener('click', () => {
@@ -2754,10 +2769,8 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       setStatus('ok', `박스 ${sel.length}개를 삭제했습니다. 되돌리기(Ctrl+Z)로 되살릴 수 있어요.`);
     });
 
-    document.getElementById('bulkClear').addEventListener('click', () => {
-      boxes.forEach((b) => (b.checked = false));
-      renderBoxList();
-    });
+    document.getElementById('bulkAll').addEventListener('click', () => selectAllBoxes(true));
+    document.getElementById('bulkClear').addEventListener('click', () => selectAllBoxes(false));
 
     // ---- 정렬: 고른 차례대로 박스 순서를 바꾼다 (되돌리기로 되돌릴 수 있다) ----
     const boxSort = document.getElementById('boxSort');
@@ -2793,6 +2806,27 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       if (el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT')) return;
       e.preventDefault();
       if (k === 'y' || e.shiftKey) redoBoxes(); else undoBoxes();
+    });
+
+    // ---- 전체 선택 단축키 ----
+    // 글자 칸 안의 Ctrl+A 는 그 칸의 글자 전체 선택이고, Esc 는 열린 창·메뉴를 닫는 게 먼저다.
+    // 그 밖의 자리에서만 박스를 고르고 푼다.
+    function typingNow() {
+      const el = document.activeElement;
+      return !!el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
+    }
+    function somethingOpen() {
+      return !!document.querySelector('.modal-overlay.show, #modelMenu.show, #fileMenu.show');
+    }
+    document.addEventListener('keydown', (e) => {
+      if (typingNow() || somethingOpen() || !boxes.length) return;
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();   // 화면 글자 전체가 파랗게 칠해지는 대신
+        selectAllBoxes(true);
+        setStatus('ok', `박스 ${boxes.length}개를 모두 골랐습니다. (Esc 로 해제)`);
+      } else if (e.key === 'Escape' && checkedBoxes().length) {
+        selectAllBoxes(false);
+      }
     });
 
     document.getElementById('addBoxBtn').addEventListener('click', () => {
