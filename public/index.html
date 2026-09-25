@@ -218,6 +218,32 @@
   .input-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; }
   .input-panel[hidden] { display: none; }
 
+  /* ---------- AI 연동 설정: 회사 고르기 + 모델 고르기 ---------- */
+  .prov-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .prov-tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 9px 6px; border: 1px solid var(--border); border-radius: 11px;
+    background: var(--surface); color: var(--text); font-family: inherit; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .12s var(--ease);
+  }
+  .prov-tab b { font-size: 12.5px; font-weight: 700; }
+  .prov-tab .prov-sub { font-size: 9.5px; color: var(--text-muted); }
+  .prov-tab:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .prov-tab:active { transform: scale(.97); }
+  .prov-tab.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 3px 10px rgba(123,92,250,.18); }
+  /* 키가 이미 저장된 회사에는 초록 점 */
+  .prov-tab.has-key b::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 5px; border-radius: 50%; background: var(--ok); vertical-align: middle; }
+  .prov-desc { font-size: 11.5px; line-height: 1.6; color: var(--text-muted); margin-bottom: 10px; }
+
+  .model-pick { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .model-pick label { font-size: 11.5px; font-weight: 700; color: var(--text); }
+  .model-pick select {
+    width: 100%; border: 1px solid var(--border); border-radius: 9px;
+    background: var(--surface); color: var(--text); font-size: 12.5px; padding: 8px 10px; font-family: inherit;
+  }
+  .model-note { font-size: 11px; line-height: 1.55; color: var(--text-muted); }
+  .model-pick .side-link-btn { align-self: flex-start; }
+
   /* 도형 생성기와 같은 카드 (side-card) */
   .side-card { flex: none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 9px; }
   .side-card-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text); }
@@ -1120,36 +1146,53 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
   <div class="modal-overlay" id="apiKeyOverlay">
     <div class="modal-card">
       <div class="modal-head">
-        <span class="modal-title">Gemini API 키 설정</span>
+        <span class="modal-title">AI 연동 설정</span>
         <button type="button" class="modal-close" id="apiKeyCloseBtn"><span id="iconClose2"></span></button>
       </div>
       <div class="modal-body">
         <p class="hint-intro" style="margin-bottom:12px; padding-bottom:0; border-bottom:none;">
-          이미지 인식(OCR)과 AI 문제 생성·변형은 Google Gemini를 사용해요. 본인의 무료 API 키를 아래에
-          넣으면 잠긴 기능들이 바로 풀립니다 — <b>이 키는 이 브라우저에만 저장되고 서버에는 저장되지
-          않아요.</b>
+          이미지 인식(OCR)과 문제 생성·변형에 쓸 회사를 고르고 본인의 API 키를 넣으세요.
+          <b>키는 이 브라우저에만 저장되고, 각 회사 API 로만 전송됩니다 — 이 앱 서버는 키를 보지 않습니다.</b>
         </p>
+
+        <div class="prov-tabs" id="provTabs" role="tablist">
+          <button type="button" class="prov-tab" data-prov="gemini" role="tab">
+            <b>Gemini</b><span class="prov-sub">Google</span><i class="tab-chip free">무료 한도</i>
+          </button>
+          <button type="button" class="prov-tab" data-prov="openai" role="tab">
+            <b>ChatGPT</b><span class="prov-sub">OpenAI</span><i class="tab-chip key">유료</i>
+          </button>
+          <button type="button" class="prov-tab" data-prov="anthropic" role="tab">
+            <b>Claude</b><span class="prov-sub">Anthropic</span><i class="tab-chip key">유료</i>
+          </button>
+        </div>
+        <div class="prov-desc" id="provDesc"></div>
+
         <div class="api-key-field">
           <span class="filename-icon" id="iconKeyField"></span>
-          <input type="password" id="apiKeyInput" placeholder="AIza로 시작하는 API 키를 붙여넣으세요" autocomplete="off">
+          <input type="password" id="apiKeyInput" placeholder="API 키를 붙여넣으세요" autocomplete="off">
           <button type="button" class="api-key-toggle" id="apiKeyToggleBtn" title="키 표시/숨기기"><span id="iconEye2"></span></button>
         </div>
+
+        <div class="model-pick">
+          <label for="modelSel">모델</label>
+          <select id="modelSel"></select>
+          <div class="model-note" id="modelNote"></div>
+          <button type="button" class="side-link-btn" id="listModelsBtn">이 키로 쓸 수 있는 모델 확인</button>
+        </div>
+
         <div class="api-key-actions">
           <button type="button" class="side-link-btn" id="apiKeyClearBtn"><span id="iconTrash2"></span>키 삭제</button>
           <button type="button" class="btn-gradient" id="apiKeySaveBtn"><span id="iconSave2"></span>저장</button>
         </div>
+
         <div class="hint-row" style="margin-top:16px;">
-          <b>① 무료 API 키 발급받기</b>
-          <span><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>
-          접속 → Google 계정으로 로그인 → <b>Create API key</b> 클릭 → 생성된 키(<code>AIza...</code>로 시작)를
-          복사해서 위 입력창에 붙여넣고 저장하면 끝이에요.</span>
+          <b>① API 키 발급받기</b>
+          <span id="keyGuide"></span>
         </div>
         <div class="hint-row">
-          <b>② 무료 티어 사용량</b>
-          <span>Gemini 2.5 Flash 무료 티어는 분당·일일 요청 수에 제한이 있어요(대략 분당 10회, 하루
-          250회 안팎 — 모델·시점에 따라 바뀔 수 있습니다). 개인 학습·소규모 사용에는 충분하지만, 정확한
-          최신 한도는 <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener">공식 요금/한도 문서</a>에서
-          확인하세요. 한도를 넘으면 잠시 후 다시 시도하시면 됩니다.</span>
+          <b>② 요금</b>
+          <span id="priceGuide"></span>
         </div>
       </div>
     </div>
@@ -1209,22 +1252,56 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // ---- Gemini API 키 관리 (이 브라우저에만 저장, 서버로는 요청할 때만 실려서 전달됨) ----
-    const API_KEY_STORAGE = 'hwpeq_gemini_key';
-    function getApiKey() {
-      try {
-        return localStorage.getItem(API_KEY_STORAGE) || '';
-      } catch (err) {
-        return '';
+    // AI 호출은 브라우저에서 각 회사 API 로 바로 나간다. 이 앱 서버는 키를 보지 않는다.
+    // 무거운 모듈이라 처음 쓸 때 한 번만 불러온다.
+    let _aiModule = null;
+    async function ai() { return _aiModule || (_aiModule = await import('./js/ai.js')); }
+    let _prompts = null;
+    async function prompts() { return _prompts || (_prompts = await import('./js/prompts.js')); }
+
+    // 저장소 이름은 도형 생성기와 똑같이 맞춰 둔다. 나중에 두 앱을 같은 주소에 올리면
+    // 키가 그대로 공유된다. (providers.js 의 PROVIDERS[p].keyStore 와 같은 값)
+    const KEY_STORE = { gemini: 'geminiApiKey', openai: 'openaiApiKey', anthropic: 'anthropicApiKey' };
+    const PROVIDER_NAMES = { gemini: 'Google Gemini', openai: 'OpenAI GPT', anthropic: 'Anthropic Claude' };
+    const DEFAULT_MODEL = { gemini: 'gemini-3.8-flash', openai: 'gpt-6-sol', anthropic: 'claude-sonnet-5' };
+
+    const store = {
+      get(k, d = '') { try { return localStorage.getItem(k) ?? d; } catch (err) { return d; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch (err) { /* 저장 못 하는 환경이면 무시 */ } },
+      del(k) { try { localStorage.removeItem(k); } catch (err) { /* 무시 */ } },
+    };
+
+    // 예전 단일 Gemini 키를 새 이름으로 한 번 옮긴다
+    (function migrateOldKey() {
+      const old = store.get('hwpeq_gemini_key');
+      if (old && !store.get(KEY_STORE.gemini)) {
+        store.set(KEY_STORE.gemini, old);
+        store.set('aiProvider', 'gemini');
       }
+      if (old) store.del('hwpeq_gemini_key');
+    })();
+
+    function aiProvider() {
+      const p = store.get('aiProvider', 'gemini');
+      return KEY_STORE[p] ? p : 'gemini';
     }
-    function hasApiKey() {
-      return !!getApiKey();
-    }
-    function setApiKeyValue(key) {
-      try {
-        if (key) localStorage.setItem(API_KEY_STORAGE, key);
-        else localStorage.removeItem(API_KEY_STORAGE);
-      } catch (err) { /* localStorage를 못 쓰는 환경이면 그냥 무시 */ }
+    function apiKeyFor(p) { return store.get(KEY_STORE[p]); }
+    function getApiKey() { return apiKeyFor(aiProvider()); }
+    function hasApiKey() { return !!getApiKey(); }
+    function anyApiKey() { return Object.keys(KEY_STORE).some((p) => apiKeyFor(p)); }
+    function modelFor(p) { return store.get(p + 'Model') || DEFAULT_MODEL[p]; }
+
+    function setApiKeyValue(key, provider) {
+      const p = provider || aiProvider();
+      if (key) { store.set(KEY_STORE[p], key); store.set('aiProvider', p); }
+      else {
+        store.del(KEY_STORE[p]);
+        // 지운 회사가 쓰던 회사였다면, 키가 남아 있는 다른 회사로 옮겨 준다
+        if (p === aiProvider()) {
+          const next = Object.keys(KEY_STORE).find((q) => apiKeyFor(q));
+          if (next) store.set('aiProvider', next);
+        }
+      }
       updateApiKeyUI();
     }
     // AI 관련 동작 직전에 호출: 키가 없으면 안내 토스트를 띄우고 설정 모달을 열어준 뒤 false를 반환한다.
@@ -1511,15 +1588,15 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       renderBoxList();
 
       try {
-        const res = await fetch('/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instruction, context: box.text, type: '', apiKey: getApiKey() }),
+        const [{ generateText }, { buildGeneratePrompt, parseProblems }] = await Promise.all([ai(), prompts()]);
+        const p = aiProvider();
+        const r = await generateText(p, {
+          key: apiKeyFor(p), model: modelFor(p),
+          user: buildGeneratePrompt(instruction, box.text, ''),
+          json: true, temperature: 0.4,
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
-
-        const problems = data.problems || [];
+        const problems = parseProblems(r.text || '');
+        if (!problems.length) throw new Error('문제를 만들지 못했습니다.');
         aiOpenBoxIds.delete(boxId);
         addBoxes(problems, 'ai', boxId);
         setStatus('ok', `AI가 변형한 문제 ${problems.length}개를 바로 아래에 추가했습니다. 확인 후 변환해주세요.`);
@@ -1671,8 +1748,108 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     // ---- API 키 설정 모달 ----
     const apiKeyOverlay = document.getElementById('apiKeyOverlay');
     const apiKeyInput = document.getElementById('apiKeyInput');
+    const modelSel = document.getElementById('modelSel');
+
+    // 모달에서 지금 보고 있는 회사 (저장을 눌러야 실제로 바뀐다)
+    let dialogProvider = aiProvider();
+
+    const KEY_GUIDE = {
+      gemini: '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 에 구글 계정으로 로그인 → <b>Create API key</b> → 생성된 키(<code>AIza…</code>)를 복사해 위에 붙여 넣고 저장.',
+      openai: '<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Platform</a> 에서 <b>Create new secret key</b> → 생성된 키(<code>sk-…</code>)를 복사해 위에 붙여 넣고 저장. 미리 크레딧을 충전해 두어야 합니다.',
+      anthropic: '<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console</a> 에서 <b>Create Key</b> → 생성된 키(<code>sk-ant-…</code>)를 복사해 위에 붙여 넣고 저장. 미리 크레딧을 충전해 두어야 합니다.',
+    };
+    const PRICE_GUIDE = {
+      gemini: '무료 한도가 있습니다(분당·하루 요청 수 제한). 한도를 넘거나 결제를 켠 키는 쓴 만큼 요금이 듭니다.',
+      openai: '무료 한도가 없습니다. 모든 요청이 선불 크레딧에서 차감됩니다.',
+      anthropic: '무료 한도가 없습니다. 모든 요청이 크레딧에서 차감됩니다.',
+    };
+    const PLACEHOLDER = { gemini: 'AIza 로 시작하는 API 키', openai: 'sk- 로 시작하는 API 키', anthropic: 'sk-ant- 로 시작하는 API 키' };
+
+    // 고른 회사에 맞춰 모달 내용을 다시 그린다
+    async function renderProviderPane() {
+      const p = dialogProvider;
+      document.querySelectorAll('.prov-tab').forEach((b) => {
+        b.classList.toggle('on', b.dataset.prov === p);
+        b.classList.toggle('has-key', !!apiKeyFor(b.dataset.prov));
+      });
+      apiKeyInput.placeholder = PLACEHOLDER[p];
+      apiKeyInput.value = apiKeyFor(p);
+      document.getElementById('keyGuide').innerHTML = KEY_GUIDE[p];
+      document.getElementById('priceGuide').textContent = PRICE_GUIDE[p];
+
+      const { PROVIDER_META, CURATED, tierOf } = await ai();
+      const meta = PROVIDER_META[p];
+      document.getElementById('provDesc').textContent = meta ? `${meta.title} (${meta.by}) — ${meta.desc}` : '';
+
+      // 이 키로 실제 받아온 목록이 있으면 그걸, 없으면 엄선 목록을 보여 준다
+      let saved = [];
+      try { saved = JSON.parse(store.get(p + 'ModelList', '[]')) || []; } catch (err) { saved = []; }
+      const cur = CURATED[p] || [];
+      const chosen = modelFor(p);
+      modelSel.innerHTML = '';
+      const seen = new Set();
+      for (const m of cur) {
+        seen.add(m.id);
+        const o = document.createElement('option');
+        o.value = m.id;
+        o.textContent = `${m.name} · ${m.tier}${m.badge === 'free' ? ' · 무료 한도' : ''}`;
+        modelSel.appendChild(o);
+      }
+      for (const id of saved) {
+        if (seen.has(id)) continue;
+        const o = document.createElement('option');
+        o.value = id;
+        o.textContent = `${id} · ${tierOf(id).label}`;
+        modelSel.appendChild(o);
+      }
+      if (![...modelSel.options].some((o) => o.value === chosen)) {
+        const o = document.createElement('option');
+        o.value = chosen; o.textContent = chosen;
+        modelSel.insertBefore(o, modelSel.firstChild);
+      }
+      modelSel.value = chosen;
+      updateModelNote();
+    }
+
+    async function updateModelNote() {
+      const { CURATED, priceOf } = await ai();
+      const p = dialogProvider;
+      const id = modelSel.value;
+      const meta = (CURATED[p] || []).find((m) => m.id === id);
+      const pr = priceOf(id);
+      const price = pr.known
+        ? `입력 $${pr.input} / 출력 $${pr.output} (100만 토큰당)`
+        : '요금표에 없는 모델이라 금액을 계산하지 않습니다';
+      document.getElementById('modelNote').textContent = meta ? `${meta.desc} · ${price}` : price;
+    }
+    modelSel.addEventListener('change', updateModelNote);
+
+    document.getElementById('provTabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('.prov-tab');
+      if (!btn) return;
+      dialogProvider = btn.dataset.prov;
+      renderProviderPane();
+    });
+
+    document.getElementById('listModelsBtn').addEventListener('click', async () => {
+      const p = dialogProvider;
+      const key = apiKeyInput.value.trim() || apiKeyFor(p);
+      if (!key) { setStatus('error', '먼저 키를 입력해주세요.'); return; }
+      setStatus('pending', '이 키로 쓸 수 있는 모델을 받아오는 중...');
+      try {
+        const { listModelsFor, sortCatalog } = await ai();
+        const list = sortCatalog(await listModelsFor(p, key));
+        store.set(p + 'ModelList', JSON.stringify(list));
+        await renderProviderPane();
+        setStatus('ok', `이 키로 쓸 수 있는 모델 ${list.length}개를 받아왔습니다.`);
+      } catch (err) {
+        setStatus('error', err.message);
+      }
+    });
+
     function openApiKeyModal() {
-      apiKeyInput.value = getApiKey();
+      dialogProvider = aiProvider();
+      renderProviderPane();
       apiKeyOverlay.classList.add('show');
       requestAnimationFrame(() => requestAnimationFrame(() => apiKeyOverlay.classList.add('in')));
       setTimeout(() => apiKeyInput.focus(), 200);
@@ -1691,20 +1868,28 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
       apiKeyInput.type = showing ? 'password' : 'text';
       document.getElementById('iconEye2').innerHTML = showing ? ICONS.eye2 : ICONS.close;
     });
-    document.getElementById('apiKeySaveBtn').addEventListener('click', () => {
+    document.getElementById('apiKeySaveBtn').addEventListener('click', async () => {
       const key = apiKeyInput.value.trim();
       if (!key) {
         setStatus('error', '키를 입력해주세요.');
         return;
       }
-      setApiKeyValue(key);
-      setStatus('ok', 'API 키를 저장했습니다. 이제 AI 기능을 사용할 수 있어요.');
+      const p = dialogProvider;
+      store.set(p + 'Model', modelSel.value);
+      setApiKeyValue(key, p);
+      setStatus('ok', `${PROVIDER_NAMES[p]} 키를 저장했습니다. 이제 AI 기능을 사용할 수 있어요.`);
       closeApiKeyModal();
+      // 저장한 키로 실제 쓸 수 있는 모델 목록을 조용히 받아 둔다(다음에 열면 반영됨)
+      try {
+        const { listModelsFor, sortCatalog } = await ai();
+        store.set(p + 'ModelList', JSON.stringify(sortCatalog(await listModelsFor(p, key))));
+      } catch (err) { /* 목록을 못 받아도 저장된 키로 쓰는 데는 지장 없다 */ }
     });
     document.getElementById('apiKeyClearBtn').addEventListener('click', () => {
       apiKeyInput.value = '';
-      setApiKeyValue('');
-      setStatus('ok', 'API 키를 삭제했습니다.');
+      setApiKeyValue('', dialogProvider);
+      renderProviderPane();
+      setStatus('ok', `${PROVIDER_NAMES[dialogProvider]} 키를 삭제했습니다.`);
     });
 
     // ---- 이미지 입력: 드롭존(드래그/붙여넣기/파일선택) + 박스별 붙여넣기 공용 큐 ----
@@ -1781,15 +1966,14 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const imageBase64 = dataUrl.split(',')[1];
-      const res = await fetch('/ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64, mimeType: file.type || 'image/png', apiKey: getApiKey() }),
+      const [{ generateText }, { OCR_PROMPT }] = await Promise.all([ai(), prompts()]);
+      const p = aiProvider();
+      const r = await generateText(p, {
+        key: apiKeyFor(p), model: modelFor(p),
+        user: OCR_PROMPT, image: dataUrl,
+        maxTokens: 4096, temperature: 0.1,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
-      return (data.text || '').trim();
+      return (r.text || '').trim();
     }
 
     async function processQueue() {
@@ -1983,15 +2167,15 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
 
       try {
         const context = boxes.filter((b) => b.checked).map((b) => b.text.trim()).filter(Boolean).join('\n\n');
-        const res = await fetch('/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instruction, context, type: aiType.value, apiKey: getApiKey() }),
+        const [{ generateText }, { buildGeneratePrompt, parseProblems }] = await Promise.all([ai(), prompts()]);
+        const p = aiProvider();
+        const r = await generateText(p, {
+          key: apiKeyFor(p), model: modelFor(p),
+          user: buildGeneratePrompt(instruction, context, aiType.value),
+          json: true, temperature: 0.4,
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
-
-        const problems = data.problems || [];
+        const problems = parseProblems(r.text || '');
+        if (!problems.length) throw new Error('문제를 생성하지 못했습니다.');
         addBoxes(problems, 'ai');
         aiInstruction.value = '';
         setStatus('ok', `AI가 문제 ${problems.length}개를 생성해 박스로 추가했습니다. 정답·해설을 확인한 뒤 변환해주세요.`);

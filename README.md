@@ -112,52 +112,28 @@ Workers는 Node 런타임이 아니므로 `node:*` 내장 모듈을 쓰면 안 �
 
 ## AI 기능 (이미지 OCR + 문항 생성/변형) 설정
 
-`/ocr`, `/generate` 둘 다 같은 Google Gemini API와 같은 `GEMINI_API_KEY` 환경
-변수를 사용합니다 — 하나만 설정하면 두 기능 모두 동작합니다.
+**세 회사를 쓸 수 있습니다** — Google Gemini · OpenAI GPT · Anthropic Claude.
+머리글의 열쇠 단추에서 회사를 고르고 본인 API 키를 넣으면 됩니다.
 
-**모델 자동 폴백**: 최신 모델부터 차례로 시도하고, 실패하면 다음 모델로 넘어갑니다.
+호출은 **브라우저에서 각 회사 API 로 직접** 나갑니다. 이 앱 서버는 키를 보지도
+갖지도 않습니다(도형 생성기와 같은 방식). 그래서 `/ocr`·`/generate` 서버 함수는
+없앴고, 남은 서버 함수는 hwpx 를 만드는 `/convert` 하나뿐입니다.
 
-```
-gemini-3.8-flash -> 3.7 -> 3.6 -> 3.5 -> 2.5 -> gemini-flash-latest
-```
+- `public/js/providers.js` — 도형 생성기(suneung-figure-generator)에서 **그대로 가져온**
+  파일입니다. 모델 카탈로그·요금표·회사별 호출이 들어 있습니다. 그쪽이 고쳐지면
+  통째로 다시 복사해 오면 됩니다. **직접 수정하지 마세요.**
+- `public/js/ai.js` — 위 파일을 감싸 Gemini 호출을 더하고, 세 회사를 한 함수
+  (`generateText`)로 부를 수 있게 합니다. providers.js 의 `generateText` 는
+  OpenAI·Claude 만 다루고 Gemini 는 스트리밍 경로를 쓰는데, 이 앱은 스트리밍이
+  필요 없어 여기서 채웠습니다.
+- `public/js/prompts.js` — OCR·문항 생성 지시문과 응답 파싱.
 
-구글이 새로 발급된 키에는 옛 모델을 막아두거나(404), 무료 티어 한도를 다 쓰거나(429),
-모델이 일시적으로 과부하(5xx)인 경우가 있어서, 그럴 때 자동으로 다음 모델의 무료
-한도를 쓰게 됩니다. 사용자는 자기 키만 넣으면 되고 어떤 모델이 열려 있는지 신경 쓸
-필요가 없습니다. 단, API 키 자체가 잘못된 경우(400/403 `API_KEY_INVALID`)에는 어떤
-모델로도 실패하므로 남은 모델을 두드리지 않고 즉시 오류를 돌려줍니다.
-응답에는 실제로 answer한 모델 이름이 `model` 필드로 함께 담깁니다.
+키는 브라우저 localStorage 에 회사별로 저장됩니다(`geminiApiKey`, `openaiApiKey`,
+`anthropicApiKey`). **도형 생성기와 같은 이름**이라, 나중에 두 앱을 같은 주소에
+올리면 키가 그대로 공유됩니다.
 
-모델 목록은 `netlify/functions/geminiClient.mjs`의 `MODELS`와 `app.py`의 `_MODELS`
-두 곳에 있으며, **같은 순서로 유지해야 합니다**.
-
-- **이미지에서 가져오기**: 파일 선택, 드래그앤드롭, 또는 Ctrl+V 붙여넣기로 이미지를 넣으면
-  각 이미지가 박스 하나로 추가됩니다. 여러 장을 연달아 넣으면 큐에 쌓여 순서대로 처리됩니다.
-- **AI로 생성**: 자연어로 요청("이차함수 최댓값 문제 2개 만들어줘" 등)하면 대한민국 수능
-  스타일(객관식 ①~⑤ / 단답형 / 서술형, 실제 수능에서 쓰이는 어휘·형식)로 문제+해설을 작성해
-  각 문제를 새 박스로 추가합니다. `/generate`는 Gemini의 JSON 모드로 `{"problems": [...]}`
-  형태의 배열을 받아, 문제 하나당 박스 하나로 정확히 대응시킵니다.
-- **AI로 변형** (박스별): 각 박스의 반짝이 아이콘 버튼으로 그 문제 하나만 대상으로
-  "더 어렵게", "객관식으로" 같은 요청을 보낼 수 있습니다. 결과는 원본 박스를 덮어쓰지 않고
-  바로 아래에 새 박스로 추가됩니다. 요청이 처리되는 동안 그 박스 테두리에 은은한 그라디언트
-  글로우 애니메이션이 표시됩니다.
-
-모든 AI 결과는 자동으로 변환되지 않고 박스로 채워지므로, 내용을 확인한 뒤 원하는 박스만
-체크해 변환 버튼을 눌러야 합니다.
-
-**API 키 발급**: [Google AI Studio](https://aistudio.google.com/apikey)에서 무료로
-발급받을 수 있습니다 (요청 빈도 제한이 있는 무료 티어). 키는 절대 코드에 직접 넣지 말고
-아래처럼 환경 변수로만 설정하세요.
-
-- **Netlify**: Site settings → Environment variables → `GEMINI_API_KEY` 추가 후 재배포.
-- **Render / Railway / Fly.io**: 각 플랫폼의 환경 변수(Environment Variables) 설정 화면에서
-  `GEMINI_API_KEY` 추가.
-- **로컬 실행**: 셸에서 `export GEMINI_API_KEY=발급받은키` (PowerShell은
-  `$env:GEMINI_API_KEY="발급받은키"`) 실행 후 `python app.py`. 이 값을 `.env` 파일에
-  저장해도 되며, `.gitignore`에 이미 `.env`가 포함되어 있어 실수로 커밋되지 않습니다.
-
-환경 변수가 설정되지 않은 상태로 이 기능들을 쓰면 서버가
-"GEMINI_API_KEY가 설정되어 있지 않습니다" 오류를 반환합니다.
+Flask 버전(`app.py` + `templates/index.html`)은 예전 구조 그대로 서버의
+`GEMINI_API_KEY` 를 쓰는 `/ocr`·`/generate` 라우트를 유지합니다.
 
 ## 왜 두 벌인가 (Python + JavaScript)
 
