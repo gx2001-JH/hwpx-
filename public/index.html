@@ -1045,20 +1045,53 @@
   .toolbar-bulk .side-link-btn:hover:not(:disabled) { background: #fff; color: var(--accent-hover); transform: none; box-shadow: none; }
   .toolbar-bulk .side-link-btn.danger:hover:not(:disabled) { background: #FFF1F1; color: var(--error); }
   .toolbar-bulk .side-link-btn:disabled { opacity: .45; cursor: default; }
-  /* ---------- 지난 작업 이어서 하기 (되살리는 일이라 초록) ---------- */
+  /* ---------- 지난 작업 이어서 하기 (되살리는 일이라 초록) ----------
+     켤 때 가장 먼저 눈에 들어와야 해서 두 줄짜리 큰 띠로 두고, 처음 몇 초만 테두리가 빛난다
+     (계속 반짝이면 일하는 동안 거슬린다). 켤 때 '이어서 하기'에 초점을 둬 Enter 한 번이면 된다. */
   .restore-bar {
-    flex: none; align-self: flex-start; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-    max-width: calc(100% - 28px); margin: 10px 14px 0; padding: 5px 6px 5px 8px;
-    background: #EEF8F2; border: 1px solid #BFE8D2; border-radius: 22px; color: #1F6B4A;
-    font-size: 12px; font-weight: 700; animation: box-in .2s var(--ease);
+    position: relative; overflow: hidden;
+    flex: none; align-self: flex-start; display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+    width: min(720px, calc(100% - 28px)); margin: 14px 14px 0; padding: 14px 16px 14px 14px;
+    background: linear-gradient(135deg, #F2FBF6 0%, #E4F6EC 100%);
+    border: 1.5px solid #9ED9B8; border-radius: 18px; color: #1F6B4A;
+    box-shadow: 0 4px 16px rgba(46,158,106,.14);
+    animation: box-in .25s var(--ease), rb-glow 1.6s ease-in-out .3s 3;
+  }
+  /* 한 번 지나가는 빛줄기 */
+  .restore-bar::after {
+    content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent);
+    transform: skewX(-18deg); animation: rb-shine 1.4s ease .5s 2 both;
+  }
+  @keyframes rb-glow {
+    0%, 100% { box-shadow: 0 4px 16px rgba(46,158,106,.14), 0 0 0 0 rgba(46,158,106,0); border-color: #9ED9B8; }
+    50% { box-shadow: 0 4px 16px rgba(46,158,106,.14), 0 0 0 6px rgba(46,158,106,.22); border-color: #2E9E6A; }
+  }
+  @keyframes rb-shine { from { left: -40%; } to { left: 120%; } }
+  @media (prefers-reduced-motion: reduce) {
+    .restore-bar { animation: none; }
+    .restore-bar::after { display: none; }
   }
   .restore-bar[hidden] { display: none; }
-  .restore-bar .rb-ico { flex: none; width: 22px; height: 22px; border-radius: 50%; background: #2E9E6A; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; }
-  .restore-bar .rb-txt { word-break: keep-all; }
-  .restore-bar .rb-txt b { color: #14532D; }
-  .restore-bar .side-link-btn { height: 28px; }
-  .restore-bar .rb-go { background: #2E9E6A; border-color: #2E9E6A; color: #fff; font-weight: 800; }
+  .restore-bar .rb-ico {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; background: #2E9E6A; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 21px; font-weight: 900;
+    box-shadow: 0 3px 10px rgba(46,158,106,.35);
+  }
+  .restore-bar .rb-main { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .restore-bar .rb-title { font-size: 15.5px; font-weight: 800; color: #14532D; letter-spacing: -.01em; }
+  .restore-bar .rb-txt { font-size: 12.5px; font-weight: 600; color: #2F6B4C; word-break: keep-all; }
+  .restore-bar .rb-txt b { color: #14532D; font-weight: 800; }
+  .restore-bar .rb-actions { flex: none; display: flex; align-items: center; gap: 8px; }
+  .restore-bar .side-link-btn { height: 38px; padding: 0 16px; font-size: 13px; font-weight: 700; }
+  .restore-bar .rb-go { gap: 6px; padding: 0 20px 0 16px; background: #2E9E6A; border-color: #2E9E6A; color: #fff; font-size: 14px; font-weight: 800; box-shadow: 0 3px 10px rgba(46,158,106,.35); }
   .restore-bar .rb-go:hover { background: #1F7A4F; border-color: #1F7A4F; color: #fff; }
+  .restore-bar .rb-go:focus-visible { outline: none; box-shadow: 0 0 0 3px #fff, 0 0 0 5px #2E9E6A; }
+  .restore-bar .rb-go span { font-size: 15px; }
+  @media (max-width: 560px) {
+    .restore-bar .rb-actions { flex: 1 1 100%; }
+    .restore-bar .rb-go { flex: 1 1 auto; justify-content: center; }
+  }
 
   /* ---------- 찾아 바꾸기 줄 (고른 박스 줄과 같은 연보라 알약) ---------- */
   .find-bar {
@@ -2122,11 +2155,16 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
         </div>
         <!-- 찾아 바꾸기: 머리띠 바로 밑에 펼쳐지는 줄 (고른 박스 줄과 같은 모양) -->
         <!-- 지난 작업 이어서 하기 (자동 저장된 것이 있을 때만) -->
-        <div class="restore-bar" id="restoreBar" hidden>
+        <div class="restore-bar" id="restoreBar" role="region" aria-label="지난 작업" hidden>
           <span class="rb-ico" aria-hidden="true">↺</span>
-          <span class="rb-txt" id="restoreText"></span>
-          <button type="button" class="side-link-btn rb-go" id="restoreGo">이어서 하기</button>
-          <button type="button" class="side-link-btn" id="restoreNew" title="지난 작업을 지우고 새로 시작합니다">새로 시작</button>
+          <div class="rb-main">
+            <b class="rb-title">지난 작업이 남아 있어요</b>
+            <span class="rb-txt" id="restoreText"></span>
+          </div>
+          <div class="rb-actions">
+            <button type="button" class="side-link-btn rb-go" id="restoreGo" title="지난 작업을 그대로 엽니다 (Enter)"><span aria-hidden="true">↺</span>이어서 하기</button>
+            <button type="button" class="side-link-btn" id="restoreNew" title="지난 작업을 지우고 새로 시작합니다">새로 시작</button>
+          </div>
         </div>
         <div class="find-bar" id="findBar" hidden>
           <label class="find-field"><span>찾기</span><input type="text" id="findText" placeholder="예: [4점]" autocomplete="off"></label>
@@ -3505,8 +3543,14 @@ $$\alpha+\beta=-\frac{b}{a}, \quad \alpha\beta=\frac{c}{a}$$
     function showRestoreBar(prev) {
       const { n, whenTxt, docsN } = describeWork(prev);
       document.getElementById('restoreText').innerHTML =
-        `지난 작업이 남아 있어요 — ${docsN > 1 ? `문서 <b>${docsN}개</b> · ` : ''}박스 <b>${n}개</b>${whenTxt ? ` · ${escapeHtml(whenTxt)}` : ''}`;
+        `${docsN > 1 ? `문서 <b>${docsN}개</b> · ` : ''}박스 <b>${n}개</b>${whenTxt ? ` · ${escapeHtml(whenTxt)} 저장` : ''}`;
       document.getElementById('restoreBar').hidden = false;
+      // Enter 한 번으로 이어서 하기 (켤 때 다른 곳에 초점이 없을 때만)
+      setTimeout(() => {
+        if (document.activeElement === document.body || !document.activeElement) {
+          document.getElementById('restoreGo').focus({ preventScroll: true });
+        }
+      }, 50);
     }
     document.getElementById('restoreGo').addEventListener('click', () => {
       const prev = readWork(PREV_KEY);
